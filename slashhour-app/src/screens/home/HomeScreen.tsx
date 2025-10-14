@@ -7,6 +7,7 @@ import FeedScreen from './FeedScreen';
 import NearYouScreen from './NearYouScreen';
 import AppHeader from '../../components/AppHeader';
 import TabBar, { Tab } from '../../components/TabBar';
+import { COLORS } from '../../theme';
 
 const tabs: Tab[] = [
   { id: 'following', label: 'You Follow' },
@@ -21,7 +22,6 @@ export default function HomeScreen({ navigation }: any) {
     <SafeAreaView style={styles.container}>
       <AppHeader
         userName={user?.name || user?.username}
-        onProfilePress={() => navigation.navigate('Profile')}
       />
 
       <TabBar
@@ -38,6 +38,6 @@ export default function HomeScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.background,
   },
 });

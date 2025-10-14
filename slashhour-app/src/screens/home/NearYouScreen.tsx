@@ -14,6 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Deal } from '../../types/models';
 import DealCard from '../../components/DealCard';
 import { useNearbyDeals } from '../../hooks/useNearbyDeals';
+import { COLORS, TYPOGRAPHY, SPACING, RADIUS, LAYOUT } from '../../theme';
 
 export default function NearYouScreen() {
   const navigation = useNavigation<any>();
@@ -52,7 +53,7 @@ export default function NearYouScreen() {
           <Text style={styles.headerTitle}>Near You</Text>
         </View>
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#FF6B6B" />
+          <ActivityIndicator size="large" color={COLORS.primary} />
           <Text style={styles.loadingText}>Finding nearby deals...</Text>
         </View>
       </SafeAreaView>
@@ -128,7 +129,8 @@ export default function NearYouScreen() {
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={handleRefresh}
-            colors={['#FF6B6B']}
+            colors={[COLORS.primary]}
+            tintColor={COLORS.primary}
           />
         }
       />
@@ -139,107 +141,106 @@ export default function NearYouScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORS.backgroundSecondary,
   },
   header: {
-    backgroundColor: '#fff',
-    padding: 16,
+    backgroundColor: COLORS.white,
+    padding: SPACING.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: COLORS.borderLight,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#333',
+    ...TYPOGRAPHY.styles.h1,
+    color: COLORS.textPrimary,
   },
   headerSubtitle: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    color: COLORS.textSecondary,
+    marginTop: SPACING.xs,
   },
   radiusButton: {
-    backgroundColor: '#4ECDC4',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    backgroundColor: COLORS.secondary,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.full,
   },
   radiusButtonLarge: {
-    backgroundColor: '#4ECDC4',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 25,
-    marginTop: 16,
+    backgroundColor: COLORS.secondary,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.full,
+    marginTop: SPACING.md,
   },
   radiusButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+    color: COLORS.white,
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
   listContent: {
-    padding: 16,
+    padding: SPACING.md,
+    paddingBottom: LAYOUT.tabBarHeight + SPACING.xxl,
   },
   distanceBadge: {
     position: 'absolute',
-    top: 8,
-    right: 24,
-    backgroundColor: 'rgba(78, 205, 196, 0.9)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    top: SPACING.sm,
+    right: SPACING.lg,
+    backgroundColor: `${COLORS.secondary}E6`, // 90% opacity
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: RADIUS.md,
   },
   distanceText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
+    color: COLORS.white,
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 40,
+    padding: SPACING.xxl,
   },
   loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#666',
+    marginTop: SPACING.md,
+    fontSize: TYPOGRAPHY.fontSize.md,
+    color: COLORS.textSecondary,
   },
   errorText: {
     fontSize: 64,
-    marginBottom: 16,
+    marginBottom: SPACING.md,
   },
   errorMessage: {
-    fontSize: 16,
-    color: '#F38181',
+    fontSize: TYPOGRAPHY.fontSize.md,
+    color: COLORS.error,
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: SPACING.md,
   },
   retryButton: {
-    backgroundColor: '#FF6B6B',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.md,
   },
   retryButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: COLORS.white,
+    fontSize: TYPOGRAPHY.fontSize.md,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
   emptyText: {
     fontSize: 64,
-    marginBottom: 16,
+    marginBottom: SPACING.md,
   },
   emptyMessage: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
+    ...TYPOGRAPHY.styles.h3,
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.sm,
   },
   emptySubtext: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    color: COLORS.textSecondary,
     textAlign: 'center',
   },
 });

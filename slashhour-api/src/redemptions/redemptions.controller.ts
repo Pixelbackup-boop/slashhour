@@ -9,7 +9,7 @@ export class RedemptionsController {
 
   @Post(':dealId')
   async redeemDeal(@Req() req, @Param('dealId') dealId: string) {
-    const userId = req.user.sub;
+    const userId = req.user.id;
     return this.redemptionsService.redeemDeal(userId, dealId);
   }
 
@@ -19,13 +19,13 @@ export class RedemptionsController {
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 20,
   ) {
-    const userId = req.user.sub;
+    const userId = req.user.id;
     return this.redemptionsService.getUserRedemptions(userId, page, limit);
   }
 
   @Get(':redemptionId')
   async getRedemptionDetails(@Req() req, @Param('redemptionId') redemptionId: string) {
-    const userId = req.user.sub;
+    const userId = req.user.id;
     return this.redemptionsService.getRedemptionDetails(userId, redemptionId);
   }
 }

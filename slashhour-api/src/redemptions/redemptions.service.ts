@@ -67,6 +67,12 @@ export class RedemptionsService {
     }
 
     // Create redemption record with proper entity relations
+    console.log('🔍 Creating redemption for:', {
+      userId: user.id,
+      dealId: deal.id,
+      businessId: deal.business.id,
+    });
+
     const redemption = this.redemptionRepository.create({
       user,
       deal,
@@ -77,7 +83,17 @@ export class RedemptionsService {
       deal_category: deal.category,
     });
 
-    await this.redemptionRepository.save(redemption);
+    console.log('✅ Redemption entity created:', {
+      hasUser: !!redemption.user,
+      hasDeal: !!redemption.deal,
+      hasBusiness: !!redemption.business,
+      originalPrice: redemption.original_price,
+      paidPrice: redemption.paid_price,
+    });
+
+    console.log('💾 Saving redemption to database...');
+    const savedRedemption = await this.redemptionRepository.save(redemption);
+    console.log('✅ Redemption saved successfully! ID:', savedRedemption.id);
 
     // Increment quantity redeemed
     await this.dealRepository.update(dealId, {
@@ -85,8 +101,8 @@ export class RedemptionsService {
     });
 
     return {
-      redemption,
-      redemptionCode: redemption.id, // The redemption ID serves as the code
+      redemption: savedRedemption,
+      redemptionCode: savedRedemption.id, // The redemption ID serves as the code
     };
   }
 

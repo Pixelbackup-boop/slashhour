@@ -178,7 +178,11 @@ export const trackCategoryFilter = (category: string, dealsCount: number) => {
  */
 export const trackScreenView = (screenName: string, params?: Record<string, any>) => {
   if (__DEV__) {
-    console.log('📱 Screen View:', screenName, params);
+    if (params) {
+      console.log('📱 Screen View:', screenName, params);
+    } else {
+      console.log('📱 Screen View:', screenName);
+    }
   } else {
     addBreadcrumb(`Screen: ${screenName}`, 'navigation', params);
   }

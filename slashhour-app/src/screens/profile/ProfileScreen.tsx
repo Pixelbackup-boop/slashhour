@@ -17,6 +17,7 @@ import { trackScreenView } from '../../services/analytics';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import StatCard from '../../components/StatCard';
 import InfoRow from '../../components/InfoRow';
+import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, SIZES, LAYOUT } from '../../theme';
 
 export default function ProfileScreen({ navigation }: any) {
   const dispatch = useDispatch();
@@ -53,11 +54,7 @@ export default function ProfileScreen({ navigation }: any) {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>← Back</Text>
-        </TouchableOpacity>
         <Text style={styles.headerTitle}>Profile</Text>
-        <View style={styles.placeholder} />
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -78,7 +75,7 @@ export default function ProfileScreen({ navigation }: any) {
         {/* Statistics Section */}
         {isLoading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#FF6B6B" />
+            <ActivityIndicator size="large" color={COLORS.primary} />
             <Text style={styles.loadingText}>Loading your stats...</Text>
           </View>
         ) : stats ? (
@@ -145,6 +142,19 @@ export default function ProfileScreen({ navigation }: any) {
           <View style={styles.infoCard}>
             <TouchableOpacity
               style={styles.actionRow}
+              onPress={() => navigation.navigate('FollowingList')}
+            >
+              <View style={styles.actionLeft}>
+                <Text style={styles.actionIcon}>❤️</Text>
+                <Text style={styles.actionLabel}>Following</Text>
+              </View>
+              <Text style={styles.actionArrow}>›</Text>
+            </TouchableOpacity>
+
+            <View style={styles.divider} />
+
+            <TouchableOpacity
+              style={styles.actionRow}
               onPress={() => navigation.navigate('RedemptionHistory')}
             >
               <View style={styles.actionLeft}>
@@ -181,6 +191,9 @@ export default function ProfileScreen({ navigation }: any) {
 
         {/* App Version */}
         <Text style={styles.version}>Version 1.0.0 - MVP</Text>
+
+        {/* Bottom padding for tab bar */}
+        <View style={{ height: LAYOUT.tabBarHeight + SPACING.lg }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -189,185 +202,164 @@ export default function ProfileScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORS.backgroundSecondary,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#fff',
+    padding: SPACING.md,
+    backgroundColor: COLORS.white,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  backButton: {
-    padding: 8,
-  },
-  backButtonText: {
-    fontSize: 16,
-    color: '#FF6B6B',
-    fontWeight: '600',
+    borderBottomColor: COLORS.borderLight,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#333',
-  },
-  placeholder: {
-    width: 60,
+    ...TYPOGRAPHY.styles.displayMedium,
+    color: COLORS.textPrimary,
   },
   scrollView: {
     flex: 1,
   },
   userCard: {
-    backgroundColor: '#fff',
-    padding: 24,
+    backgroundColor: COLORS.white,
+    padding: SPACING.lg,
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: COLORS.borderLight,
   },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#FF6B6B',
+    width: SIZES.avatar.lg,
+    height: SIZES.avatar.lg,
+    borderRadius: SIZES.avatar.lg / 2,
+    backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: SPACING.md,
   },
   avatarText: {
     fontSize: 36,
-    fontWeight: '700',
-    color: '#fff',
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    color: COLORS.white,
   },
   userName: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#333',
-    marginBottom: 4,
+    ...TYPOGRAPHY.styles.h1,
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.xs,
   },
   userEmail: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 2,
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    color: COLORS.textSecondary,
+    marginBottom: SPACING.xs,
   },
   userUsername: {
-    fontSize: 14,
-    color: '#999',
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    color: COLORS.textTertiary,
   },
   loadingContainer: {
-    padding: 40,
+    padding: SPACING.xxl,
     alignItems: 'center',
   },
   loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: '#666',
+    marginTop: SPACING.md,
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    color: COLORS.textSecondary,
   },
   section: {
-    padding: 16,
+    padding: SPACING.md,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#333',
-    marginBottom: 12,
+    ...TYPOGRAPHY.styles.h3,
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.md,
   },
   statsGrid: {
     flexDirection: 'row',
-    gap: 12,
+    gap: SPACING.md,
   },
   infoCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    ...SHADOWS.md,
   },
   actionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: SPACING.md,
   },
   actionLeft: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   actionIcon: {
-    fontSize: 20,
-    marginRight: 12,
+    fontSize: SIZES.icon.md,
+    marginRight: SPACING.md,
   },
   actionLabel: {
-    fontSize: 16,
-    color: '#333',
-    fontWeight: '500',
+    fontSize: TYPOGRAPHY.fontSize.md,
+    color: COLORS.textPrimary,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
   actionArrow: {
     fontSize: 24,
-    color: '#ccc',
+    color: COLORS.gray300,
     fontWeight: '300',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: COLORS.borderLight,
+    marginVertical: SPACING.md,
   },
   impactCard: {
     backgroundColor: '#FFF3E0',
-    borderRadius: 12,
-    padding: 20,
-    margin: 16,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    margin: SPACING.md,
     marginTop: 0,
     borderWidth: 2,
-    borderColor: '#FFD93D',
+    borderColor: COLORS.warning,
   },
   impactTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#FF6B6B',
-    marginBottom: 8,
+    ...TYPOGRAPHY.styles.h3,
+    color: COLORS.primary,
+    marginBottom: SPACING.sm,
   },
   impactText: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    color: COLORS.textSecondary,
     lineHeight: 20,
   },
   emptyState: {
-    padding: 40,
+    padding: SPACING.xxl,
     alignItems: 'center',
   },
   emptyStateText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#999',
-    marginBottom: 4,
+    fontSize: TYPOGRAPHY.fontSize.md,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+    color: COLORS.textTertiary,
+    marginBottom: SPACING.xs,
   },
   emptyStateSubtext: {
-    fontSize: 14,
-    color: '#ccc',
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    color: COLORS.textDisabled,
   },
   logoutButton: {
-    backgroundColor: '#F38181',
-    padding: 16,
-    borderRadius: 12,
-    margin: 16,
-    marginTop: 8,
+    backgroundColor: COLORS.error,
+    padding: SPACING.md,
+    borderRadius: RADIUS.lg,
+    margin: SPACING.md,
+    marginTop: SPACING.sm,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    ...SHADOWS.md,
   },
   logoutButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
+    color: COLORS.white,
+    fontSize: TYPOGRAPHY.fontSize.md,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
   },
   version: {
-    fontSize: 12,
-    color: '#999',
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    color: COLORS.textTertiary,
     textAlign: 'center',
-    padding: 16,
+    padding: SPACING.md,
     paddingTop: 0,
   },
 });

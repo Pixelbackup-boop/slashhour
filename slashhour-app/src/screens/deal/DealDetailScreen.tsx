@@ -15,7 +15,9 @@ import RedemptionModal from '../../components/RedemptionModal';
 import PriceCard from '../../components/PriceCard';
 import CountdownBox from '../../components/CountdownBox';
 import StockBar from '../../components/StockBar';
+import FollowButton from '../../components/FollowButton';
 import { useDealDetail } from '../../hooks/useDealDetail';
+import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../../theme';
 
 interface DealDetailScreenProps {
   route: {
@@ -65,8 +67,21 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
         <View style={styles.content}>
           {/* Business Info */}
           <View style={styles.businessSection}>
-            <Text style={styles.businessName}>{deal.business?.business_name}</Text>
-            <Text style={styles.category}>{deal.category}</Text>
+            <View style={styles.businessHeader}>
+              <View style={styles.businessInfo}>
+                <Text style={styles.businessName}>{deal.business?.business_name}</Text>
+                <Text style={styles.category}>{deal.category}</Text>
+              </View>
+              {deal.business?.id && (
+                <FollowButton
+                  businessId={deal.business.id}
+                  businessName={deal.business.business_name}
+                  businessCategory={deal.category}
+                  size="small"
+                  variant="outline"
+                />
+              )}
+            </View>
           </View>
 
           {/* Discount Badge */}
@@ -143,7 +158,7 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
             disabled={isRedeeming}
           >
             {isRedeeming ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={COLORS.white} />
             ) : (
               <Text style={styles.redeemButtonText}>Redeem This Deal</Text>
             )}
@@ -166,20 +181,20 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.white,
   },
   header: {
-    padding: 16,
+    padding: SPACING.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: COLORS.borderLight,
   },
   backButton: {
-    padding: 8,
+    padding: SPACING.sm,
   },
   backButtonText: {
-    fontSize: 16,
-    color: '#FF6B6B',
-    fontWeight: '600',
+    fontSize: TYPOGRAPHY.fontSize.md,
+    color: COLORS.primary,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
   scrollView: {
     flex: 1,
@@ -187,84 +202,89 @@ const styles = StyleSheet.create({
   bannerImage: {
     width: '100%',
     height: 250,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: COLORS.gray100,
   },
   content: {
-    padding: 20,
+    padding: SPACING.lg,
   },
   businessSection: {
-    marginBottom: 16,
+    marginBottom: SPACING.md,
+  },
+  businessHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  businessInfo: {
+    flex: 1,
+    marginRight: SPACING.md,
   },
   businessName: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#333',
-    marginBottom: 4,
+    ...TYPOGRAPHY.styles.h2,
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.xs,
   },
   category: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    color: COLORS.textSecondary,
     textTransform: 'capitalize',
   },
   discountBadge: {
-    backgroundColor: '#FF6B6B',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.full,
     alignSelf: 'flex-start',
-    marginBottom: 16,
+    marginBottom: SPACING.md,
   },
   discountText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
+    color: COLORS.white,
+    fontSize: TYPOGRAPHY.fontSize.md,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#333',
-    marginBottom: 20,
+    ...TYPOGRAPHY.styles.displayMedium,
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.lg,
     lineHeight: 34,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: SPACING.lg,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#333',
-    marginBottom: 12,
+    ...TYPOGRAPHY.styles.h3,
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.md,
   },
   description: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: TYPOGRAPHY.fontSize.md,
+    color: COLORS.textSecondary,
     lineHeight: 24,
   },
   termItem: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    color: COLORS.textSecondary,
     lineHeight: 22,
-    marginBottom: 6,
+    marginBottom: SPACING.xs,
   },
   address: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    color: COLORS.textSecondary,
     lineHeight: 20,
   },
   redeemButton: {
-    backgroundColor: '#FF6B6B',
-    padding: 18,
-    borderRadius: 12,
+    backgroundColor: COLORS.primary,
+    padding: SPACING.lg,
+    borderRadius: RADIUS.lg,
     alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 40,
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.xxl,
   },
   redeemButtonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: COLORS.gray300,
   },
   redeemButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '700',
+    ...TYPOGRAPHY.styles.button,
+    color: COLORS.white,
   },
 });

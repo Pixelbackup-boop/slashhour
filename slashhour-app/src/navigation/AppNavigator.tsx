@@ -1,24 +1,184 @@
 import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store/store';
+import { COLORS, SHADOWS, SPACING } from '../theme';
 import LoginScreen from '../screens/auth/LoginScreen';
 import HomeScreen from '../screens/home/HomeScreen';
-import DealDetailScreen from '../screens/deal/DealDetailScreen';
+import SearchScreen from '../screens/search/SearchScreen';
+import PostScreen from '../screens/post/PostScreen';
+import InboxScreen from '../screens/inbox/InboxScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
+import DealDetailScreen from '../screens/deal/DealDetailScreen';
 import RedemptionHistoryScreen from '../screens/redemption/RedemptionHistoryScreen';
+import FollowingListScreen from '../screens/following/FollowingListScreen';
 import { Deal } from '../types/models';
 
 type RootStackParamList = {
   Login: undefined;
-  Home: undefined;
+  MainTabs: undefined;
   DealDetail: { deal: Deal };
-  Profile: undefined;
   RedemptionHistory: undefined;
+  FollowingList: undefined;
+};
+
+type TabParamList = {
+  Home: undefined;
+  Search: undefined;
+  Post: undefined;
+  Inbox: undefined;
+  Profile: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+const Tab = createBottomTabNavigator<TabParamList>();
+
+// Bottom Tab Navigator
+function MainTabNavigator() {
+  const insets = useSafeAreaInsets();
+
+  // Calculate dynamic tab bar height
+  // Base height (60) + safe area bottom inset + extra padding for gesture area
+  const tabBarHeight = 60 + insets.bottom + (insets.bottom === 0 ? 8 : 0);
+
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: COLORS.primary,
+        tabBarInactiveTintColor: COLORS.gray400,
+        tabBarStyle: {
+          backgroundColor: COLORS.white,
+          borderTopWidth: 1,
+          borderTopColor: COLORS.borderLight,
+          height: tabBarHeight,
+          paddingBottom: insets.bottom || SPACING.sm,
+          paddingTop: SPACING.sm,
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          ...SHADOWS.lg,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+          marginBottom: 2,
+        },
+        tabBarIconStyle: {
+          marginTop: 4,
+        },
+      }}
+    >
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{
+          tabBarLabel: 'Home',
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon icon="🏠" focused={focused} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Search"
+        component={SearchScreen}
+        options={{
+          tabBarLabel: 'Search',
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon icon="🔍" focused={focused} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Post"
+        component={PostScreen}
+        options={{
+          tabBarLabel: 'Post',
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon icon="➕" focused={focused} isPrimary />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Inbox"
+        component={InboxScreen}
+        options={{
+          tabBarLabel: 'Inbox',
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon icon="💬" focused={focused} />
+          ),
+          // TODO: Add badge for unread messages
+          // tabBarBadge: 3,
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{
+          tabBarLabel: 'Profile',
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon icon="👤" focused={focused} />
+          ),
+          // TODO: Add badge for notifications
+          // tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
+        }}
+      />
+    </Tab.Navigator>
+  );
+}
+
+// Tab Icon Component with emoji support
+interface TabIconProps {
+  icon: string;
+  focused: boolean;
+  isPrimary?: boolean;
+}
+
+function TabIcon({ icon, focused, isPrimary }: TabIconProps) {
+  if (isPrimary) {
+    // Center "Post" tab with special styling
+    return (
+      <View style={styles.primaryTabIcon}>
+        <Text style={styles.primaryTabIconText}>{icon}</Text>
+      </View>
+    );
+  }
+
+  return (
+    <Text style={[styles.tabIcon, { opacity: focused ? 1 : 0.6 }]}>
+      {icon}
+    </Text>
+  );
+}
+
+const styles = StyleSheet.create({
+  primaryTabIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: -28,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  primaryTabIconText: {
+    fontSize: 28,
+    color: COLORS.white,
+  },
+  tabIcon: {
+    fontSize: 24,
+  },
+});
 
 export default function AppNavigator() {
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
@@ -30,10 +190,23 @@ export default function AppNavigator() {
           <Stack.Screen name="Login" component={LoginScreen} />
         ) : (
           <>
-            <Stack.Screen name="Home" component={HomeScreen} />
-            <Stack.Screen name="DealDetail" component={DealDetailScreen} />
-            <Stack.Screen name="Profile" component={ProfileScreen} />
-            <Stack.Screen name="RedemptionHistory" component={RedemptionHistoryScreen} />
+            <Stack.Screen name="MainTabs" component={MainTabNavigator} />
+            <Stack.Screen
+              name="DealDetail"
+              component={DealDetailScreen}
+              options={{
+                presentation: 'modal',
+                animation: 'slide_from_bottom',
+              }}
+            />
+            <Stack.Screen
+              name="RedemptionHistory"
+              component={RedemptionHistoryScreen}
+            />
+            <Stack.Screen
+              name="FollowingList"
+              component={FollowingListScreen}
+            />
           </>
         )}
       </Stack.Navigator>

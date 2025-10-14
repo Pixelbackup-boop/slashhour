@@ -2,18 +2,27 @@
 
 ## ⚠️ IMPORTANT: Read This First!
 **📘 [CODING STANDARDS & PATTERNS](./CODING_STANDARDS.md)** ← **READ BEFORE STARTING ANY WORK**
+**🎨 [BEST PRACTICES & UI/UX TRENDS](./best_practice_trends_UI_UX.md)** ← **PROACTIVE SUGGESTIONS GUIDE**
+**📱 [RESPONSIVE DESIGN FOUNDATION](./slashhour-app/RESPONSIVE_DESIGN.md)** ← **CROSS-DEVICE COMPATIBILITY GUIDE**
 
-This document contains:
+These documents contain:
 - ✅ The winning pattern that works perfectly
 - ✅ Custom hooks guidelines
 - ✅ Reusable components template
 - ✅ Error handling with Sentry
 - ✅ Analytics tracking requirements
 - ✅ Clean architecture principles
+- ✅ Modern UI/UX trends (2024-2025)
+- ✅ Mobile navigation best practices
+- ✅ Accessibility guidelines
+- ✅ Performance optimization patterns
 - ✅ Testing checklist
 - ✅ Commit guidelines
+- ✅ Responsive design system (theme & utilities)
+- ✅ Cross-device compatibility patterns
+- ✅ Dynamic safe area insets for all devices
 
-**ALWAYS follow this pattern for new features!**
+**ALWAYS follow these patterns for new features!**
 
 ---
 
@@ -31,6 +40,8 @@ This document contains:
 
 ### Completed Documents
 - ✅ **CODING_STANDARDS.md** - **[MUST READ]** Coding patterns, hooks, clean architecture
+- ✅ **best_practice_trends_UI_UX.md** - **[MUST READ]** Modern UI/UX trends, best practices, proactive suggestions
+- ✅ **slashhour-app/RESPONSIVE_DESIGN.md** - **[MUST READ]** Responsive design system, theme tokens, cross-device guide
 - ✅ **slashhour business plan.md** - Complete business plan with market analysis, financial projections
 - ✅ **slashhour storyline.md** - User stories organized by epics with acceptance criteria
 - ✅ **slashhour mvp plan.md** - Complete technical specifications, database schema, API design
@@ -40,6 +51,8 @@ This document contains:
 
 ### Key Resources
 - **[CODING STANDARDS](./CODING_STANDARDS.md)** ← **START HERE FOR NEW FEATURES**
+- **[BEST PRACTICES & UI/UX](./best_practice_trends_UI_UX.md)** ← **MODERN TRENDS & SUGGESTIONS**
+- **[RESPONSIVE DESIGN](./slashhour-app/RESPONSIVE_DESIGN.md)** ← **THEME SYSTEM & DEVICE COMPATIBILITY**
 - Business Plan: `./slashhour business plan.md`
 - User Stories: `./slashhour storyline.md`
 - MVP Tech Specs: `./slashhour mvp plan.md`

@@ -12,6 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Deal } from '../../types/models';
 import DealCard from '../../components/DealCard';
 import { useFeed } from '../../hooks/useFeed';
+import { COLORS, TYPOGRAPHY, SPACING, LAYOUT } from '../../theme';
 
 export default function FeedScreen() {
   const navigation = useNavigation<any>();
@@ -28,7 +29,7 @@ export default function FeedScreen() {
           <Text style={styles.headerTitle}>Your Deals</Text>
         </View>
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#FF6B6B" />
+          <ActivityIndicator size="large" color={COLORS.primary} />
           <Text style={styles.loadingText}>Loading deals...</Text>
         </View>
       </SafeAreaView>
@@ -85,7 +86,8 @@ export default function FeedScreen() {
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={handleRefresh}
-            colors={['#FF6B6B']}
+            colors={[COLORS.primary]}
+            tintColor={COLORS.primary}
           />
         }
       />
@@ -96,61 +98,60 @@ export default function FeedScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORS.backgroundSecondary,
   },
   header: {
-    backgroundColor: '#fff',
-    padding: 16,
+    backgroundColor: COLORS.white,
+    padding: SPACING.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: COLORS.borderLight,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#333',
+    ...TYPOGRAPHY.styles.h1,
+    color: COLORS.textPrimary,
   },
   headerSubtitle: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    color: COLORS.textSecondary,
+    marginTop: SPACING.xs,
   },
   listContent: {
-    padding: 16,
+    padding: SPACING.md,
+    paddingBottom: LAYOUT.tabBarHeight + SPACING.xxl,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 40,
+    padding: SPACING.xxl,
   },
   loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#666',
+    marginTop: SPACING.md,
+    fontSize: TYPOGRAPHY.fontSize.md,
+    color: COLORS.textSecondary,
   },
   errorText: {
     fontSize: 64,
-    marginBottom: 16,
+    marginBottom: SPACING.md,
   },
   errorMessage: {
-    fontSize: 16,
-    color: '#F38181',
+    fontSize: TYPOGRAPHY.fontSize.md,
+    color: COLORS.error,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: SPACING.sm,
   },
   emptyText: {
     fontSize: 64,
-    marginBottom: 16,
+    marginBottom: SPACING.md,
   },
   emptyMessage: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
+    ...TYPOGRAPHY.styles.h3,
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.sm,
   },
   emptySubtext: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    color: COLORS.textSecondary,
     textAlign: 'center',
   },
 });

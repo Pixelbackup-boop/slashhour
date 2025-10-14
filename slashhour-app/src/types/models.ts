@@ -135,16 +135,31 @@ export interface Follow {
   id: string;
   user_id: string;
   business_id: string;
-  notifications_enabled: boolean;
-  notification_types: {
-    new_deal: boolean;
-    expiring: boolean;
-    flash: boolean;
-  };
-  last_viewed_at?: string;
-  deals_viewed_count: number;
-  deals_redeemed_count: number;
-  created_at: string;
+  status: 'active' | 'muted' | 'unfollowed';
+  notifyNewDeals: boolean;
+  notifyFlashDeals: boolean;
+  followedAt: string;
+  updatedAt: string;
+}
+
+export interface FollowStatus {
+  isFollowing: boolean;
+  status?: 'active' | 'muted' | 'unfollowed';
+  notifyNewDeals?: boolean;
+  notifyFlashDeals?: boolean;
+  followedAt?: string;
+}
+
+export interface FollowedBusiness extends Business {
+  followStatus: 'active' | 'muted';
+  notifyNewDeals: boolean;
+  notifyFlashDeals: boolean;
+  followedAt: string;
+}
+
+export interface FollowedBusinessesResponse {
+  total: number;
+  businesses: FollowedBusiness[];
 }
 
 export interface UserRedemption {

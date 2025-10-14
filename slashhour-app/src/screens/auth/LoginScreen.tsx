@@ -10,10 +10,12 @@ import {
   Platform,
 } from 'react-native';
 import { useLogin } from '../../hooks/useLogin';
+import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SIZES } from '../../theme';
 
 export default function LoginScreen() {
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const { isLoading, error, handleLogin: login } = useLogin();
 
   const handleLoginPress = () => {
@@ -39,17 +41,30 @@ export default function LoginScreen() {
             autoCapitalize="none"
             keyboardType="email-address"
             editable={!isLoading}
+            textAlignVertical="center"
+            includeFontPadding={false}
           />
 
           <Text style={styles.label}>Password</Text>
-          <TextInput
-            style={styles.input}
-            value={password}
-            onChangeText={setPassword}
-            placeholder="Enter password"
-            secureTextEntry
-            editable={!isLoading}
-          />
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={styles.passwordInput}
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Enter password"
+              secureTextEntry={!showPassword}
+              editable={!isLoading}
+              textAlignVertical="center"
+              includeFontPadding={false}
+            />
+            <TouchableOpacity
+              style={styles.eyeButton}
+              onPress={() => setShowPassword(!showPassword)}
+              hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
+            >
+              <Text style={styles.eyeIcon}>{showPassword ? '👁️' : '👁️‍🗨️'}</Text>
+            </TouchableOpacity>
+          </View>
 
           {error && <Text style={styles.error}>{error}</Text>}
 
@@ -75,66 +90,92 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.background,
   },
   content: {
     flex: 1,
-    padding: 20,
+    padding: SPACING.lg,
     justifyContent: 'center',
   },
   logo: {
-    fontSize: 48,
+    ...TYPOGRAPHY.styles.displayLarge,
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: SPACING.sm,
   },
   subtitle: {
-    fontSize: 18,
+    ...TYPOGRAPHY.styles.bodyLarge,
     textAlign: 'center',
-    color: '#666',
-    marginBottom: 40,
+    color: COLORS.textSecondary,
+    marginBottom: SPACING.xxl,
   },
   form: {
     width: '100%',
   },
   label: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-    color: '#333',
+    ...TYPOGRAPHY.styles.label,
+    marginBottom: SPACING.xs,
+    color: COLORS.textPrimary,
+    textTransform: 'none',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    marginBottom: 20,
-    backgroundColor: '#f9f9f9',
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    fontSize: TYPOGRAPHY.fontSize.md,
+    marginBottom: SPACING.lg,
+    backgroundColor: COLORS.gray50,
+    height: Platform.OS === 'android' ? 56 : SIZES.input.md,
+  },
+  passwordContainer: {
+    position: 'relative',
+    marginBottom: SPACING.lg,
+  },
+  passwordInput: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    paddingRight: 50,
+    fontSize: TYPOGRAPHY.fontSize.md,
+    backgroundColor: COLORS.gray50,
+    height: Platform.OS === 'android' ? 56 : SIZES.input.md,
+  },
+  eyeButton: {
+    position: 'absolute',
+    right: SPACING.md,
+    top: Platform.OS === 'android' ? 16 : SPACING.md,
+    padding: SPACING.xs,
+  },
+  eyeIcon: {
+    fontSize: SIZES.icon.md,
   },
   button: {
-    backgroundColor: '#FF6B6B',
-    padding: 16,
-    borderRadius: 8,
+    backgroundColor: COLORS.primary,
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: SPACING.sm,
+    height: SIZES.button.lg,
+    justifyContent: 'center',
   },
   buttonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: COLORS.gray300,
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
+    ...TYPOGRAPHY.styles.button,
+    color: COLORS.textInverse,
   },
   error: {
-    color: '#F38181',
-    marginBottom: 10,
+    color: COLORS.error,
+    marginBottom: SPACING.sm,
     textAlign: 'center',
+    fontSize: TYPOGRAPHY.fontSize.sm,
   },
   version: {
-    marginTop: 40,
-    fontSize: 12,
-    color: '#999',
+    marginTop: SPACING.xxl,
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    color: COLORS.textTertiary,
     textAlign: 'center',
   },
 });
