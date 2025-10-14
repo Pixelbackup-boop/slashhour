@@ -147,24 +147,40 @@ export interface Follow {
   created_at: string;
 }
 
-export interface Redemption {
+export interface UserRedemption {
   id: string;
-  deal_id: string;
-  user_id: string;
-  business_id: string;
-  redemption_code: string;
-  qr_code_data: string;
-  validated_at?: string;
-  validated_by?: string;
-  original_price: number;
-  discounted_price: number;
-  amount_saved: number;
-  status: RedemptionStatus;
-  expires_at: string;
-  created_at: string;
+  originalPrice: number;
+  paidPrice: number;
+  savingsAmount: number;
+  dealCategory: string;
+  redeemedAt: string;
+  deal: {
+    id: string;
+    title: string;
+    description?: string;
+    category: string;
+    images: any[];
+  } | null;
+  business: {
+    id: string;
+    businessName: string;
+    category: string;
+    address: string;
+    city: string;
+    country: string;
+  } | null;
 }
 
-export type RedemptionStatus = 'pending' | 'validated' | 'expired';
+export interface UserRedemptionsResponse {
+  redemptions: UserRedemption[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasMore: boolean;
+  };
+}
 
 export interface Category {
   id: number;

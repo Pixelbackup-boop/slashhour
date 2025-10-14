@@ -178,6 +178,23 @@ export default function ProfileScreen({ navigation }: any) {
           </View>
         )}
 
+        {/* Quick Actions */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>📋 Quick Actions</Text>
+          <View style={styles.infoCard}>
+            <TouchableOpacity
+              style={styles.actionRow}
+              onPress={() => navigation.navigate('RedemptionHistory')}
+            >
+              <View style={styles.actionLeft}>
+                <Text style={styles.actionIcon}>🎫</Text>
+                <Text style={styles.actionLabel}>Redemption History</Text>
+              </View>
+              <Text style={styles.actionArrow}>›</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {/* Account Settings */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>⚙️ Account</Text>
@@ -346,6 +363,30 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#333',
+  },
+  actionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  actionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  actionIcon: {
+    fontSize: 20,
+    marginRight: 12,
+  },
+  actionLabel: {
+    fontSize: 16,
+    color: '#333',
+    fontWeight: '500',
+  },
+  actionArrow: {
+    fontSize: 24,
+    color: '#ccc',
+    fontWeight: '300',
   },
   impactCard: {
     backgroundColor: '#FFF3E0',

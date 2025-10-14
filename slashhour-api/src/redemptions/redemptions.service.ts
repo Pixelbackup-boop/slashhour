@@ -104,8 +104,33 @@ export class RedemptionsService {
       .take(limit)
       .getManyAndCount();
 
+    // Transform to camelCase response
+    const transformedRedemptions = redemptions.map(r => ({
+      id: r.id,
+      originalPrice: parseFloat(r.original_price.toString()),
+      paidPrice: parseFloat(r.paid_price.toString()),
+      savingsAmount: parseFloat(r.savings_amount.toString()),
+      dealCategory: r.deal_category,
+      redeemedAt: r.redeemed_at.toISOString(),
+      deal: r.deal ? {
+        id: r.deal.id,
+        title: r.deal.title,
+        description: r.deal.description,
+        category: r.deal.category,
+        images: r.deal.images || [],
+      } : null,
+      business: r.business ? {
+        id: r.business.id,
+        businessName: r.business.business_name,
+        category: r.business.category,
+        address: r.business.address,
+        city: r.business.city,
+        country: r.business.country,
+      } : null,
+    }));
+
     return {
-      redemptions,
+      redemptions: transformedRedemptions,
       pagination: {
         page,
         limit,
