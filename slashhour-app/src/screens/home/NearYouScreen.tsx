@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -11,91 +11,21 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import * as Location from 'expo-location';
-import { feedService } from '../../services/api/feedService';
 import { Deal } from '../../types/models';
 import DealCard from '../../components/DealCard';
+import { useNearbyDeals } from '../../hooks/useNearbyDeals';
 
 export default function NearYouScreen() {
   const navigation = useNavigation<any>();
-  const [deals, setDeals] = useState<(Deal & { distance: number })[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [radius, setRadius] = useState(5); // Default 5km radius
-
-  const requestLocationPermission = async () => {
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setError('Location permission denied. Please enable location to see nearby deals.');
-        setLoading(false);
-        return false;
-      }
-      return true;
-    } catch (err) {
-      console.error('Error requesting location permission:', err);
-      setError('Failed to request location permission');
-      setLoading(false);
-      return false;
-    }
-  };
-
-  const getCurrentLocation = async () => {
-    try {
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-      return {
-        lat: location.coords.latitude,
-        lng: location.coords.longitude,
-      };
-    } catch (err) {
-      console.error('Error getting location:', err);
-      throw new Error('Failed to get your location');
-    }
-  };
-
-  const fetchNearbyDeals = async () => {
-    try {
-      setError(null);
-
-      // Request permission if not already granted
-      const hasPermission = await requestLocationPermission();
-      if (!hasPermission) return;
-
-      // Get current location
-      const currentLocation = await getCurrentLocation();
-      setLocation(currentLocation);
-
-      // Fetch nearby deals
-      const response = await feedService.getNearYouFeed(
-        currentLocation.lat,
-        currentLocation.lng,
-        radius,
-        1,
-        20
-      );
-      setDeals(response.deals);
-    } catch (err: any) {
-      console.error('Error fetching nearby deals:', err);
-      const errorMessage = err.response?.data?.message || err.message || 'Failed to load nearby deals';
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchNearbyDeals();
-  }, [radius]);
-
-  const handleRefresh = () => {
-    setRefreshing(true);
-    fetchNearbyDeals();
-  };
+  const {
+    deals,
+    isLoading,
+    error,
+    radius,
+    isRefreshing,
+    setRadius,
+    handleRefresh,
+  } = useNearbyDeals();
 
   const handleDealPress = (deal: Deal) => {
     navigation.navigate('DealDetail', { deal });
@@ -115,7 +45,7 @@ export default function NearYouScreen() {
     );
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
@@ -138,7 +68,7 @@ export default function NearYouScreen() {
         <View style={styles.centerContainer}>
           <Text style={styles.errorText}>📍</Text>
           <Text style={styles.errorMessage}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={fetchNearbyDeals}>
+          <TouchableOpacity style={styles.retryButton} onPress={handleRefresh}>
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
         </View>
@@ -196,7 +126,7 @@ export default function NearYouScreen() {
         contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
+            refreshing={isRefreshing}
             onRefresh={handleRefresh}
             colors={['#FF6B6B']}
           />
