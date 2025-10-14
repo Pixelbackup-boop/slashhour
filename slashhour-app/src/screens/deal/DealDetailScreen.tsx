@@ -6,15 +6,16 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Deal } from '../../types/models';
 import { getCategoryImage } from '../../utils/categoryImages';
-import { redemptionService } from '../../services/api/redemptionService';
 import RedemptionModal from '../../components/RedemptionModal';
-import { trackDealViewed, trackDealRedeemed } from '../../services/analytics';
+import PriceCard from '../../components/PriceCard';
+import CountdownBox from '../../components/CountdownBox';
+import StockBar from '../../components/StockBar';
+import { useDealDetail } from '../../hooks/useDealDetail';
 
 interface DealDetailScreenProps {
   route: {
@@ -27,90 +28,24 @@ interface DealDetailScreenProps {
 
 export default function DealDetailScreen({ route, navigation }: DealDetailScreenProps) {
   const { deal } = route.params;
-  const [timeRemaining, setTimeRemaining] = React.useState('');
-  const [isRedeeming, setIsRedeeming] = React.useState(false);
-  const [showRedemptionModal, setShowRedemptionModal] = React.useState(false);
-  const [redemptionCode, setRedemptionCode] = React.useState('');
-
-  // Calculate savings and discount percentage
-  const calculateSavings = () => {
-    const original = Number(deal.original_price) || 0;
-    const discounted = Number(deal.discounted_price) || 0;
-    const savings = original - discounted;
-    const percentage = original > 0 ? (savings / original) * 100 : 0;
-    return {
-      savings: savings.toFixed(2),
-      percentage: Math.round(percentage),
-    };
-  };
-
-  const { savings, percentage } = calculateSavings();
-
-  const calculateTimeRemaining = () => {
-    const now = new Date();
-    const expires = new Date(deal.expires_at);
-    const diffMs = expires.getTime() - now.getTime();
-
-    if (diffMs <= 0) {
-      return 'Expired';
-    }
-
-    const totalHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const days = Math.floor(totalHours / 24);
-    const hours = totalHours % 24;
-
-    if (days > 0) {
-      return `${days} ${days === 1 ? 'day' : 'days'} ${hours}h`;
-    } else {
-      return `${hours}h`;
-    }
-  };
-
-  React.useEffect(() => {
-    // Track deal viewed
-    trackDealViewed(deal.id, deal.business?.id || '', deal.category);
-
-    // Update countdown immediately
-    setTimeRemaining(calculateTimeRemaining());
-
-    // Update countdown every hour
-    const interval = setInterval(() => {
-      setTimeRemaining(calculateTimeRemaining());
-    }, 3600000); // Update every hour (3600000ms = 1 hour)
-
-    return () => clearInterval(interval);
-  }, [deal.expires_at]);
+  const {
+    timeRemaining,
+    isRedeeming,
+    showRedemptionModal,
+    redemptionCode,
+    savings,
+    handleRedeem,
+    closeRedemptionModal,
+  } = useDealDetail(deal);
 
   const getDiscountText = () => {
-    if (percentage > 0) {
-      return `${percentage}% OFF`;
+    if (savings.percentage > 0) {
+      return `${savings.percentage}% OFF`;
     }
-    if (savings > '0') {
-      return `Save $${savings}`;
+    if (savings.savings > '0') {
+      return `Save $${savings.savings}`;
     }
     return 'SPECIAL DEAL';
-  };
-
-  const handleRedeem = async () => {
-    try {
-      setIsRedeeming(true);
-      const response = await redemptionService.redeemDeal(deal.id);
-      setRedemptionCode(response.redemptionCode);
-      setShowRedemptionModal(true);
-
-      // Track successful redemption
-      trackDealRedeemed(
-        deal.id,
-        deal.business?.id || '',
-        parseFloat(savings),
-        deal.category
-      );
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to redeem deal';
-      Alert.alert('Redemption Failed', errorMessage);
-    } finally {
-      setIsRedeeming(false);
-    }
   };
 
   return (
@@ -143,21 +78,12 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
           <Text style={styles.title}>{deal.title}</Text>
 
           {/* Price Section */}
-          <View style={styles.priceSection}>
-            <View style={styles.priceRow}>
-              <Text style={styles.priceLabel}>Original Price:</Text>
-              <Text style={styles.originalPrice}>${deal.original_price}</Text>
-            </View>
-            <View style={styles.priceRow}>
-              <Text style={styles.priceLabel}>Deal Price:</Text>
-              <Text style={styles.dealPrice}>${deal.discounted_price}</Text>
-            </View>
-            <View style={styles.savingsRow}>
-              <Text style={styles.savingsText}>
-                You Save: ${savings} ({percentage}% OFF)
-              </Text>
-            </View>
-          </View>
+          <PriceCard
+            originalPrice={deal.original_price}
+            dealPrice={deal.discounted_price}
+            savings={savings.savings}
+            percentage={savings.percentage}
+          />
 
           {/* Description */}
           {deal.description && (
@@ -170,35 +96,20 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
           {/* Validity */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Validity</Text>
-            <View style={styles.countdownBox}>
-              <Text style={styles.countdownIcon}>⏰</Text>
-              <View>
-                <Text style={styles.countdownLabel}>Deal ends in</Text>
-                <Text style={styles.countdownText}>{timeRemaining}</Text>
-              </View>
-            </View>
-            {deal.is_flash_deal && (
-              <View style={styles.flashBadge}>
-                <Text style={styles.flashText}>⚡ FLASH DEAL</Text>
-              </View>
-            )}
+            <CountdownBox
+              timeRemaining={timeRemaining}
+              isFlashDeal={deal.is_flash_deal}
+            />
           </View>
 
           {/* Availability */}
           {deal.quantity_available && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Availability</Text>
-              <View style={styles.stockBar}>
-                <View
-                  style={[
-                    styles.stockFill,
-                    { width: `${((deal.quantity_available - deal.quantity_redeemed) / deal.quantity_available) * 100}%` }
-                  ]}
-                />
-              </View>
-              <Text style={styles.stockText}>
-                {deal.quantity_available - deal.quantity_redeemed} of {deal.quantity_available} remaining
-              </Text>
+              <StockBar
+                quantityAvailable={deal.quantity_available}
+                quantityRedeemed={deal.quantity_redeemed}
+              />
             </View>
           )}
 
@@ -245,8 +156,8 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
         redemptionCode={redemptionCode}
         dealTitle={deal.title}
         businessName={deal.business?.business_name || ''}
-        savings={savings}
-        onClose={() => setShowRedemptionModal(false)}
+        savings={savings.savings}
+        onClose={closeRedemptionModal}
       />
     </SafeAreaView>
   );
@@ -315,43 +226,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     lineHeight: 34,
   },
-  priceSection: {
-    backgroundColor: '#f9f9f9',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 24,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  priceLabel: {
-    fontSize: 16,
-    color: '#666',
-  },
-  originalPrice: {
-    fontSize: 16,
-    color: '#999',
-    textDecorationLine: 'line-through',
-  },
-  dealPrice: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#4ECDC4',
-  },
-  savingsRow: {
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-  },
-  savingsText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#6BCB77',
-    textAlign: 'center',
-  },
   section: {
     marginBottom: 24,
   },
@@ -365,58 +239,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     lineHeight: 24,
-  },
-  countdownBox: {
-    backgroundColor: '#FFF3E0',
-    padding: 16,
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#FFD93D',
-  },
-  countdownIcon: {
-    fontSize: 24,
-    marginRight: 12,
-  },
-  countdownLabel: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 4,
-  },
-  countdownText: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#FF6B6B',
-  },
-  flashBadge: {
-    backgroundColor: '#FFD93D',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    alignSelf: 'flex-start',
-    marginTop: 8,
-  },
-  flashText: {
-    color: '#333',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  stockBar: {
-    height: 8,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 4,
-    overflow: 'hidden',
-    marginBottom: 8,
-  },
-  stockFill: {
-    height: '100%',
-    backgroundColor: '#4ECDC4',
-  },
-  stockText: {
-    fontSize: 14,
-    color: '#666',
   },
   termItem: {
     fontSize: 14,
