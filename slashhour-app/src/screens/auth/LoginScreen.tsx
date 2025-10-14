@@ -6,50 +6,18 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
-import { loginStart, loginSuccess, loginFailure } from '../../store/slices/authSlice';
-import { authService } from '../../services/api/authService';
-import { RootState } from '../../store/store';
-import { trackLogin } from '../../services/analytics';
+import { useLogin } from '../../hooks/useLogin';
 
 export default function LoginScreen() {
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [password, setPassword] = useState('');
-  const dispatch = useDispatch();
-  const { isLoading, error } = useSelector((state: RootState) => state.auth);
+  const { isLoading, error, handleLogin: login } = useLogin();
 
-  const handleLogin = async () => {
-    if (!emailOrPhone || !password) {
-      Alert.alert('Error', 'Please enter email and password');
-      return;
-    }
-
-    try {
-      dispatch(loginStart());
-      const response = await authService.login({ emailOrPhone, password });
-
-      dispatch(
-        loginSuccess({
-          user: response.user,
-          token: response.accessToken,
-          refreshToken: response.refreshToken,
-        })
-      );
-
-      // Track login event
-      const loginMethod = emailOrPhone.includes('@') ? 'email' : emailOrPhone.includes('+') ? 'phone' : 'username';
-      trackLogin(loginMethod);
-
-      Alert.alert('Success', 'Logged in successfully!');
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Login failed. Please try again.';
-      dispatch(loginFailure(errorMessage));
-      Alert.alert('Login Failed', errorMessage);
-    }
+  const handleLoginPress = () => {
+    login(emailOrPhone, password);
   };
 
   return (
@@ -87,7 +55,7 @@ export default function LoginScreen() {
 
           <TouchableOpacity
             style={[styles.button, isLoading && styles.buttonDisabled]}
-            onPress={handleLogin}
+            onPress={handleLoginPress}
             disabled={isLoading}
           >
             {isLoading ? (
