@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,43 +13,19 @@ import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../store/slices/authSlice';
 import { RootState } from '../../store/store';
 import { authService } from '../../services/api/authService';
-import apiClient from '../../services/api/ApiClient';
 import { trackScreenView } from '../../services/analytics';
-
-interface UserStats {
-  totalSavings: number;
-  monthlySavings: number;
-  totalRedemptions: number;
-  monthlyRedemptions: number;
-  categoriesUsed: number;
-  totalCategories: number;
-  followingCount: number;
-}
+import { useUserProfile } from '../../hooks/useUserProfile';
+import StatCard from '../../components/StatCard';
+import InfoRow from '../../components/InfoRow';
 
 export default function ProfileScreen({ navigation }: any) {
   const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
-  const [stats, setStats] = useState<UserStats | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { stats, isLoading, error } = useUserProfile();
 
   useEffect(() => {
     trackScreenView('ProfileScreen');
-    fetchUserStats();
   }, []);
-
-  const fetchUserStats = async () => {
-    try {
-      setIsLoading(true);
-      const data = await apiClient.get<any>('/users/profile/stats');
-      setStats(data);
-    } catch (error: any) {
-      console.error('Failed to fetch user stats:', error);
-      // Don't show alert if there are no stats yet, just show empty state
-      setStats(null);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -111,14 +87,8 @@ export default function ProfileScreen({ navigation }: any) {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>💰 Your Savings</Text>
               <View style={styles.statsGrid}>
-                <View style={styles.statCard}>
-                  <Text style={styles.statValue}>{formatCurrency(stats.totalSavings)}</Text>
-                  <Text style={styles.statLabel}>Total Saved</Text>
-                </View>
-                <View style={styles.statCard}>
-                  <Text style={styles.statValue}>{formatCurrency(stats.monthlySavings)}</Text>
-                  <Text style={styles.statLabel}>This Month</Text>
-                </View>
+                <StatCard value={formatCurrency(stats.totalSavings)} label="Total Saved" />
+                <StatCard value={formatCurrency(stats.monthlySavings)} label="This Month" />
               </View>
             </View>
 
@@ -126,14 +96,8 @@ export default function ProfileScreen({ navigation }: any) {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>🎉 Deals Redeemed</Text>
               <View style={styles.statsGrid}>
-                <View style={styles.statCard}>
-                  <Text style={styles.statValue}>{stats.totalRedemptions}</Text>
-                  <Text style={styles.statLabel}>Total Deals</Text>
-                </View>
-                <View style={styles.statCard}>
-                  <Text style={styles.statValue}>{stats.monthlyRedemptions}</Text>
-                  <Text style={styles.statLabel}>This Month</Text>
-                </View>
+                <StatCard value={stats.totalRedemptions} label="Total Deals" />
+                <StatCard value={stats.monthlyRedemptions} label="This Month" />
               </View>
             </View>
 
@@ -141,22 +105,19 @@ export default function ProfileScreen({ navigation }: any) {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>📊 Your Activity</Text>
               <View style={styles.infoCard}>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Categories Explored</Text>
-                  <Text style={styles.infoValue}>{stats.categoriesUsed} / {stats.totalCategories}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Businesses Following</Text>
-                  <Text style={styles.infoValue}>{stats.followingCount}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Average Savings</Text>
-                  <Text style={styles.infoValue}>
-                    {stats.totalRedemptions > 0
+                <InfoRow
+                  label="Categories Explored"
+                  value={`${stats.categoriesUsed} / ${stats.totalCategories}`}
+                />
+                <InfoRow label="Businesses Following" value={stats.followingCount} />
+                <InfoRow
+                  label="Average Savings"
+                  value={
+                    stats.totalRedemptions > 0
                       ? formatCurrency(stats.totalSavings / stats.totalRedemptions)
-                      : '$0.00'}
-                  </Text>
-                </View>
+                      : '$0.00'
+                  }
+                />
               </View>
             </View>
 
@@ -199,14 +160,14 @@ export default function ProfileScreen({ navigation }: any) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>⚙️ Account</Text>
           <View style={styles.infoCard}>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Member Since</Text>
-              <Text style={styles.infoValue}>
-                {user?.created_at
+            <InfoRow
+              label="Member Since"
+              value={
+                user?.created_at
                   ? new Date(user.created_at).toLocaleDateString()
-                  : 'N/A'}
-              </Text>
-            </View>
+                  : 'N/A'
+              }
+            />
           </View>
         </View>
 
@@ -316,29 +277,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
   },
-  statCard: {
-    flex: 1,
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#FF6B6B',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
-  },
   infoCard: {
     backgroundColor: '#fff',
     borderRadius: 12,
@@ -348,21 +286,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  infoLabel: {
-    fontSize: 14,
-    color: '#666',
-  },
-  infoValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
   },
   actionRow: {
     flexDirection: 'row',
