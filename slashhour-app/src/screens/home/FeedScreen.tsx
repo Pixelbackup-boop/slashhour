@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -9,46 +9,19 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { feedService } from '../../services/api/feedService';
 import { Deal } from '../../types/models';
 import DealCard from '../../components/DealCard';
+import { useFeed } from '../../hooks/useFeed';
 
 export default function FeedScreen() {
   const navigation = useNavigation<any>();
-  const [deals, setDeals] = useState<Deal[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchDeals = async () => {
-    try {
-      setError(null);
-      const response = await feedService.getYouFollowFeed(1, 20);
-      setDeals(response.deals);
-    } catch (err: any) {
-      console.error('Error fetching deals:', err);
-      const errorMessage = err.response?.data?.message || err.message || 'Failed to load deals';
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchDeals();
-  }, []);
-
-  const handleRefresh = () => {
-    setRefreshing(true);
-    fetchDeals();
-  };
+  const { deals, isLoading, error, isRefreshing, handleRefresh } = useFeed();
 
   const handleDealPress = (deal: Deal) => {
     navigation.navigate('DealDetail', { deal });
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
@@ -110,7 +83,7 @@ export default function FeedScreen() {
         contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
+            refreshing={isRefreshing}
             onRefresh={handleRefresh}
             colors={['#FF6B6B']}
           />
