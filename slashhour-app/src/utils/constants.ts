@@ -7,6 +7,11 @@ export const API_BASE_URL = __DEV__
   ? 'http://192.168.1.153:3000/api/v1'  // Use local IP for mobile testing
   : 'https://api.slashhour.com/v1';
 
+// Sentry Configuration
+export const SENTRY_DSN = __DEV__
+  ? '' // Leave empty in development to avoid noise
+  : 'https://db542917e54d740a2074a1cc87254c9d@o4510187433295872.ingest.us.sentry.io/4510187468292096';
+
 // Essential Categories
 export const CATEGORIES = [
   { key: 'restaurant', name: 'Restaurants & Food', icon: '🍕', color: '#FF6B6B' },

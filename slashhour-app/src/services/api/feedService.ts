@@ -12,6 +12,17 @@ interface FeedResponse {
   };
 }
 
+interface NearYouFeedResponse {
+  deals: (Deal & { distance: number })[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasMore: boolean;
+  };
+}
+
 export const feedService = {
   getYouFollowFeed: async (page: number = 1, limit: number = 20): Promise<FeedResponse> => {
     const response = await apiClient.get<FeedResponse>(
@@ -26,8 +37,8 @@ export const feedService = {
     radius: number = 5,
     page: number = 1,
     limit: number = 20
-  ): Promise<FeedResponse> => {
-    const response = await apiClient.get<FeedResponse>(
+  ): Promise<NearYouFeedResponse> => {
+    const response = await apiClient.get<NearYouFeedResponse>(
       `/feed/near-you?lat=${lat}&lng=${lng}&radius=${radius}&page=${page}&limit=${limit}`
     );
     return response;

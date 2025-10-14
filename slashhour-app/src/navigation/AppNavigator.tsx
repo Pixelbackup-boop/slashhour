@@ -6,8 +6,17 @@ import { RootState } from '../store/store';
 import LoginScreen from '../screens/auth/LoginScreen';
 import HomeScreen from '../screens/home/HomeScreen';
 import DealDetailScreen from '../screens/deal/DealDetailScreen';
+import ProfileScreen from '../screens/profile/ProfileScreen';
+import { Deal } from '../types/models';
 
-const Stack = createNativeStackNavigator();
+type RootStackParamList = {
+  Login: undefined;
+  Home: undefined;
+  DealDetail: { deal: Deal };
+  Profile: undefined;
+};
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function AppNavigator() {
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
@@ -21,6 +30,7 @@ export default function AppNavigator() {
           <>
             <Stack.Screen name="Home" component={HomeScreen} />
             <Stack.Screen name="DealDetail" component={DealDetailScreen} />
+            <Stack.Screen name="Profile" component={ProfileScreen} />
           </>
         )}
       </Stack.Navigator>

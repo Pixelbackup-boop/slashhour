@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { User } from '../../types/models';
+import { setUserContext, clearUserContext } from '../../config/sentry';
 
 interface AuthState {
   user: User | null;
@@ -37,6 +38,13 @@ const authSlice = createSlice({
       state.isAuthenticated = true;
       state.isLoading = false;
       state.error = null;
+
+      // Set user context in Sentry for error tracking
+      setUserContext({
+        id: action.payload.user.id,
+        email: action.payload.user.email,
+        username: action.payload.user.username,
+      });
     },
     loginFailure: (state, action: PayloadAction<string>) => {
       state.isLoading = false;
@@ -48,6 +56,9 @@ const authSlice = createSlice({
       state.refreshToken = null;
       state.isAuthenticated = false;
       state.error = null;
+
+      // Clear user context from Sentry
+      clearUserContext();
     },
     updateUser: (state, action: PayloadAction<Partial<User>>) => {
       if (state.user) {

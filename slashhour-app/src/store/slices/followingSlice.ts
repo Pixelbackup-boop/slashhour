@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Business } from '../../types/models';
+import { trackBusinessFollowed, trackBusinessUnfollowed } from '../../services/analytics';
 
 interface FollowingState {
   businesses: Business[];
@@ -31,9 +32,22 @@ const followingSlice = createSlice({
     },
     followBusiness: (state, action: PayloadAction<Business>) => {
       state.businesses.push(action.payload);
+
+      // Track business followed
+      trackBusinessFollowed(
+        action.payload.id,
+        action.payload.business_name,
+        action.payload.category || 'unknown'
+      );
     },
     unfollowBusiness: (state, action: PayloadAction<string>) => {
+      const business = state.businesses.find((b) => b.id === action.payload);
       state.businesses = state.businesses.filter((b) => b.id !== action.payload);
+
+      // Track business unfollowed
+      if (business) {
+        trackBusinessUnfollowed(business.id, business.business_name);
+      }
     },
   },
 });

@@ -2,9 +2,24 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { initSentry } from './config/sentry.config';
+import { SentryExceptionFilter } from './common/filters/sentry-exception.filter';
+import { LoggerService } from './common/services/logger.service';
+
+// Initialize Sentry error tracking before anything else
+initSentry();
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
+  });
+
+  // Use custom logger
+  const logger = new LoggerService('Bootstrap');
+  app.useLogger(logger);
+
+  // Global exception filter for Sentry
+  app.useGlobalFilters(new SentryExceptionFilter());
 
   // Global prefix for API
   app.setGlobalPrefix(process.env.API_PREFIX || 'api/v1');
@@ -44,7 +59,7 @@ async function bootstrap() {
   const port = process.env.PORT || 3000;
   await app.listen(port);
 
-  console.log(`
+  logger.log(`
   🚀 Slashhour API is running!
   📍 URL: http://localhost:${port}/${process.env.API_PREFIX || 'api/v1'}
   📚 Swagger Docs: http://localhost:${port}/api/docs

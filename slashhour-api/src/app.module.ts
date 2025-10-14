@@ -12,6 +12,7 @@ import { BusinessesModule } from './businesses/businesses.module';
 import { DealsModule } from './deals/deals.module';
 import { SearchModule } from './search/search.module';
 import { RedemptionsModule } from './redemptions/redemptions.module';
+import { LoggerService } from './common/services/logger.service';
 
 @Module({
   imports: [
@@ -46,6 +47,13 @@ import { RedemptionsModule } from './redemptions/redemptions.module';
     RedemptionsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: LoggerService,
+      useValue: new LoggerService('AppModule'),
+    },
+  ],
+  exports: [LoggerService],
 })
 export class AppModule {}

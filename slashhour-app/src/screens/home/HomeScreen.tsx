@@ -6,22 +6,14 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '../../store/slices/authSlice';
+import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
-import { authService } from '../../services/api/authService';
 import FeedScreen from './FeedScreen';
 import NearYouScreen from './NearYouScreen';
 
-export default function HomeScreen() {
-  const dispatch = useDispatch();
+export default function HomeScreen({ navigation }: any) {
   const { user } = useSelector((state: RootState) => state.auth);
   const [activeTab, setActiveTab] = useState<'following' | 'nearby'>('following');
-
-  const handleLogout = () => {
-    authService.logout();
-    dispatch(logout());
-  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -30,8 +22,11 @@ export default function HomeScreen() {
           <Text style={styles.logo}>🍕 Slashhour</Text>
           <Text style={styles.subtitle}>Welcome, {user?.name || user?.username}</Text>
         </View>
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutButtonText}>Logout</Text>
+        <TouchableOpacity
+          style={styles.profileButton}
+          onPress={() => navigation.navigate('Profile')}
+        >
+          <Text style={styles.profileIcon}>👤</Text>
         </TouchableOpacity>
       </View>
 
@@ -81,16 +76,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
   },
-  logoutButton: {
-    backgroundColor: '#F38181',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 6,
+  profileButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  logoutButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+  profileIcon: {
+    fontSize: 24,
   },
   tabContainer: {
     flexDirection: 'row',

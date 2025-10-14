@@ -5,7 +5,7 @@ export interface User {
   phone?: string;
   email?: string;
   username: string;
-  full_name?: string;
+  name?: string;
   avatar_url?: string;
   default_location?: Location;
   default_radius_km: number;

@@ -107,26 +107,27 @@ export class UsersService {
       .getMany();
 
     // Calculate total savings
-    const total_savings = redemptions.reduce(
+    const totalSavings = redemptions.reduce(
       (sum, r) => sum + parseFloat(r.savings_amount.toString()),
       0,
     );
 
-    // Calculate monthly savings (current month)
+    // Calculate monthly savings and redemptions (current month)
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const monthlyRedemptions = redemptions.filter(
+    const monthlyRedemptionsList = redemptions.filter(
       (r) => new Date(r.redeemed_at) >= startOfMonth,
     );
-    const monthly_savings = monthlyRedemptions.reduce(
+    const monthlySavings = monthlyRedemptionsList.reduce(
       (sum, r) => sum + parseFloat(r.savings_amount.toString()),
       0,
     );
 
     // Count redemptions
-    const total_redemptions = redemptions.length;
+    const totalRedemptions = redemptions.length;
+    const monthlyRedemptions = monthlyRedemptionsList.length;
 
-    // Calculate favorite categories
+    // Calculate categories used
     const categoryCount = new Map<string, number>();
     redemptions.forEach((r) => {
       categoryCount.set(
@@ -134,10 +135,21 @@ export class UsersService {
         (categoryCount.get(r.deal_category) || 0) + 1,
       );
     });
-    const favorite_categories = Array.from(categoryCount.entries())
+    const categoriesUsed = categoryCount.size;
+    const totalCategories = 8; // From constants: restaurant, grocery, fashion, shoes, electronics, home_living, beauty, health
+
+    const favoriteCategories = Array.from(categoryCount.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, 3)
       .map(([category]) => category);
+
+    // Get following count
+    const followingCount = await this.userRepository
+      .createQueryBuilder('user')
+      .leftJoin('follows', 'follow', 'follow.user_id = user.id')
+      .where('user.id = :userId', { userId })
+      .andWhere('follow.status = :status', { status: 'active' })
+      .getCount();
 
     // Calculate most saved business
     const businessSavings = new Map<string, { id: string; name: string; total: number }>();
@@ -155,44 +167,48 @@ export class UsersService {
       });
     });
 
-    let most_saved_business: {
-      business_id: string;
-      business_name: string;
-      total_saved: number;
-    } | null = null;
+    let mostSavedBusiness: {
+      businessId: string;
+      businessName: string;
+      totalSaved: number;
+    } | undefined = undefined;
     if (businessSavings.size > 0) {
-      const [business_id, data] = Array.from(businessSavings.entries()).sort(
+      const [businessId, data] = Array.from(businessSavings.entries()).sort(
         (a, b) => b[1].total - a[1].total,
       )[0];
-      most_saved_business = {
-        business_id,
-        business_name: data.name,
-        total_saved: data.total,
+      mostSavedBusiness = {
+        businessId,
+        businessName: data.name,
+        totalSaved: data.total,
       };
     }
 
     // Calculate savings vs goal
-    let savings_vs_goal: {
+    let savingsVsGoal: {
       goal: number;
       achieved: number;
       percentage: number;
-    } | null = null;
+    } | undefined = undefined;
     if (user.monthly_savings_goal) {
       const goal = parseFloat(user.monthly_savings_goal.toString());
-      savings_vs_goal = {
+      savingsVsGoal = {
         goal,
-        achieved: monthly_savings,
-        percentage: Math.round((monthly_savings / goal) * 100),
+        achieved: monthlySavings,
+        percentage: Math.round((monthlySavings / goal) * 100),
       };
     }
 
     return {
-      total_savings,
-      total_redemptions,
-      monthly_savings,
-      favorite_categories,
-      most_saved_business,
-      savings_vs_goal,
+      totalSavings,
+      totalRedemptions,
+      monthlySavings,
+      monthlyRedemptions,
+      categoriesUsed,
+      totalCategories,
+      followingCount,
+      favoriteCategories,
+      mostSavedBusiness,
+      savingsVsGoal,
     };
   }
 }

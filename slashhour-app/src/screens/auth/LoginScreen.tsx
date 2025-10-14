@@ -14,6 +14,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { loginStart, loginSuccess, loginFailure } from '../../store/slices/authSlice';
 import { authService } from '../../services/api/authService';
 import { RootState } from '../../store/store';
+import { trackLogin } from '../../services/analytics';
 
 export default function LoginScreen() {
   const [emailOrPhone, setEmailOrPhone] = useState('');
@@ -38,6 +39,10 @@ export default function LoginScreen() {
           refreshToken: response.refreshToken,
         })
       );
+
+      // Track login event
+      const loginMethod = emailOrPhone.includes('@') ? 'email' : emailOrPhone.includes('+') ? 'phone' : 'username';
+      trackLogin(loginMethod);
 
       Alert.alert('Success', 'Logged in successfully!');
     } catch (err: any) {

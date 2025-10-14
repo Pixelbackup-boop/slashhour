@@ -14,6 +14,7 @@ import { Deal } from '../../types/models';
 import { getCategoryImage } from '../../utils/categoryImages';
 import { redemptionService } from '../../services/api/redemptionService';
 import RedemptionModal from '../../components/RedemptionModal';
+import { trackDealViewed, trackDealRedeemed } from '../../services/analytics';
 
 interface DealDetailScreenProps {
   route: {
@@ -66,6 +67,9 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
   };
 
   React.useEffect(() => {
+    // Track deal viewed
+    trackDealViewed(deal.id, deal.business?.id || '', deal.category);
+
     // Update countdown immediately
     setTimeRemaining(calculateTimeRemaining());
 
@@ -93,6 +97,14 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
       const response = await redemptionService.redeemDeal(deal.id);
       setRedemptionCode(response.redemptionCode);
       setShowRedemptionModal(true);
+
+      // Track successful redemption
+      trackDealRedeemed(
+        deal.id,
+        deal.business?.id || '',
+        parseFloat(savings),
+        deal.category
+      );
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message || 'Failed to redeem deal';
       Alert.alert('Redemption Failed', errorMessage);
