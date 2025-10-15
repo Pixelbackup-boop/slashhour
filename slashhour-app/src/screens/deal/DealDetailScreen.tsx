@@ -40,6 +40,16 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
     closeRedemptionModal,
   } = useDealDetail(deal);
 
+  // Debug logging for images
+  React.useEffect(() => {
+    console.log('🔍 DealDetailScreen - Deal images:', {
+      hasImages: !!deal.images,
+      imageCount: deal.images?.length || 0,
+      images: deal.images,
+      category: deal.category
+    });
+  }, [deal]);
+
   const getDiscountText = () => {
     if (savings.percentage > 0) {
       return `${savings.percentage}% OFF`;
@@ -60,7 +70,11 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <Image
-          source={getCategoryImage(deal.category)}
+          source={
+            deal.images && deal.images.length > 0
+              ? { uri: deal.images[0].url }
+              : getCategoryImage(deal.category)
+          }
           style={styles.bannerImage}
           resizeMode="cover"
         />
@@ -68,10 +82,21 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
           {/* Business Info */}
           <View style={styles.businessSection}>
             <View style={styles.businessHeader}>
-              <View style={styles.businessInfo}>
+              <TouchableOpacity
+                style={styles.businessInfo}
+                onPress={() => {
+                  if (deal.business?.id) {
+                    navigation.navigate('BusinessProfile', {
+                      businessId: deal.business.id,
+                      businessName: deal.business.business_name,
+                    });
+                  }
+                }}
+                activeOpacity={0.7}
+              >
                 <Text style={styles.businessName}>{deal.business?.business_name}</Text>
                 <Text style={styles.category}>{deal.category}</Text>
-              </View>
+              </TouchableOpacity>
               {deal.business?.id && (
                 <FollowButton
                   businessId={deal.business.id}

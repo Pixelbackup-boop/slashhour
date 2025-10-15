@@ -8,28 +8,36 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../store/store';
 import { COLORS, SHADOWS, SPACING } from '../theme';
 import LoginScreen from '../screens/auth/LoginScreen';
+import SignUpScreen from '../screens/auth/SignUpScreen';
 import HomeScreen from '../screens/home/HomeScreen';
 import SearchScreen from '../screens/search/SearchScreen';
-import PostScreen from '../screens/post/PostScreen';
 import InboxScreen from '../screens/inbox/InboxScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 import DealDetailScreen from '../screens/deal/DealDetailScreen';
 import RedemptionHistoryScreen from '../screens/redemption/RedemptionHistoryScreen';
 import FollowingListScreen from '../screens/following/FollowingListScreen';
-import { Deal } from '../types/models';
+import BusinessProfileScreen from '../screens/business/BusinessProfileScreen';
+import EditBusinessProfileScreen from '../screens/business/EditBusinessProfileScreen';
+import RegisterBusinessScreen from '../screens/business/RegisterBusinessScreen';
+import CreateDealScreen from '../screens/post/CreateDealScreen';
+import { Deal, Business } from '../types/models';
 
 type RootStackParamList = {
   Login: undefined;
+  SignUp: undefined;
   MainTabs: undefined;
   DealDetail: { deal: Deal };
   RedemptionHistory: undefined;
   FollowingList: undefined;
+  BusinessProfile: { businessId: string; businessName?: string };
+  EditBusinessProfile: { business: Business };
+  RegisterBusiness: undefined;
+  CreateDeal: { businessId: string; businessName: string };
 };
 
 type TabParamList = {
   Home: undefined;
   Search: undefined;
-  Post: undefined;
   Inbox: undefined;
   Profile: undefined;
 };
@@ -95,16 +103,6 @@ function MainTabNavigator() {
         }}
       />
       <Tab.Screen
-        name="Post"
-        component={PostScreen}
-        options={{
-          tabBarLabel: 'Post',
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon icon="➕" focused={focused} isPrimary />
-          ),
-        }}
-      />
-      <Tab.Screen
         name="Inbox"
         component={InboxScreen}
         options={{
@@ -139,16 +137,7 @@ interface TabIconProps {
   isPrimary?: boolean;
 }
 
-function TabIcon({ icon, focused, isPrimary }: TabIconProps) {
-  if (isPrimary) {
-    // Center "Post" tab with special styling
-    return (
-      <View style={styles.primaryTabIcon}>
-        <Text style={styles.primaryTabIconText}>{icon}</Text>
-      </View>
-    );
-  }
-
+function TabIcon({ icon, focused }: TabIconProps) {
   return (
     <Text style={[styles.tabIcon, { opacity: focused ? 1 : 0.6 }]}>
       {icon}
@@ -157,24 +146,6 @@ function TabIcon({ icon, focused, isPrimary }: TabIconProps) {
 }
 
 const styles = StyleSheet.create({
-  primaryTabIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: COLORS.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: -28,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  primaryTabIconText: {
-    fontSize: 28,
-    color: COLORS.white,
-  },
   tabIcon: {
     fontSize: 24,
   },
@@ -187,7 +158,10 @@ export default function AppNavigator() {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {!isAuthenticated ? (
-          <Stack.Screen name="Login" component={LoginScreen} />
+          <>
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="SignUp" component={SignUpScreen} />
+          </>
         ) : (
           <>
             <Stack.Screen name="MainTabs" component={MainTabNavigator} />
@@ -206,6 +180,34 @@ export default function AppNavigator() {
             <Stack.Screen
               name="FollowingList"
               component={FollowingListScreen}
+            />
+            <Stack.Screen
+              name="BusinessProfile"
+              component={BusinessProfileScreen}
+            />
+            <Stack.Screen
+              name="EditBusinessProfile"
+              component={EditBusinessProfileScreen}
+              options={{
+                presentation: 'modal',
+                animation: 'slide_from_bottom',
+              }}
+            />
+            <Stack.Screen
+              name="RegisterBusiness"
+              component={RegisterBusinessScreen}
+              options={{
+                presentation: 'modal',
+                animation: 'slide_from_bottom',
+              }}
+            />
+            <Stack.Screen
+              name="CreateDeal"
+              component={CreateDealScreen}
+              options={{
+                animation: 'fade',
+                animationDuration: 200,
+              }}
             />
           </>
         )}

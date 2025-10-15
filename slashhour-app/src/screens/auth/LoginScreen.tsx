@@ -12,7 +12,7 @@ import {
 import { useLogin } from '../../hooks/useLogin';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SIZES } from '../../theme';
 
-export default function LoginScreen() {
+export default function LoginScreen({ navigation }: any) {
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -20,6 +20,10 @@ export default function LoginScreen() {
 
   const handleLoginPress = () => {
     login(emailOrPhone, password);
+  };
+
+  const handleSignUpPress = () => {
+    navigation.navigate('SignUp');
   };
 
   return (
@@ -78,6 +82,16 @@ export default function LoginScreen() {
             ) : (
               <Text style={styles.buttonText}>Login</Text>
             )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.signUpLink}
+            onPress={handleSignUpPress}
+            disabled={isLoading}
+          >
+            <Text style={styles.signUpLinkText}>
+              Don't have an account? <Text style={styles.signUpLinkBold}>Sign Up</Text>
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -171,6 +185,18 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
     textAlign: 'center',
     fontSize: TYPOGRAPHY.fontSize.sm,
+  },
+  signUpLink: {
+    marginTop: SPACING.lg,
+    alignItems: 'center',
+  },
+  signUpLinkText: {
+    fontSize: TYPOGRAPHY.fontSize.md,
+    color: COLORS.textSecondary,
+  },
+  signUpLinkBold: {
+    color: COLORS.primary,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
   },
   version: {
     marginTop: SPACING.xxl,

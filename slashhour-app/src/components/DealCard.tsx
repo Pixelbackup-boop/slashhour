@@ -7,9 +7,10 @@ import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme';
 interface DealCardProps {
   deal: Deal;
   onPress?: () => void;
+  onBusinessPress?: () => void;
 }
 
-export default function DealCard({ deal, onPress }: DealCardProps) {
+export default function DealCard({ deal, onPress, onBusinessPress }: DealCardProps) {
   const [timeRemaining, setTimeRemaining] = useState('');
 
   const calculateTimeRemaining = () => {
@@ -71,12 +72,22 @@ export default function DealCard({ deal, onPress }: DealCardProps) {
       activeOpacity={0.7}
     >
       <Image
-        source={getCategoryImage(deal.category)}
+        source={
+          deal.images && deal.images.length > 0
+            ? { uri: deal.images[0].url }
+            : getCategoryImage(deal.category)
+        }
         style={styles.categoryImage}
         resizeMode="cover"
       />
       <View style={styles.header}>
-        <Text style={styles.businessName}>{deal.business?.business_name}</Text>
+        <TouchableOpacity
+          onPress={() => onBusinessPress?.()}
+          activeOpacity={0.7}
+          hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
+        >
+          <Text style={styles.businessName}>{deal.business?.business_name}</Text>
+        </TouchableOpacity>
         <View style={styles.discountBadge}>
           <Text style={styles.discountText}>{getDiscountText()}</Text>
         </View>

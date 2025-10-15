@@ -22,6 +22,15 @@ export default function FeedScreen() {
     navigation.navigate('DealDetail', { deal });
   };
 
+  const handleBusinessPress = (deal: Deal) => {
+    if (deal.business?.id) {
+      navigation.navigate('BusinessProfile', {
+        businessId: deal.business.id,
+        businessName: deal.business.business_name,
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -79,7 +88,11 @@ export default function FeedScreen() {
         data={deals}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <DealCard deal={item} onPress={() => handleDealPress(item)} />
+          <DealCard
+            deal={item}
+            onPress={() => handleDealPress(item)}
+            onBusinessPress={() => handleBusinessPress(item)}
+          />
         )}
         contentContainerStyle={styles.listContent}
         refreshControl={

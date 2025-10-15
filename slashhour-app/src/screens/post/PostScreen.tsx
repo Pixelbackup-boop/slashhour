@@ -1,38 +1,64 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../store/store';
+import { useFocusEffect } from '@react-navigation/native';
 import { trackScreenView } from '../../services/analytics';
-import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, LAYOUT } from '../../theme';
+import { useMyBusinesses } from '../../hooks/useMyBusinesses';
+import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../../theme';
 
 export default function PostScreen({ navigation }: any) {
-  const { user } = useSelector((state: RootState) => state.auth);
-  const [userType, setUserType] = useState<'consumer' | 'business' | null>(null);
+  const { businesses, isLoading: businessesLoading } = useMyBusinesses();
+  const shouldNavigateRef = useRef(true);
+  const isNavigatingRef = useRef(false);
 
   useEffect(() => {
     trackScreenView('PostScreen');
+  }, []);
 
-    // Check user type
-    // @ts-ignore - user_type might not be in type definition yet
-    setUserType(user?.user_type || user?.userType || 'consumer');
-  }, [user]);
+  // Listen for tab press to reset navigation flag
+  useEffect(() => {
+    const unsubscribe = navigation.getParent()?.addListener('tabPress', (e: any) => {
+      // Only reset if user is pressing the Post tab
+      const targetTab = e.target?.split('-')[0];
+      if (targetTab === 'Post') {
+        shouldNavigateRef.current = true;
+        isNavigatingRef.current = false;
+      }
+    });
+    return unsubscribe;
+  }, [navigation]);
 
-  const handleCreateDeal = () => {
-    // TODO: Navigate to create deal form
-    Alert.alert(
-      'Create Deal',
-      'Deal creation form will be implemented in the next phase',
-      [{ text: 'OK' }]
-    );
-  };
+  // Auto-navigate to CreateDealScreen when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      // Reset navigation flag when screen comes into focus
+      // This ensures auto-navigation works every time user comes to Post tab
+      shouldNavigateRef.current = true;
+
+      // Only navigate if flag is true and not already navigating
+      if (!businessesLoading && businesses.length > 0 && shouldNavigateRef.current && !isNavigatingRef.current) {
+        shouldNavigateRef.current = false;
+        isNavigatingRef.current = true;
+        const business = businesses[0];
+
+        // Use setTimeout to ensure navigation happens after screen is fully mounted
+        setTimeout(() => {
+          navigation.navigate('CreateDeal', {
+            businessId: business.id,
+            businessName: business.business_name,
+          });
+          isNavigatingRef.current = false;
+        }, 100);
+      }
+    }, [businesses, businessesLoading, navigation])
+  );
 
   const handleBecomeBusiness = () => {
     Alert.alert(
@@ -51,54 +77,25 @@ export default function PostScreen({ navigation }: any) {
     );
   };
 
-  // Business owner view
-  if (userType === 'business') {
+  // Show loading state while fetching businesses
+  if (businessesLoading) {
     return (
       <SafeAreaView style={styles.container}>
-        <ScrollView showsVerticalScrollIndicator={false}>
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>Create Deal</Text>
-            <Text style={styles.headerSubtitle}>Share great deals with your customers</Text>
-          </View>
+        <View style={styles.emptyState}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text style={styles.emptyStateText}>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
-          {/* Quick Stats */}
-          <View style={styles.statsContainer}>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>0</Text>
-              <Text style={styles.statLabel}>Active Deals</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>0</Text>
-              <Text style={styles.statLabel}>Total Redemptions</Text>
-            </View>
-          </View>
-
-          {/* Create Deal Button */}
-          <TouchableOpacity style={styles.createButton} onPress={handleCreateDeal}>
-            <Text style={styles.createButtonIcon}>+</Text>
-            <Text style={styles.createButtonText}>Create New Deal</Text>
-          </TouchableOpacity>
-
-          {/* Deal Templates */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Deal Templates</Text>
-            <View style={styles.templatesContainer}>
-              <TouchableOpacity style={styles.templateCard} onPress={handleCreateDeal}>
-                <Text style={styles.templateIcon}>⚡</Text>
-                <Text style={styles.templateName}>Flash Deal</Text>
-                <Text style={styles.templateDesc}>Limited time offer</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.templateCard} onPress={handleCreateDeal}>
-                <Text style={styles.templateIcon}>🎉</Text>
-                <Text style={styles.templateName}>Discount</Text>
-                <Text style={styles.templateDesc}>Percentage off</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <View style={styles.bottomPadding} />
-        </ScrollView>
+  // If user has businesses, show nothing while useFocusEffect handles auto-navigation
+  if (businesses.length > 0) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.emptyState}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+        </View>
       </SafeAreaView>
     );
   }
@@ -146,98 +143,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.backgroundSecondary,
-  },
-  header: {
-    padding: SPACING.lg,
-    paddingBottom: SPACING.md,
-    backgroundColor: COLORS.white,
-  },
-  headerTitle: {
-    ...TYPOGRAPHY.styles.displayMedium,
-    color: COLORS.textPrimary,
-    marginBottom: SPACING.xs,
-  },
-  headerSubtitle: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    color: COLORS.textSecondary,
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    padding: SPACING.md,
-    gap: SPACING.md,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: COLORS.white,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.md,
-    alignItems: 'center',
-    ...SHADOWS.md,
-  },
-  statValue: {
-    fontSize: 32,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
-    color: COLORS.primary,
-    marginBottom: SPACING.xs,
-  },
-  statLabel: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    color: COLORS.textSecondary,
-  },
-  createButton: {
-    backgroundColor: COLORS.primary,
-    margin: SPACING.md,
-    marginTop: SPACING.sm,
-    padding: SPACING.lg,
-    borderRadius: RADIUS.xl,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...SHADOWS.lg,
-  },
-  createButtonIcon: {
-    fontSize: 32,
-    color: COLORS.white,
-    marginRight: SPACING.md,
-    fontWeight: '300',
-  },
-  createButtonText: {
-    ...TYPOGRAPHY.styles.button,
-    color: COLORS.white,
-  },
-  section: {
-    padding: SPACING.md,
-  },
-  sectionTitle: {
-    ...TYPOGRAPHY.styles.h3,
-    color: COLORS.textPrimary,
-    marginBottom: SPACING.md,
-  },
-  templatesContainer: {
-    flexDirection: 'row',
-    gap: SPACING.md,
-  },
-  templateCard: {
-    flex: 1,
-    backgroundColor: COLORS.white,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.md,
-    alignItems: 'center',
-    ...SHADOWS.md,
-  },
-  templateIcon: {
-    fontSize: 40,
-    marginBottom: SPACING.sm,
-  },
-  templateName: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    color: COLORS.textPrimary,
-    marginBottom: SPACING.xs,
-  },
-  templateDesc: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    color: COLORS.textSecondary,
   },
   emptyState: {
     flex: 1,
@@ -301,8 +206,5 @@ const styles = StyleSheet.create({
   benefitText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     color: COLORS.textSecondary,
-  },
-  bottomPadding: {
-    height: LAYOUT.tabBarHeight + SPACING.xl,
   },
 });
