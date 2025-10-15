@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import * as Location from 'expo-location';
 import { feedService } from '../services/api/feedService';
 import { logError } from '../config/sentry';
 import { trackScreenView } from '../services/analytics';
 import { Deal } from '../types/models';
+import LocationService from '../services/location/LocationService';
+import { LocationErrorCode, LocationErrorMessage, isLocationUserAction } from '../services/location/locationConstants';
 
 interface UseNearbyDealsReturn {
   deals: (Deal & { distance: number })[];
@@ -23,37 +24,37 @@ export const useNearbyDeals = (): UseNearbyDealsReturn => {
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [radius, setRadius] = useState(5); // Default 5km radius
 
-  const requestLocationPermission = useCallback(async () => {
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setError('Location permission denied. Please enable location to see nearby deals.');
-        setIsLoading(false);
-        return false;
-      }
-      return true;
-    } catch (err: any) {
-      console.error('Error requesting location permission:', err);
-      setError('Failed to request location permission');
-      setIsLoading(false);
-      logError(err, { context: 'useNearbyDeals - requestLocationPermission' });
-      return false;
-    }
-  }, []);
-
   const getCurrentLocation = useCallback(async () => {
     try {
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
+      // LocationService now handles showing native dialogs for:
+      // 1. Enabling location services (if disabled)
+      // 2. Requesting permissions (if not granted)
+      const location = await LocationService.getCurrentLocation();
       return {
-        lat: location.coords.latitude,
-        lng: location.coords.longitude,
+        lat: location.latitude,
+        lng: location.longitude,
       };
     } catch (err: any) {
-      console.error('Error getting location:', err);
-      logError(err, { context: 'useNearbyDeals - getCurrentLocation' });
-      throw new Error('Failed to get your location');
+      // Check if this is an expected user action vs actual error
+      if (isLocationUserAction(err)) {
+        // This is normal user behavior - just log at info level
+        console.log('ℹ️ User declined location access or services unavailable:', err.message);
+      } else {
+        // This is an unexpected error - log as error
+        console.error('❌ Unexpected error getting location:', err);
+        logError(err, { context: 'useNearbyDeals - getCurrentLocation' });
+      }
+
+      // Provide friendly error messages when user declines native dialogs
+      if (err.message === LocationErrorCode.SERVICES_DISABLED) {
+        throw new Error(LocationErrorMessage.SERVICES_DISABLED);
+      } else if (err.message === LocationErrorCode.PERMISSION_DENIED) {
+        throw new Error(LocationErrorMessage.PERMISSION_DENIED);
+      } else if (err.message === LocationErrorCode.TIMEOUT) {
+        throw new Error(LocationErrorMessage.TIMEOUT);
+      } else {
+        throw new Error(LocationErrorMessage.GENERIC_ERROR);
+      }
     }
   }, []);
 
@@ -66,11 +67,7 @@ export const useNearbyDeals = (): UseNearbyDealsReturn => {
       }
       setError(null);
 
-      // Request permission if not already granted
-      const hasPermission = await requestLocationPermission();
-      if (!hasPermission) return;
-
-      // Get current location
+      // Get current location (LocationService handles native dialogs internally)
       const currentLocation = await getCurrentLocation();
       setLocation(currentLocation);
 
@@ -84,15 +81,24 @@ export const useNearbyDeals = (): UseNearbyDealsReturn => {
       );
       setDeals(response.deals);
     } catch (err: any) {
-      console.error('Error fetching nearby deals:', err);
       const errorMessage = err.response?.data?.message || err.message || 'Failed to load nearby deals';
+
+      // Check if this is a location-related user action (not a real error)
+      if (isLocationUserAction(err)) {
+        // Expected user behavior - log at info level only
+        console.log('ℹ️ Location unavailable:', errorMessage);
+      } else {
+        // Actual error (API failure, network issue, etc.) - log as error
+        console.error('❌ Error fetching nearby deals:', err);
+        logError(err, { context: 'useNearbyDeals - fetchNearbyDeals', radius });
+      }
+
       setError(errorMessage);
-      logError(err, { context: 'useNearbyDeals - fetchNearbyDeals', radius });
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [radius, requestLocationPermission, getCurrentLocation]);
+  }, [radius, getCurrentLocation]);
 
   const handleRefresh = useCallback(() => {
     fetchNearbyDeals(true);

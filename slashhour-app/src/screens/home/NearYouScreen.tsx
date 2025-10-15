@@ -8,6 +8,8 @@ import {
   RefreshControl,
   TouchableOpacity,
   Alert,
+  Linking,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -27,6 +29,9 @@ export default function NearYouScreen() {
     setRadius,
     handleRefresh,
   } = useNearbyDeals();
+
+  // Note: Location permission/services are now handled by native dialogs in LocationService
+  // This screen only shows errors if user declines those native dialogs
 
   const handleDealPress = (deal: Deal) => {
     navigation.navigate('DealDetail', { deal });
@@ -61,6 +66,13 @@ export default function NearYouScreen() {
   }
 
   if (error) {
+    // Check if it's a location-related error to show "Go to Settings" button
+    const isLocationError =
+      error.includes('location') ||
+      error.includes('Location') ||
+      error.includes('permission') ||
+      error.includes('Permission');
+
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
@@ -69,9 +81,25 @@ export default function NearYouScreen() {
         <View style={styles.centerContainer}>
           <Text style={styles.errorText}>📍</Text>
           <Text style={styles.errorMessage}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={handleRefresh}>
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
+          <View style={styles.errorButtonsContainer}>
+            {isLocationError && (
+              <TouchableOpacity
+                style={[styles.retryButton, styles.settingsButton]}
+                onPress={() => {
+                  if (Platform.OS === 'ios') {
+                    Linking.openURL('app-settings:');
+                  } else {
+                    Linking.openSettings();
+                  }
+                }}
+              >
+                <Text style={styles.retryButtonText}>Open Settings</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity style={styles.retryButton} onPress={handleRefresh}>
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </SafeAreaView>
     );
@@ -218,11 +246,19 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: SPACING.md,
   },
+  errorButtonsContainer: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    alignItems: 'center',
+  },
   retryButton: {
     backgroundColor: COLORS.primary,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
     borderRadius: RADIUS.md,
+  },
+  settingsButton: {
+    backgroundColor: COLORS.secondary,
   },
   retryButtonText: {
     color: COLORS.white,
