@@ -61,6 +61,10 @@ class ApiClient {
     this.token = token;
   }
 
+  getToken(): string | null {
+    return this.token;
+  }
+
   clearToken() {
     this.token = null;
   }
