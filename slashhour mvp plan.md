@@ -434,10 +434,11 @@ DELETE /businesses/{id}/follow    // Unfollow
 PATCH  /businesses/{id}/follow    // Update notification preferences
 
 // Business Management
-POST   /businesses           // Create business account
+POST   /businesses           // Create business account (with GPS location)
 GET    /businesses/{id}      // Get business profile
 PATCH  /businesses/{id}      // Update business
 GET    /businesses/{id}/analytics // Get analytics dashboard
+POST   /businesses/location/reverse-geocode // Convert GPS to address
 
 // Deal Management
 POST   /deals               // Post new deal
@@ -615,8 +616,10 @@ slashhour-app/
 │   │   │   ├── DealService.ts
 │   │   │   └── BusinessService.ts
 │   │   ├── location/
-│   │   │   ├── LocationService.ts
-│   │   │   └── GeofenceService.ts
+│   │   │   ├── LocationService.ts       // GPS location capture
+│   │   │   ├── ReverseGeocodeService.ts // GPS to address conversion
+│   │   │   ├── GeofenceService.ts
+│   │   │   └── DistanceCalculator.ts    // Haversine formula for distances
 │   │   ├── notifications/
 │   │   │   ├── PushNotificationService.ts
 │   │   │   └── LocalNotificationService.ts
@@ -1229,11 +1232,21 @@ Phase 1: Foundation (Weeks 1-4)
 - ✅ Basic API endpoints
 - ✅ Follow system implementation
 - ✅ Deal posting for businesses
+- ✅ **Precise GPS location capture for business registration**
+  * Location permission handling (iOS/Android)
+  * GPS coordinates capture via Expo Location API
+  * Reverse geocoding integration (Google Maps Geocoding API)
+  * Auto-fill address fields from GPS coordinates
+  * Store precise lat/lng for accurate distance calculations
 
 Phase 2: Core Features (Weeks 5-8)
 
 - ✅ "You Follow" feed
-- ✅ "Near You" feed with radius
+- ✅ **"Near You" feed with precise location-based radius**
+  * Uses stored GPS coordinates from business registration
+  * Accurate distance calculations using Haversine formula
+  * Real-time filtering based on user's current location
+  * Sort by distance using precise coordinates
 - ✅ Categories (8 essential)
 - ✅ QR code redemption
 - ✅ Push notifications

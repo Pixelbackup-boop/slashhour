@@ -24,13 +24,44 @@ So that I can reach my customers when I have excess inventory
 
 Acceptance Criteria:
 - Choose business type: Restaurant/Grocery/Fashion/Electronics/Home/Beauty/Health
-- Auto-detect business location via GPS
+- **Precise GPS location capture:**
+  * "Use My Current Location" button during registration
+  * Request location permission with clear explanation
+  * Capture precise GPS coordinates (latitude, longitude)
+  * Auto-fill address fields using reverse geocoding
+  * Show detected address for shop owner verification
+  * Allow manual adjustment if detected address is incorrect
+  * Store exact coordinates for accurate "Near You" matching
 - Verify ownership (phone/email verification)
-- Minimal fields: Name, Category, Address, Phone
+- Minimal fields: Name, Category, Location (GPS + Address), Phone
 - Post first deal within 2 minutes of signup
 - Free tier clearly marked (no credit card required)
 
-US-1.3: Location Permission with Value Proposition
+US-1.3: Precise Business Location Capture
+
+As a business owner registering my shop
+I want my exact location automatically detected
+So that my deals show up accurately for nearby customers
+
+Acceptance Criteria:
+- "Use My Current Location" button prominently displayed
+- Request location permission with explanation: "We need your shop's exact location to show your deals to nearby customers"
+- Capture high-accuracy GPS coordinates (latitude/longitude)
+- Display loading state while getting location
+- Reverse geocode GPS to human-readable address
+- Auto-fill all address fields:
+  * Street address
+  * City
+  * State/Province
+  * Country (2-letter code)
+  * Postal/ZIP code
+- Show detected address for verification
+- Allow manual editing if address needs correction
+- Fallback to manual entry if GPS fails
+- Store both coordinates and formatted address
+- Validation: Ensure coordinates are within reasonable bounds
+
+US-1.4: Location Permission with Value Proposition
 
 As a user concerned about privacy
 I want to understand why location is needed
@@ -78,6 +109,10 @@ So that I can save money on groceries, meals, and necessities nearby
 Acceptance Criteria:
 NEAR YOU Tab Requirements:
 - Radius selector: [2km] [3km] [5km] [10km]
+- **Accurate distance calculations using GPS coordinates:**
+  * Uses precise shop location from GPS registration
+  * Real-time distance calculation from user's current location
+  * Ensures accurate "Near You" results based on actual distances
 - Shows all deals from essential shops in radius
 - Each deal displays:
   * Distance (e.g., "0.8 km away")
@@ -220,7 +255,8 @@ Quick Post Flow:
 4. Set discount: [20%] [30%] [40%] [50%] or custom
 5. Set duration: [2 hrs] [4 hrs] [Today] [2 days]
 6. Auto-calculate savings
-7. Post immediately
+7. **Deal automatically inherits shop's precise GPS location**
+8. Post immediately
 
 US-5.2: Inventory-Based Deal Creation
 
