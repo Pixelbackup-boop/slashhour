@@ -61,6 +61,93 @@ export class DealsService {
     };
   }
 
+  /**
+   * NEW 2025 API: Create deal with multipart/form-data (native-like upload)
+   * Handles file uploads directly - much faster than base64 conversion on client
+   */
+  async createWithMultipart(
+    userId: string,
+    businessId: string,
+    body: any,
+    files: Express.Multer.File[],
+  ) {
+    // Verify business exists and user is owner
+    const business = await this.businessRepository.findOne({
+      where: { id: businessId },
+    });
+
+    if (!business) {
+      throw new NotFoundException('Business not found');
+    }
+
+    if (business.owner_id !== userId) {
+      throw new ForbiddenException(
+        'You do not have permission to create deals for this business',
+      );
+    }
+
+    // Parse FormData fields
+    const createDealDto: CreateDealDto = {
+      title: body.title,
+      description: body.description || undefined,
+      original_price: parseFloat(body.original_price),
+      discounted_price: parseFloat(body.discounted_price),
+      category: body.category,
+      tags: body.tags ? JSON.parse(body.tags) : undefined,
+      starts_at: new Date(body.starts_at),
+      expires_at: new Date(body.expires_at),
+      is_flash_deal: body.is_flash_deal === 'true',
+      visibility_radius_km: body.visibility_radius_km
+        ? parseFloat(body.visibility_radius_km)
+        : undefined,
+      quantity_available: body.quantity_available
+        ? parseInt(body.quantity_available, 10)
+        : undefined,
+      max_per_user: body.max_per_user
+        ? parseInt(body.max_per_user, 10)
+        : undefined,
+      terms_conditions: body.terms_conditions
+        ? JSON.parse(body.terms_conditions)
+        : undefined,
+      valid_days: body.valid_days || undefined,
+    };
+
+    // Convert uploaded files to base64 data URLs (server-side conversion is faster)
+    if (files && files.length > 0) {
+      const images = files.map((file, index) => ({
+        url: `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
+        order: index,
+      }));
+      createDealDto.images = images;
+    }
+
+    // Validate dates
+    if (createDealDto.starts_at >= createDealDto.expires_at) {
+      throw new BadRequestException(
+        'Start date must be before expiration date',
+      );
+    }
+
+    // Validate pricing
+    if (createDealDto.discounted_price >= createDealDto.original_price) {
+      throw new BadRequestException(
+        'Discounted price must be less than original price',
+      );
+    }
+
+    const deal = this.dealRepository.create({
+      ...createDealDto,
+      business_id: businessId,
+    });
+
+    await this.dealRepository.save(deal);
+
+    return {
+      message: 'Deal created successfully',
+      deal,
+    };
+  }
+
   async findAll(page: number = 1, limit: number = 20) {
     const skip = (page - 1) * limit;
 

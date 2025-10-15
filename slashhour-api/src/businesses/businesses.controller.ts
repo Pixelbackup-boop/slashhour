@@ -54,6 +54,16 @@ export class BusinessesController {
     return this.businessesService.findBySlug(slug);
   }
 
+  @Get(':id/deals')
+  async getBusinessDeals(@Param('id') id: string) {
+    return this.businessesService.getBusinessDeals(id);
+  }
+
+  @Get(':id/stats')
+  async getBusinessStats(@Param('id') id: string) {
+    return this.businessesService.getBusinessStats(id);
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.businessesService.findOne(id);

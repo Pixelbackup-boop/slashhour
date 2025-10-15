@@ -2,6 +2,8 @@ import { Injectable, NotFoundException, ConflictException, ForbiddenException } 
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Business } from './entities/business.entity';
+import { Deal, DealStatus } from '../deals/entities/deal.entity';
+import { UserRedemption } from '../users/entities/user-redemption.entity';
 import { CreateBusinessDto } from './dto/create-business.dto';
 import { UpdateBusinessDto } from './dto/update-business.dto';
 
@@ -10,6 +12,10 @@ export class BusinessesService {
   constructor(
     @InjectRepository(Business)
     private businessRepository: Repository<Business>,
+    @InjectRepository(Deal)
+    private dealRepository: Repository<Deal>,
+    @InjectRepository(UserRedemption)
+    private redemptionRepository: Repository<UserRedemption>,
   ) {}
 
   async create(userId: string, createBusinessDto: CreateBusinessDto) {
@@ -184,6 +190,67 @@ export class BusinessesService {
     return {
       total: businesses.length,
       businesses,
+    };
+  }
+
+  async getBusinessDeals(businessId: string) {
+    // Verify business exists
+    const business = await this.businessRepository.findOne({
+      where: { id: businessId },
+    });
+
+    if (!business) {
+      throw new NotFoundException('Business not found');
+    }
+
+    // Get all active deals for this business
+    const deals = await this.dealRepository
+      .createQueryBuilder('deal')
+      .where('deal.business_id = :businessId', { businessId })
+      .andWhere('deal.status = :status', { status: DealStatus.ACTIVE })
+      .andWhere('deal.starts_at <= :now', { now: new Date() })
+      .andWhere('deal.expires_at > :now', { now: new Date() })
+      .orderBy('deal.created_at', 'DESC')
+      .getMany();
+
+    return {
+      deals,
+    };
+  }
+
+  async getBusinessStats(businessId: string) {
+    // Verify business exists
+    const business = await this.businessRepository.findOne({
+      where: { id: businessId },
+    });
+
+    if (!business) {
+      throw new NotFoundException('Business not found');
+    }
+
+    // Get active deal count
+    const activeDealCount = await this.dealRepository
+      .createQueryBuilder('deal')
+      .where('deal.business_id = :businessId', { businessId })
+      .andWhere('deal.status = :status', { status: DealStatus.ACTIVE })
+      .andWhere('deal.starts_at <= :now', { now: new Date() })
+      .andWhere('deal.expires_at > :now', { now: new Date() })
+      .getCount();
+
+    // Get total savings from all redemptions for this business
+    const result = await this.redemptionRepository
+      .createQueryBuilder('redemption')
+      .leftJoin('redemption.business', 'business')
+      .select('SUM(redemption.savings_amount)', 'totalSavings')
+      .where('business.id = :businessId', { businessId })
+      .getRawOne();
+
+    const totalSavings = result?.totalSavings ? parseFloat(result.totalSavings) : 0;
+
+    return {
+      activeDealCount,
+      followerCount: business.follower_count,
+      totalSavings: `$${totalSavings.toFixed(2)}`,
     };
   }
 }

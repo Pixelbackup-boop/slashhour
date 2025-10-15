@@ -1,9 +1,12 @@
-import { IsString, IsEmail, IsEnum, IsOptional, IsObject, ValidateNested, IsUrl, Length, Matches } from 'class-validator';
+import { IsString, IsEmail, IsEnum, IsOptional, IsObject, ValidateNested, IsUrl, Length, Matches, IsNumber } from 'class-validator';
 import { Type } from 'class-transformer';
 import { BusinessCategory } from '../entities/business.entity';
 
 class LocationDto {
+  @IsNumber()
   lat: number;
+
+  @IsNumber()
   lng: number;
 }
 

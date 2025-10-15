@@ -9,7 +9,10 @@ import {
   Query,
   UseGuards,
   Request,
+  UseInterceptors,
+  UploadedFiles,
 } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { DealsService } from './deals.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateDealDto } from './dto/create-deal.dto';
@@ -27,6 +30,28 @@ export class DealsController {
     @Body() createDealDto: CreateDealDto,
   ) {
     return this.dealsService.create(req.user.id, businessId, createDealDto);
+  }
+
+  /**
+   * NEW 2025 API: Create deal with multipart/form-data (native-like upload)
+   * This endpoint handles file uploads directly without base64 conversion
+   * Much faster and more memory efficient than the JSON endpoint above
+   */
+  @Post('business/:businessId/multipart')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FilesInterceptor('images', 10)) // Max 10 images
+  async createWithMultipart(
+    @Request() req,
+    @Param('businessId') businessId: string,
+    @Body() body: any, // FormData fields
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    return this.dealsService.createWithMultipart(
+      req.user.id,
+      businessId,
+      body,
+      files,
+    );
   }
 
   @Get()
