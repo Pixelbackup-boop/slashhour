@@ -15,6 +15,7 @@ import { RootState } from '../../store/store';
 import { authService } from '../../services/api/authService';
 import { trackScreenView } from '../../services/analytics';
 import { useUserProfile } from '../../hooks/useUserProfile';
+import { useMyBusinesses } from '../../hooks/useMyBusinesses';
 import StatCard from '../../components/StatCard';
 import InfoRow from '../../components/InfoRow';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, SIZES, LAYOUT } from '../../theme';
@@ -23,6 +24,7 @@ export default function ProfileScreen({ navigation }: any) {
   const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
   const { stats, isLoading, error } = useUserProfile();
+  const { businesses, isLoading: businessesLoading } = useMyBusinesses();
 
   useEffect(() => {
     trackScreenView('ProfileScreen');
@@ -50,6 +52,10 @@ export default function ProfileScreen({ navigation }: any) {
     return `$${amount.toFixed(2)}`;
   };
 
+  const handleBusinessPress = (businessId: string, businessName: string) => {
+    navigation.navigate('BusinessProfile', { businessId, businessName });
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -71,6 +77,60 @@ export default function ProfileScreen({ navigation }: any) {
             <Text style={styles.userUsername}>@{user.username}</Text>
           )}
         </View>
+
+        {/* My Shop or Create Your Shop */}
+        {!businessesLoading && (
+          <View style={styles.section}>
+            {businesses.length > 0 ? (
+              <>
+                <Text style={styles.sectionTitle}>🏪 My Shop</Text>
+                <View style={styles.infoCard}>
+                  {businesses.map((business, index) => (
+                    <View key={business.id}>
+                      {index > 0 && <View style={styles.divider} />}
+                      <TouchableOpacity
+                        style={styles.businessRow}
+                        onPress={() => handleBusinessPress(business.id, business.business_name)}
+                      >
+                        <View style={styles.businessLeft}>
+                          <View style={styles.businessIcon}>
+                            <Text style={styles.businessIconText}>
+                              {business.business_name.charAt(0).toUpperCase()}
+                            </Text>
+                          </View>
+                          <View style={styles.businessInfo}>
+                            <Text style={styles.businessName}>{business.business_name}</Text>
+                            <Text style={styles.businessCategory}>{business.category}</Text>
+                          </View>
+                        </View>
+                        <Text style={styles.actionArrow}>›</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              </>
+            ) : (
+              <>
+                <Text style={styles.sectionTitle}>🏪 Business</Text>
+                <View style={styles.createShopCard}>
+                  <View style={styles.createShopIcon}>
+                    <Text style={styles.createShopIconText}>🏪</Text>
+                  </View>
+                  <Text style={styles.createShopTitle}>Own a Business?</Text>
+                  <Text style={styles.createShopDescription}>
+                    Register your shop and start posting deals to reach thousands of local customers
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.createShopButton}
+                    onPress={() => navigation.navigate('RegisterBusiness')}
+                  >
+                    <Text style={styles.createShopButtonText}>Create Your Shop</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </View>
+        )}
 
         {/* Statistics Section */}
         {isLoading ? (
@@ -361,5 +421,88 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     padding: SPACING.md,
     paddingTop: 0,
+  },
+  businessRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: SPACING.md,
+  },
+  businessLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  businessIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: COLORS.secondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: SPACING.md,
+  },
+  businessIconText: {
+    fontSize: 20,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    color: COLORS.white,
+  },
+  businessInfo: {
+    flex: 1,
+  },
+  businessName: {
+    fontSize: TYPOGRAPHY.fontSize.md,
+    color: COLORS.textPrimary,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+    marginBottom: SPACING.xs / 2,
+  },
+  businessCategory: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    color: COLORS.textSecondary,
+    textTransform: 'capitalize',
+  },
+  createShopCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.xl,
+    alignItems: 'center',
+    ...SHADOWS.md,
+  },
+  createShopIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: COLORS.backgroundSecondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  createShopIconText: {
+    fontSize: 40,
+  },
+  createShopTitle: {
+    ...TYPOGRAPHY.styles.h2,
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.sm,
+    textAlign: 'center',
+  },
+  createShopDescription: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: SPACING.lg,
+  },
+  createShopButton: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.xl,
+    borderRadius: RADIUS.lg,
+    ...SHADOWS.md,
+  },
+  createShopButtonText: {
+    color: COLORS.white,
+    fontSize: TYPOGRAPHY.fontSize.md,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
   },
 });
