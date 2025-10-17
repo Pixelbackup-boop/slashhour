@@ -77,10 +77,10 @@ export default function CreateDealScreen({ route, navigation }: CreateDealScreen
     trackScreenView('CreateDealScreen', { businessId });
   }, [businessId]);
 
-  // Handle Android hardware back button to prevent navigation loop
+  // Handle Android hardware back button
   React.useEffect(() => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-      // Navigate to Home tab instead of going back
+      // Go back to previous screen (Business Profile)
       handleCancel();
       return true; // Prevent default back behavior
     });
@@ -129,8 +129,7 @@ export default function CreateDealScreen({ route, navigation }: CreateDealScreen
     // Launch image picker
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [4, 3],
+      allowsEditing: false, // Allow any aspect ratio without forced cropping
       quality: 0.8,
     });
 
@@ -140,8 +139,8 @@ export default function CreateDealScreen({ route, navigation }: CreateDealScreen
   };
 
   const handleCancel = () => {
-    // Navigate directly to MainTabs with Home screen to avoid Post tab loop
-    navigation.navigate('MainTabs', { screen: 'Home' });
+    // Go back to previous screen (Business Profile)
+    navigation.goBack();
   };
 
   return (
@@ -622,11 +621,12 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     overflow: 'hidden',
     position: 'relative',
+    backgroundColor: COLORS.white,
   },
   imagePreviewImage: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover',
+    resizeMode: 'contain',
   },
   imageRemoveButton: {
     position: 'absolute',

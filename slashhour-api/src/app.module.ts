@@ -12,6 +12,7 @@ import { BusinessesModule } from './businesses/businesses.module';
 import { DealsModule } from './deals/deals.module';
 import { SearchModule } from './search/search.module';
 import { RedemptionsModule } from './redemptions/redemptions.module';
+import { ConversationsModule } from './conversations/conversations.module';
 import { LoggerService } from './common/services/logger.service';
 
 @Module({
@@ -45,6 +46,7 @@ import { LoggerService } from './common/services/logger.service';
     DealsModule,
     SearchModule,
     RedemptionsModule,
+    ConversationsModule,
   ],
   controllers: [AppController],
   providers: [

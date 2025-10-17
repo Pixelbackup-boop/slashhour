@@ -93,10 +93,10 @@ export class Business {
   hours?: Record<string, { open: string; close: string; closed?: boolean }>;
 
   // Media
-  @Column({ type: 'varchar', length: 500, nullable: true })
+  @Column({ type: 'text', nullable: true })
   logo_url?: string;
 
-  @Column({ type: 'varchar', length: 500, nullable: true })
+  @Column({ type: 'text', nullable: true })
   cover_image_url?: string;
 
   @Column({ type: 'jsonb', default: '[]' })

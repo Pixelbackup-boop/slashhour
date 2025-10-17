@@ -29,7 +29,7 @@ export class User {
   @Column({ name: 'user_type', type: 'varchar', length: 20, default: 'consumer' })
   userType: string; // 'consumer' or 'business'
 
-  @Column({ type: 'varchar', length: 500, nullable: true })
+  @Column({ type: 'text', nullable: true })
   avatar_url?: string;
 
   // Location stored as JSON: {lat: number, lng: number}

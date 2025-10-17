@@ -263,3 +263,57 @@ export interface NearbyFeedResponse extends FeedResponse {
     [key: string]: number;
   };
 }
+
+// Messaging Types
+export interface Conversation {
+  id: string;
+  businessId: string;
+  customerId: string;
+  lastMessageAt?: string;
+  lastMessageText?: string;
+  unreadCount: number;
+  createdAt: string;
+  updatedAt: string;
+  business: {
+    id: string;
+    businessName: string;
+    logoUrl?: string;
+    category?: string;
+  };
+  customer: {
+    id: string;
+    username: string;
+    name?: string;
+    avatarUrl?: string;
+  };
+}
+
+export interface Message {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  messageText: string;
+  messageType: 'text' | 'image';
+  isRead: boolean;
+  readAt?: string;
+  createdAt: string;
+  sender: {
+    id: string;
+    username: string;
+    name?: string;
+    avatarUrl?: string;
+  };
+}
+
+export interface ConversationsResponse {
+  success: boolean;
+  conversations: Conversation[];
+}
+
+export interface MessagesResponse {
+  success: boolean;
+  messages: Message[];
+  total: number;
+  page: number;
+  limit: number;
+}

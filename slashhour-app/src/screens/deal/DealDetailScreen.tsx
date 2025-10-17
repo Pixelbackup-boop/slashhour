@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,6 +15,7 @@ import PriceCard from '../../components/PriceCard';
 import CountdownBox from '../../components/CountdownBox';
 import StockBar from '../../components/StockBar';
 import FollowButton from '../../components/FollowButton';
+import ImageCarousel from '../../components/ImageCarousel';
 import { useDealDetail } from '../../hooks/useDealDetail';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../../theme';
 
@@ -69,14 +69,13 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <Image
-          source={
-            deal.images && deal.images.length > 0
-              ? { uri: deal.images[0].url }
-              : getCategoryImage(deal.category)
-          }
-          style={styles.bannerImage}
-          resizeMode="cover"
+        <ImageCarousel
+          images={deal.images || []}
+          height={250}
+          width={undefined}
+          borderRadius={0}
+          showPagination={true}
+          fallbackImage={getCategoryImage(deal.category)}
         />
         <View style={styles.content}>
           {/* Business Info */}
@@ -223,11 +222,6 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-  },
-  bannerImage: {
-    width: '100%',
-    height: 250,
-    backgroundColor: COLORS.gray100,
   },
   content: {
     padding: SPACING.lg,

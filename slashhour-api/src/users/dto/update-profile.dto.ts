@@ -22,7 +22,7 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsString()
   @Length(1, 100)
-  full_name?: string;
+  name?: string;
 
   @IsOptional()
   @IsEmail()

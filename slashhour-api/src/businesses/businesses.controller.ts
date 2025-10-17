@@ -9,7 +9,10 @@ import {
   Query,
   UseGuards,
   Request,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { BusinessesService } from './businesses.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateBusinessDto } from './dto/create-business.dto';
@@ -83,5 +86,29 @@ export class BusinessesController {
   @UseGuards(JwtAuthGuard)
   async delete(@Request() req, @Param('id') id: string) {
     return this.businessesService.delete(id, req.user.id);
+  }
+
+  @Post(':id/logo')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('logo'))
+  async uploadLogo(
+    @Request() req,
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    const business = await this.businessesService.uploadLogo(id, req.user.id, file);
+    return { message: 'Logo uploaded successfully', business };
+  }
+
+  @Post(':id/cover')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('cover'))
+  async uploadCover(
+    @Request() req,
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    const business = await this.businessesService.uploadCoverImage(id, req.user.id, file);
+    return { message: 'Cover image uploaded successfully', business };
   }
 }

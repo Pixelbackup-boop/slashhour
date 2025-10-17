@@ -1,10 +1,13 @@
 import apiClient from './ApiClient';
+import { fetch as expoFetch } from 'expo/fetch';
+import { File } from 'expo-file-system';
+import { API_BASE_URL } from '../../utils/constants';
 import { Business, Deal } from '../../types/models';
 
 interface BusinessStatsResponse {
   activeDealCount: number;
   followerCount: number;
-  totalSavings: string;
+  totalDealsSold: number;
 }
 
 export const businessService = {
@@ -54,6 +57,64 @@ export const businessService = {
   updateBusiness: async (businessId: string, data: Partial<Business>): Promise<Business> => {
     const response = await apiClient.put<{ business: Business }>(`/businesses/${businessId}`, data);
     return response.business;
+  },
+
+  /**
+   * Upload business logo
+   */
+  uploadLogo: async (businessId: string, imageUri: string): Promise<{ message: string; business: Business }> => {
+    const token = await apiClient.getToken();
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+
+    const formData = new FormData();
+    const file = new File(imageUri);
+    formData.append('logo', file);
+
+    const response = await expoFetch(`${API_BASE_URL}/businesses/${businessId}/logo`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      throw new Error(errorData?.message || 'Failed to upload logo');
+    }
+
+    return await response.json();
+  },
+
+  /**
+   * Upload business cover image
+   */
+  uploadCover: async (businessId: string, imageUri: string): Promise<{ message: string; business: Business }> => {
+    const token = await apiClient.getToken();
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+
+    const formData = new FormData();
+    const file = new File(imageUri);
+    formData.append('cover', file);
+
+    const response = await expoFetch(`${API_BASE_URL}/businesses/${businessId}/cover`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      throw new Error(errorData?.message || 'Failed to upload cover image');
+    }
+
+    return await response.json();
   },
 };
 

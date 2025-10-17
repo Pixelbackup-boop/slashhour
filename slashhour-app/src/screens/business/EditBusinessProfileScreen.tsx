@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -12,8 +12,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEditBusinessProfile } from '../../hooks/useEditBusinessProfile';
 import { trackScreenView } from '../../services/analytics';
-import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../../theme';
+import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, SIZES } from '../../theme';
 import { Business } from '../../types/models';
+import LocationService from '../../services/location/LocationService';
+import ReverseGeocodeService from '../../services/location/ReverseGeocodeService';
+import BusinessHoursEditor, { BusinessHours } from '../../components/BusinessHoursEditor';
 
 interface EditBusinessProfileScreenProps {
   route: {
@@ -26,7 +29,8 @@ interface EditBusinessProfileScreenProps {
 
 export default function EditBusinessProfileScreen({ route, navigation }: EditBusinessProfileScreenProps) {
   const { business } = route.params;
-  const { formData, isLoading, error, updateField, handleSave, resetForm } = useEditBusinessProfile(business);
+  const { formData, isLoading, error, updateField, setCoordinates, setHours, handleSave, resetForm } = useEditBusinessProfile(business);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
 
   useEffect(() => {
     trackScreenView('EditBusinessProfileScreen', { businessId: business.id });
@@ -63,6 +67,75 @@ export default function EditBusinessProfileScreen({ route, navigation }: EditBus
     );
   };
 
+  const handleUseCurrentLocation = async () => {
+    try {
+      setIsGettingLocation(true);
+
+      // Get current GPS coordinates
+      const location = await LocationService.getCurrentLocation();
+      console.log('📍 Got GPS coordinates:', location);
+
+      // Reverse geocode to get address
+      const address = await ReverseGeocodeService.getAddressFromCoordinates(
+        location.latitude,
+        location.longitude
+      );
+      console.log('📍 Got address:', address);
+
+      // Store GPS coordinates first
+      setCoordinates(location.latitude, location.longitude);
+
+      // Auto-fill address fields
+      if (address.street) {
+        updateField('address', address.street);
+      }
+      if (address.city) {
+        updateField('city', address.city);
+      }
+      if (address.state) {
+        updateField('state_province', address.state);
+      }
+      if (address.country) {
+        updateField('country', address.country);
+      }
+      if (address.postalCode) {
+        updateField('postal_code', address.postalCode);
+      }
+
+      console.log('✅ Location auto-filled successfully with coordinates:', {
+        lat: location.latitude,
+        lng: location.longitude,
+      });
+
+      Alert.alert(
+        'Location Detected! ✅',
+        `${address.formattedAddress}\n\nPlease verify this is your business location. You can edit any field if needed.`,
+        [{ text: 'OK' }]
+      );
+    } catch (error: any) {
+      let title = 'Location Error';
+      let message = 'Failed to get your location. Please enter your address manually.';
+
+      if (error.message === 'LOCATION_SERVICES_DISABLED') {
+        title = 'Location Services Required';
+        message = 'You declined to enable location services. Please enable them manually in Settings to use this feature, or enter your address manually.';
+      } else if (error.message === 'LOCATION_PERMISSION_DENIED') {
+        title = 'Location Permission Required';
+        message = 'You declined to grant location permission. Please enable it manually in Settings to use this feature, or enter your address manually.';
+      } else if (error.message === 'LOCATION_TIMEOUT') {
+        title = 'Location Timeout';
+        message = 'Could not get your location. Please make sure you have good GPS signal and try again, or enter your address manually.';
+      } else if (error.message?.includes('Network')) {
+        title = 'Network Error';
+        message = 'Could not convert your location to an address. Please check your internet connection and try again.';
+      }
+
+      Alert.alert(title, message, [{ text: 'OK' }]);
+    } finally {
+      setIsGettingLocation(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -70,7 +143,7 @@ export default function EditBusinessProfileScreen({ route, navigation }: EditBus
         <TouchableOpacity onPress={onCancel} style={styles.cancelButton}>
           <Text style={styles.cancelButtonText}>Cancel</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Profile</Text>
+        <Text style={styles.headerTitle}>Edit Shop</Text>
         <TouchableOpacity
           onPress={onSave}
           style={[styles.saveButton, isLoading && styles.saveButtonDisabled]}
@@ -114,7 +187,14 @@ export default function EditBusinessProfileScreen({ route, navigation }: EditBus
             multiline
             numberOfLines={4}
             textAlignVertical="top"
+            maxLength={150}
           />
+          <Text style={[
+            styles.charCounter,
+            (formData.description?.length || 0) > 150 && styles.charCounterError
+          ]}>
+            {formData.description?.length || 0}/150 characters
+          </Text>
 
           <Text style={styles.label}>Category *</Text>
           <View style={styles.categoryContainer}>
@@ -164,6 +244,21 @@ export default function EditBusinessProfileScreen({ route, navigation }: EditBus
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>📍 Location</Text>
 
+          <TouchableOpacity
+            style={styles.locationButton}
+            onPress={handleUseCurrentLocation}
+            disabled={isLoading || isGettingLocation}
+          >
+            {isGettingLocation ? (
+              <ActivityIndicator color={COLORS.white} size="small" />
+            ) : (
+              <Text style={styles.locationButtonIcon}>📍</Text>
+            )}
+            <Text style={styles.locationButtonText}>
+              {isGettingLocation ? 'Getting Location...' : 'Use My Current Location'}
+            </Text>
+          </TouchableOpacity>
+
           <Text style={styles.label}>Address *</Text>
           <TextInput
             style={styles.input}
@@ -207,6 +302,15 @@ export default function EditBusinessProfileScreen({ route, navigation }: EditBus
             onChangeText={(text) => updateField('postal_code', text)}
             placeholder="10001"
             placeholderTextColor={COLORS.textTertiary}
+          />
+        </View>
+
+        {/* Business Hours */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>⏰ Business Hours</Text>
+          <BusinessHoursEditor
+            hours={formData.hours || {}}
+            onChange={setHours}
           />
         </View>
 
@@ -334,5 +438,31 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.fontSize.xs,
     color: COLORS.textTertiary,
     fontStyle: 'italic',
+  },
+  charCounter: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    color: COLORS.textTertiary,
+    textAlign: 'right',
+    marginTop: SPACING.xs,
+  },
+  charCounterError: {
+    color: COLORS.error,
+  },
+  locationButton: {
+    backgroundColor: COLORS.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: RADIUS.md,
+    marginBottom: SPACING.lg,
+    height: SIZES.button.lg,
+  },
+  locationButtonIcon: {
+    fontSize: 20,
+    marginRight: SPACING.xs,
+  },
+  locationButtonText: {
+    ...TYPOGRAPHY.styles.button,
+    color: COLORS.textInverse,
   },
 });

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,28 +7,78 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  TextInput,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '../../store/slices/authSlice';
-import { RootState } from '../../store/store';
+import { useAuthStore } from '../../stores/useAuthStore';
 import { authService } from '../../services/api/authService';
 import { trackScreenView } from '../../services/analytics';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { useMyBusinesses } from '../../hooks/useMyBusinesses';
+import { useProfileEdit } from '../../hooks/useProfileEdit';
 import StatCard from '../../components/StatCard';
 import InfoRow from '../../components/InfoRow';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, SIZES, LAYOUT } from '../../theme';
 
 export default function ProfileScreen({ navigation }: any) {
-  const dispatch = useDispatch();
-  const { user } = useSelector((state: RootState) => state.auth);
+  const { user, updateUser, logout } = useAuthStore();
   const { stats, isLoading, error } = useUserProfile();
   const { businesses, isLoading: businessesLoading } = useMyBusinesses();
+  const { isUpdating, error: updateError, updateName, pickAndUploadAvatar } = useProfileEdit();
+
+  // Local state for inline editing
+  const [editableName, setEditableName] = useState(user?.name || user?.username || '');
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatar_url || '');
+  const [isEditingName, setIsEditingName] = useState(false);
 
   useEffect(() => {
     trackScreenView('ProfileScreen');
   }, []);
+
+  // Update local state when user changes
+  useEffect(() => {
+    if (user) {
+      setEditableName(user.name || user.username || '');
+      setAvatarUrl(user.avatar_url || '');
+    }
+  }, [user]);
+
+  const handleAvatarPress = async () => {
+    const newAvatarUrl = await pickAndUploadAvatar();
+    if (newAvatarUrl) {
+      setAvatarUrl(newAvatarUrl);
+      // Update Zustand store
+      updateUser({ avatar_url: newAvatarUrl });
+    } else if (updateError) {
+      Alert.alert('Error', updateError);
+    }
+  };
+
+  const handleNameSubmit = async () => {
+    if (!editableName.trim()) {
+      Alert.alert('Error', 'Name cannot be empty');
+      setEditableName(user?.name || user?.username || '');
+      setIsEditingName(false);
+      return;
+    }
+
+    if (editableName.trim() === user?.name) {
+      setIsEditingName(false);
+      return;
+    }
+
+    const success = await updateName(editableName.trim());
+    if (success) {
+      setIsEditingName(false);
+      // Update Zustand store
+      updateUser({ name: editableName.trim() });
+    } else if (updateError) {
+      Alert.alert('Error', updateError);
+      setEditableName(user?.name || user?.username || '');
+      setIsEditingName(false);
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -41,7 +91,7 @@ export default function ProfileScreen({ navigation }: any) {
           style: 'destructive',
           onPress: () => {
             authService.logout();
-            dispatch(logout());
+            logout();
           },
         },
       ]
@@ -66,12 +116,50 @@ export default function ProfileScreen({ navigation }: any) {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* User Info Card */}
         <View style={styles.userCard}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {user?.name?.charAt(0).toUpperCase() || user?.username?.charAt(0).toUpperCase() || 'U'}
-            </Text>
-          </View>
-          <Text style={styles.userName}>{user?.name || user?.username || 'User'}</Text>
+          {/* Avatar with Edit */}
+          <TouchableOpacity
+            style={styles.avatarContainer}
+            onPress={handleAvatarPress}
+            disabled={isUpdating}
+            activeOpacity={0.7}
+          >
+            {avatarUrl ? (
+              <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+            ) : (
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>
+                  {user?.name?.charAt(0).toUpperCase() || user?.username?.charAt(0).toUpperCase() || 'U'}
+                </Text>
+              </View>
+            )}
+            <View style={styles.avatarEditBadge}>
+              {isUpdating ? (
+                <ActivityIndicator size="small" color={COLORS.white} />
+              ) : (
+                <Text style={styles.avatarEditIcon}>✏️</Text>
+              )}
+            </View>
+          </TouchableOpacity>
+
+          {/* Editable Name */}
+          {isEditingName ? (
+            <TextInput
+              style={styles.nameInput}
+              value={editableName}
+              onChangeText={setEditableName}
+              onBlur={handleNameSubmit}
+              onSubmitEditing={handleNameSubmit}
+              autoFocus
+              placeholder="Enter your name"
+              placeholderTextColor={COLORS.textTertiary}
+              returnKeyType="done"
+            />
+          ) : (
+            <TouchableOpacity onPress={() => setIsEditingName(true)} activeOpacity={0.7}>
+              <Text style={styles.userName}>{user?.name || user?.username || 'User'}</Text>
+            </TouchableOpacity>
+          )}
+
           <Text style={styles.userEmail}>{user?.email || user?.phone || user?.username}</Text>
           {user?.username && (
             <Text style={styles.userUsername}>@{user.username}</Text>
@@ -284,14 +372,33 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.borderLight,
   },
+  avatarContainer: {
+    position: 'relative',
+    marginBottom: SPACING.md,
+  },
   avatar: {
-    width: SIZES.avatar.lg,
-    height: SIZES.avatar.lg,
-    borderRadius: SIZES.avatar.lg / 2,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: SPACING.md,
+  },
+  avatarEditBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: COLORS.secondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.white,
+  },
+  avatarEditIcon: {
+    fontSize: 14,
   },
   avatarText: {
     fontSize: 36,
@@ -302,6 +409,17 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.styles.h1,
     color: COLORS.textPrimary,
     marginBottom: SPACING.xs,
+  },
+  nameInput: {
+    ...TYPOGRAPHY.styles.h1,
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.xs,
+    borderBottomWidth: 2,
+    borderBottomColor: COLORS.primary,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    textAlign: 'center',
+    minWidth: 200,
   },
   userEmail: {
     fontSize: TYPOGRAPHY.fontSize.sm,

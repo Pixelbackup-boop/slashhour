@@ -4,14 +4,14 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useSelector } from 'react-redux';
-import { RootState } from '../store/store';
+import { useUser, useIsAuthenticated } from '../stores/useAuthStore';
 import { COLORS, SHADOWS, SPACING } from '../theme';
 import LoginScreen from '../screens/auth/LoginScreen';
 import SignUpScreen from '../screens/auth/SignUpScreen';
 import HomeScreen from '../screens/home/HomeScreen';
 import SearchScreen from '../screens/search/SearchScreen';
-import InboxScreen from '../screens/inbox/InboxScreen';
+import ConversationsListScreen from '../screens/inbox/ConversationsListScreen';
+import ChatScreen from '../screens/inbox/ChatScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 import DealDetailScreen from '../screens/deal/DealDetailScreen';
 import RedemptionHistoryScreen from '../screens/redemption/RedemptionHistoryScreen';
@@ -33,6 +33,12 @@ type RootStackParamList = {
   EditBusinessProfile: { business: Business };
   RegisterBusiness: undefined;
   CreateDeal: { businessId: string; businessName: string };
+  Chat: {
+    conversationId: string;
+    businessId: string;
+    businessName: string;
+    businessLogo?: string;
+  };
 };
 
 type TabParamList = {
@@ -48,6 +54,10 @@ const Tab = createBottomTabNavigator<TabParamList>();
 // Bottom Tab Navigator
 function MainTabNavigator() {
   const insets = useSafeAreaInsets();
+  const user = useUser();
+
+  // Import useConversations for unread count
+  const { totalUnreadCount } = require('../hooks/useConversations').useConversations(user?.id);
 
   // Calculate dynamic tab bar height
   // Base height (60) + safe area bottom inset + extra padding for gesture area
@@ -104,14 +114,25 @@ function MainTabNavigator() {
       />
       <Tab.Screen
         name="Inbox"
-        component={InboxScreen}
+        component={ConversationsListScreen}
         options={{
           tabBarLabel: 'Inbox',
           tabBarIcon: ({ color, focused }) => (
             <TabIcon icon="💬" focused={focused} />
           ),
-          // TODO: Add badge for unread messages
-          // tabBarBadge: 3,
+          // Show unread message count badge
+          tabBarBadge: totalUnreadCount > 0 ? (totalUnreadCount > 99 ? '99+' : totalUnreadCount) : undefined,
+          tabBarBadgeStyle: {
+            backgroundColor: COLORS.error,
+            color: COLORS.white,
+            fontSize: 10,
+            fontWeight: 'bold',
+            minWidth: 18,
+            height: 18,
+            borderRadius: 9,
+            alignItems: 'center',
+            justifyContent: 'center',
+          },
         }}
       />
       <Tab.Screen
@@ -152,11 +173,16 @@ const styles = StyleSheet.create({
 });
 
 export default function AppNavigator() {
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const isAuthenticated = useIsAuthenticated();
 
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false,
+          gestureEnabled: true, // Enable swipe gestures
+        }}
+      >
         {!isAuthenticated ? (
           <>
             <Stack.Screen name="Login" component={LoginScreen} />
@@ -168,10 +194,6 @@ export default function AppNavigator() {
             <Stack.Screen
               name="DealDetail"
               component={DealDetailScreen}
-              options={{
-                presentation: 'modal',
-                animation: 'slide_from_bottom',
-              }}
             />
             <Stack.Screen
               name="RedemptionHistory"
@@ -188,18 +210,10 @@ export default function AppNavigator() {
             <Stack.Screen
               name="EditBusinessProfile"
               component={EditBusinessProfileScreen}
-              options={{
-                presentation: 'modal',
-                animation: 'slide_from_bottom',
-              }}
             />
             <Stack.Screen
               name="RegisterBusiness"
               component={RegisterBusinessScreen}
-              options={{
-                presentation: 'modal',
-                animation: 'slide_from_bottom',
-              }}
             />
             <Stack.Screen
               name="CreateDeal"
@@ -208,6 +222,10 @@ export default function AppNavigator() {
                 animation: 'fade',
                 animationDuration: 200,
               }}
+            />
+            <Stack.Screen
+              name="Chat"
+              component={ChatScreen}
             />
           </>
         )}

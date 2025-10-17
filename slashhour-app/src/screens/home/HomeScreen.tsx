@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../store/store';
+import { useUser } from '../../stores/useAuthStore';
 import FeedScreen from './FeedScreen';
 import NearYouScreen from './NearYouScreen';
 import AppHeader from '../../components/AppHeader';
@@ -15,7 +14,7 @@ const tabs: Tab[] = [
 ];
 
 export default function HomeScreen({ navigation }: any) {
-  const { user } = useSelector((state: RootState) => state.auth);
+  const user = useUser();
   const [activeTab, setActiveTab] = useState<'following' | 'nearby'>('following');
 
   return (

@@ -1,8 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import Animated, {
+  FadeInDown,
+  FadeIn,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming
+} from 'react-native-reanimated';
 import { Deal } from '../types/models';
 import { getCategoryImage } from '../utils/categoryImages';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme';
+import ImageCarousel from './ImageCarousel';
+import { haptics } from '../utils/haptics';
 
 interface DealCardProps {
   deal: Deal;
@@ -12,6 +22,35 @@ interface DealCardProps {
 
 export default function DealCard({ deal, onPress, onBusinessPress }: DealCardProps) {
   const [timeRemaining, setTimeRemaining] = useState('');
+
+  // Animation values
+  const scale = useSharedValue(1);
+  const pressed = useSharedValue(0);
+
+  // Animated style for press feedback
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        {
+          scale: withSpring(scale.value, {
+            damping: 15,
+            stiffness: 150,
+          })
+        }
+      ],
+    };
+  });
+
+  const handlePressIn = () => {
+    scale.value = 0.95;
+    pressed.value = withTiming(1, { duration: 150 });
+    haptics.light(); // Tactile feedback on press
+  };
+
+  const handlePressOut = () => {
+    scale.value = 1;
+    pressed.value = withTiming(0, { duration: 150 });
+  };
 
   const calculateTimeRemaining = () => {
     const now = new Date();
@@ -66,49 +105,43 @@ export default function DealCard({ deal, onPress, onBusinessPress }: DealCardPro
   };
 
   return (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={onPress}
-      activeOpacity={0.7}
+    <Animated.View
+      entering={FadeInDown.duration(400).springify()}
+      style={[styles.card, animatedStyle]}
     >
-      <Image
-        source={
-          deal.images && deal.images.length > 0
-            ? { uri: deal.images[0].url }
-            : getCategoryImage(deal.category)
-        }
-        style={styles.categoryImage}
-        resizeMode="cover"
-      />
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => onBusinessPress?.()}
-          activeOpacity={0.7}
-          hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
-        >
-          <Text style={styles.businessName}>{deal.business?.business_name}</Text>
-        </TouchableOpacity>
-        <View style={styles.discountBadge}>
-          <Text style={styles.discountText}>{getDiscountText()}</Text>
-        </View>
+      <Animated.View
+        style={styles.pressableContent}
+        onTouchStart={handlePressIn}
+        onTouchEnd={() => {
+          handlePressOut();
+          onPress?.();
+        }}
+      >
+        <View style={styles.imageContainer}>
+        <ImageCarousel
+          images={deal.images || []}
+          height={150}
+          width={undefined}
+          borderRadius={0}
+          showPagination={true}
+          fallbackImage={getCategoryImage(deal.category)}
+        />
       </View>
 
-      <Text style={styles.title}>{deal.title}</Text>
+      <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">{deal.title}</Text>
 
-      {deal.description && (
-        <Text style={styles.description} numberOfLines={2}>
-          {deal.description}
-        </Text>
-      )}
+      <View style={styles.priceRow}>
+        {deal.original_price && (
+          <Text style={styles.originalPrice}>${deal.original_price}</Text>
+        )}
+        {deal.discounted_price && (
+          <Text style={styles.dealPrice}>${deal.discounted_price}</Text>
+        )}
+      </View>
 
       <View style={styles.footer}>
-        <View style={styles.priceContainer}>
-          {deal.original_price && (
-            <Text style={styles.originalPrice}>${deal.original_price}</Text>
-          )}
-          {deal.discounted_price && (
-            <Text style={styles.dealPrice}>${deal.discounted_price}</Text>
-          )}
+        <View style={styles.discountBadge}>
+          <Text style={styles.discountText}>{getDiscountText()}</Text>
         </View>
         <View style={styles.countdownContainer}>
           <Text style={styles.countdownIcon}>⏰</Text>
@@ -116,87 +149,78 @@ export default function DealCard({ deal, onPress, onBusinessPress }: DealCardPro
         </View>
       </View>
 
-      {deal.quantity_available && (
-        <View style={styles.limitBadge}>
-          <Text style={styles.limitText}>
-            Limited: {deal.quantity_redeemed || 0}/{deal.quantity_available}
-          </Text>
-        </View>
-      )}
-    </TouchableOpacity>
+        {deal.quantity_available && (
+          <View style={styles.limitBadge}>
+            <Text style={styles.limitText}>
+              Limited: {deal.quantity_redeemed || 0}/{deal.quantity_available}
+            </Text>
+          </View>
+        )}
+      </Animated.View>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
+    flex: 1,
     backgroundColor: COLORS.white,
     borderRadius: RADIUS.lg,
     marginBottom: SPACING.md,
     ...SHADOWS.md,
     overflow: 'hidden',
   },
-  categoryImage: {
+  pressableContent: {
     width: '100%',
-    height: 150,
-    backgroundColor: COLORS.gray100,
   },
-  header: {
-    padding: SPACING.md,
-    paddingBottom: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.sm,
-  },
-  businessName: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    color: COLORS.textSecondary,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
-  discountBadge: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.lg,
-  },
-  discountText: {
-    color: COLORS.white,
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
+  imageContainer: {
+    position: 'relative',
+    width: '100%',
+    overflow: 'hidden',
   },
   title: {
-    ...TYPOGRAPHY.styles.h3,
+    fontSize: TYPOGRAPHY.fontSize.md,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
     color: COLORS.textPrimary,
-    marginBottom: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-  },
-  description: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    color: COLORS.textSecondary,
+    paddingHorizontal: SPACING.sm,
+    paddingTop: SPACING.sm,
+    marginBottom: SPACING.xs,
     lineHeight: 20,
-    marginBottom: SPACING.md,
-    paddingHorizontal: SPACING.md,
   },
-  footer: {
+  priceRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.md,
-  },
-  priceContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'baseline',
+    gap: SPACING.xs,
+    paddingHorizontal: SPACING.sm,
+    marginBottom: SPACING.xs,
   },
   originalPrice: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     color: COLORS.textTertiary,
     textDecorationLine: 'line-through',
-    marginRight: SPACING.sm,
   },
   dealPrice: {
     fontSize: TYPOGRAPHY.fontSize.xl,
     fontWeight: TYPOGRAPHY.fontWeight.bold,
     color: COLORS.secondary,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.sm,
+    paddingBottom: SPACING.sm,
+  },
+  discountBadge: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: RADIUS.md,
+  },
+  discountText: {
+    color: COLORS.white,
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
   },
   countdownContainer: {
     flexDirection: 'row',
@@ -212,10 +236,9 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
   limitBadge: {
-    marginTop: SPACING.sm,
-    paddingTop: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    paddingBottom: SPACING.md,
+    paddingTop: SPACING.xs,
+    paddingHorizontal: SPACING.sm,
+    paddingBottom: SPACING.sm,
     borderTopWidth: 1,
     borderTopColor: COLORS.gray100,
   },

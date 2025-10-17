@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Deal } from '../../types/models';
-import DealCard from '../../components/DealCard';
+import FeedDealCard from '../../components/FeedDealCard';
 import { useNearbyDeals } from '../../hooks/useNearbyDeals';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, LAYOUT } from '../../theme';
 
@@ -144,14 +144,18 @@ export default function NearYouScreen() {
       <FlatList
         data={deals}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View>
-            <DealCard deal={item} onPress={() => handleDealPress(item)} />
+        renderItem={({ item, index }) => (
+          <View style={[
+            styles.cardWrapper,
+            index % 2 === 0 ? styles.leftCard : styles.rightCard
+          ]}>
+            <FeedDealCard deal={item} onPress={() => handleDealPress(item)} />
             <View style={styles.distanceBadge}>
               <Text style={styles.distanceText}>📍 {item.distance.toFixed(1)} km away</Text>
             </View>
           </View>
         )}
+        numColumns={2}
         contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl
@@ -208,8 +212,20 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
   listContent: {
-    padding: SPACING.md,
+    paddingHorizontal: SPACING.xs,
+    paddingTop: SPACING.md,
     paddingBottom: LAYOUT.tabBarHeight + SPACING.xxl,
+  },
+  cardWrapper: {
+    marginBottom: SPACING.md,
+  },
+  leftCard: {
+    marginRight: SPACING.xs,
+    marginLeft: -SPACING.xs,
+  },
+  rightCard: {
+    marginLeft: SPACING.xs,
+    marginRight: -SPACING.xs,
   },
   distanceBadge: {
     position: 'absolute',

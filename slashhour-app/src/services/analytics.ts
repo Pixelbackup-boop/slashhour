@@ -19,6 +19,12 @@ export enum AnalyticsEvent {
   BUSINESS_FOLLOWED = 'business_followed',
   BUSINESS_UNFOLLOWED = 'business_unfollowed',
   BUSINESS_VIEWED = 'business_viewed',
+  BUSINESS_LOGO_UPLOAD_PERMISSION_DENIED = 'business_logo_upload_permission_denied',
+  BUSINESS_LOGO_UPLOADED = 'business_logo_uploaded',
+  BUSINESS_LOGO_UPLOAD_FAILED = 'business_logo_upload_failed',
+  BUSINESS_COVER_UPLOAD_PERMISSION_DENIED = 'business_cover_upload_permission_denied',
+  BUSINESS_COVER_UPLOADED = 'business_cover_uploaded',
+  BUSINESS_COVER_UPLOAD_FAILED = 'business_cover_upload_failed',
 
   // Feed events
   FEED_VIEWED = 'feed_viewed',

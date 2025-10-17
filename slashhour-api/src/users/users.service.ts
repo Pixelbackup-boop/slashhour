@@ -1,9 +1,11 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
 import { UserRedemption } from './entities/user-redemption.entity';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { UserStatsDto } from './dto/user-stats.dto';
 
 @Injectable()
@@ -210,5 +212,48 @@ export class UsersService {
       mostSavedBusiness,
       savingsVsGoal,
     };
+  }
+
+  async changePassword(userId: string, changePasswordDto: ChangePasswordDto): Promise<void> {
+    // Get user with password
+    const user = await this.userRepository
+      .createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.id = :userId', { userId })
+      .getOne();
+
+    if (!user || !user.password) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Verify current password
+    const isPasswordValid = await bcrypt.compare(
+      changePasswordDto.currentPassword,
+      user.password,
+    );
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(changePasswordDto.newPassword, 10);
+
+    // Update password
+    await this.userRepository.update(userId, { password: hashedPassword });
+  }
+
+  async uploadAvatar(userId: string, file: Express.Multer.File): Promise<User> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Convert image to base64 data URL
+    const base64Image = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+
+    // Update avatar URL
+    user.avatar_url = base64Image;
+    return this.userRepository.save(user);
   }
 }

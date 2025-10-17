@@ -3,14 +3,14 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
-  ActivityIndicator,
   RefreshControl,
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Deal } from '../../types/models';
-import DealCard from '../../components/DealCard';
+import FeedDealCard from '../../components/FeedDealCard';
+import DealCardSkeleton from '../../components/DealCardSkeleton';
 import { useFeed } from '../../hooks/useFeed';
 import { COLORS, TYPOGRAPHY, SPACING, LAYOUT } from '../../theme';
 
@@ -37,10 +37,12 @@ export default function FeedScreen() {
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Your Deals</Text>
         </View>
-        <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text style={styles.loadingText}>Loading deals...</Text>
-        </View>
+        <FlashList
+          data={[1, 2, 3, 4, 5, 6]}
+          keyExtractor={(item) => `skeleton-${item}`}
+          renderItem={() => <DealCardSkeleton />}
+          contentContainerStyle={styles.listContent}
+        />
       </SafeAreaView>
     );
   }
@@ -84,16 +86,22 @@ export default function FeedScreen() {
           {deals.length} deal{deals.length !== 1 ? 's' : ''} from businesses you follow
         </Text>
       </View>
-      <FlatList
+      <FlashList
         data={deals}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <DealCard
-            deal={item}
-            onPress={() => handleDealPress(item)}
-            onBusinessPress={() => handleBusinessPress(item)}
-          />
+        renderItem={({ item, index }) => (
+          <View style={[
+            styles.cardWrapper,
+            index % 2 === 0 ? styles.leftCard : styles.rightCard
+          ]}>
+            <FeedDealCard
+              deal={item}
+              onPress={() => handleDealPress(item)}
+              onBusinessPress={() => handleBusinessPress(item)}
+            />
+          </View>
         )}
+        numColumns={2}
         contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl
@@ -129,8 +137,20 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xs,
   },
   listContent: {
-    padding: SPACING.md,
+    paddingHorizontal: SPACING.xs,
+    paddingTop: SPACING.md,
     paddingBottom: LAYOUT.tabBarHeight + SPACING.xxl,
+  },
+  cardWrapper: {
+    marginBottom: SPACING.md,
+  },
+  leftCard: {
+    marginRight: SPACING.xs,
+    marginLeft: -SPACING.xs,
+  },
+  rightCard: {
+    marginLeft: SPACING.xs,
+    marginRight: -SPACING.xs,
   },
   centerContainer: {
     flex: 1,

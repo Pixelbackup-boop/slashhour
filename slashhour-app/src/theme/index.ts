@@ -11,10 +11,10 @@
 import { SPACING as RESPONSIVE_SPACING, FONT_SIZES, BORDER_RADIUS } from '../utils/responsive';
 
 /**
- * Color Palette
+ * Color Palette - Light Mode
  * Based on Slashhour brand identity
  */
-export const COLORS = {
+export const COLORS_LIGHT = {
   // Primary Brand Colors
   primary: '#FF6B6B',
   primaryLight: '#FF8585',
@@ -78,6 +78,86 @@ export const COLORS = {
   overlayLight: 'rgba(0, 0, 0, 0.3)',
   shadow: 'rgba(0, 0, 0, 0.1)',
 } as const;
+
+/**
+ * Color Palette - Dark Mode
+ * OLED-optimized dark theme for battery saving and reduced eye strain
+ */
+export const COLORS_DARK = {
+  // Primary Brand Colors (slightly desaturated for dark mode)
+  primary: '#FF7B7B',
+  primaryLight: '#FF9999',
+  primaryDark: '#E86666',
+  primaryBackground: '#2A1414',
+
+  // Secondary Colors (brighter for dark backgrounds)
+  secondary: '#5EDDD4',
+  secondaryLight: '#7FE4DB',
+  secondaryDark: '#4AC9C0',
+
+  // Neutral Colors (Inverted grayscale)
+  white: '#FFFFFF',
+  black: '#000000',
+  gray50: '#1A1A1A',  // Darkest
+  gray100: '#1F1F1F',
+  gray200: '#2A2A2A',
+  gray300: '#3D3D3D',
+  gray400: '#666666',
+  gray500: '#999999',
+  gray600: '#B3B3B3',
+  gray700: '#CCCCCC',
+  gray800: '#E0E0E0',  // Lightest
+
+  // Semantic Colors (adjusted for dark mode visibility)
+  success: '#5CBF60',
+  successLight: '#7ACA7E',
+  successDark: '#4AAA4E',
+
+  warning: '#FFE066',
+  warningLight: '#FFE885',
+  warningDark: '#FFD84D',
+
+  error: '#FF9999',
+  errorLight: '#FFB3B3',
+  errorDark: '#FF8080',
+
+  info: '#5A9FED',
+  infoLight: '#78B0F0',
+  infoDark: '#4A8FDD',
+
+  // Background Colors (True black for OLED)
+  background: '#000000',           // Pure black for OLED
+  backgroundSecondary: '#121212',  // Slightly elevated
+  backgroundTertiary: '#1F1F1F',   // Cards & surfaces
+
+  // Text Colors (High contrast for readability)
+  textPrimary: '#FFFFFF',
+  textSecondary: '#B3B3B3',
+  textTertiary: '#808080',
+  textDisabled: '#4D4D4D',
+  textInverse: '#000000',
+
+  // Border Colors (Subtle in dark mode)
+  border: '#2A2A2A',
+  borderLight: '#1F1F1F',
+  borderDark: '#3D3D3D',
+
+  // Overlay & Shadow
+  overlay: 'rgba(0, 0, 0, 0.8)',
+  overlayLight: 'rgba(0, 0, 0, 0.6)',
+  shadow: 'rgba(0, 0, 0, 0.5)',
+} as const;
+
+/**
+ * Default color export (Light mode)
+ * Use getColors(isDark) for dynamic theme switching
+ */
+export const COLORS = COLORS_LIGHT;
+
+/**
+ * Get colors based on theme mode
+ */
+export const getColors = (isDark: boolean) => isDark ? COLORS_DARK : COLORS_LIGHT;
 
 /**
  * Typography Scale

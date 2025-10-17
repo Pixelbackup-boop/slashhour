@@ -12,7 +12,7 @@ import { useSearch } from '../../hooks/useSearch';
 import { trackScreenView } from '../../services/analytics';
 import SearchBar from '../../components/SearchBar';
 import SearchFilters from '../../components/SearchFilters';
-import DealCard from '../../components/DealCard';
+import FeedDealCard from '../../components/FeedDealCard';
 import BusinessCard from '../../components/BusinessCard';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, LAYOUT } from '../../theme';
 
@@ -146,13 +146,19 @@ export default function SearchScreen({ navigation }: any) {
                 </TouchableOpacity>
               )}
             </View>
-            {results.deals.map((deal) => (
-              <DealCard
-                key={deal.id}
-                deal={deal}
-                onPress={() => handleDealPress(deal)}
-              />
-            ))}
+            <View style={styles.dealsGrid}>
+              {results.deals.map((deal, index) => (
+                <View key={deal.id} style={[
+                  styles.cardWrapper,
+                  index % 2 === 0 ? styles.leftCard : styles.rightCard
+                ]}>
+                  <FeedDealCard
+                    deal={deal}
+                    onPress={() => handleDealPress(deal)}
+                  />
+                </View>
+              ))}
+            </View>
           </View>
         )}
 
@@ -219,6 +225,22 @@ const styles = StyleSheet.create({
   },
   resultsSection: {
     paddingTop: SPACING.md,
+  },
+  dealsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: SPACING.xs,
+  },
+  cardWrapper: {
+    marginBottom: SPACING.md,
+  },
+  leftCard: {
+    marginRight: SPACING.xs,
+    marginLeft: -SPACING.xs,
+  },
+  rightCard: {
+    marginLeft: SPACING.xs,
+    marginRight: -SPACING.xs,
   },
   resultsSectionHeader: {
     flexDirection: 'row',

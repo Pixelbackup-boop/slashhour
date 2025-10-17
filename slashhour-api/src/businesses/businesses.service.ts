@@ -237,20 +237,59 @@ export class BusinessesService {
       .andWhere('deal.expires_at > :now', { now: new Date() })
       .getCount();
 
-    // Get total savings from all redemptions for this business
-    const result = await this.redemptionRepository
+    // Get total deals sold (count of all redemptions for this business's deals)
+    const totalDealsSold = await this.redemptionRepository
       .createQueryBuilder('redemption')
-      .leftJoin('redemption.business', 'business')
-      .select('SUM(redemption.savings_amount)', 'totalSavings')
-      .where('business.id = :businessId', { businessId })
-      .getRawOne();
-
-    const totalSavings = result?.totalSavings ? parseFloat(result.totalSavings) : 0;
+      .innerJoin('redemption.deal', 'deal')
+      .where('deal.business_id = :businessId', { businessId })
+      .getCount();
 
     return {
       activeDealCount,
       followerCount: business.follower_count,
-      totalSavings: `$${totalSavings.toFixed(2)}`,
+      totalDealsSold,
     };
+  }
+
+  async uploadLogo(businessId: string, userId: string, file: Express.Multer.File): Promise<Business> {
+    const business = await this.businessRepository.findOne({
+      where: { id: businessId },
+    });
+
+    if (!business) {
+      throw new NotFoundException('Business not found');
+    }
+
+    // Check ownership
+    if (business.owner_id !== userId) {
+      throw new ForbiddenException('You do not have permission to update this business');
+    }
+
+    // Convert to base64 data URI
+    const base64Image = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+    business.logo_url = base64Image;
+
+    return await this.businessRepository.save(business);
+  }
+
+  async uploadCoverImage(businessId: string, userId: string, file: Express.Multer.File): Promise<Business> {
+    const business = await this.businessRepository.findOne({
+      where: { id: businessId },
+    });
+
+    if (!business) {
+      throw new NotFoundException('Business not found');
+    }
+
+    // Check ownership
+    if (business.owner_id !== userId) {
+      throw new ForbiddenException('You do not have permission to update this business');
+    }
+
+    // Convert to base64 data URI
+    const base64Image = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+    business.cover_image_url = base64Image;
+
+    return await this.businessRepository.save(business);
   }
 }

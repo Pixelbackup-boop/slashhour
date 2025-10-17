@@ -4,6 +4,14 @@ import { logError } from '../config/sentry';
 import { trackEvent, AnalyticsEvent } from '../services/analytics';
 import { Business } from '../types/models';
 
+interface BusinessHours {
+  [key: string]: {
+    open: string;
+    close: string;
+    closed: boolean;
+  };
+}
+
 interface EditBusinessFormData {
   business_name: string;
   description: string;
@@ -16,6 +24,9 @@ interface EditBusinessFormData {
   state_province: string;
   country: string;
   postal_code: string;
+  latitude?: number;
+  longitude?: number;
+  hours?: BusinessHours;
 }
 
 interface UseEditBusinessProfileReturn {
@@ -23,6 +34,8 @@ interface UseEditBusinessProfileReturn {
   isLoading: boolean;
   error: string | null;
   updateField: (field: keyof EditBusinessFormData, value: string) => void;
+  setCoordinates: (latitude: number, longitude: number) => void;
+  setHours: (hours: BusinessHours) => void;
   handleSave: () => Promise<boolean>;
   resetForm: () => void;
 }
@@ -40,6 +53,9 @@ export function useEditBusinessProfile(business: Business): UseEditBusinessProfi
     state_province: business.state_province || '',
     country: business.country || '',
     postal_code: business.postal_code || '',
+    latitude: business.location?.lat,
+    longitude: business.location?.lng,
+    hours: business.hours,
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -51,6 +67,21 @@ export function useEditBusinessProfile(business: Business): UseEditBusinessProfi
       [field]: value,
     }));
     setError(null);
+  };
+
+  const setCoordinates = (latitude: number, longitude: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      latitude,
+      longitude,
+    }));
+  };
+
+  const setHours = (hours: BusinessHours) => {
+    setFormData((prev) => ({
+      ...prev,
+      hours,
+    }));
   };
 
   const validateForm = (): boolean => {
@@ -138,6 +169,19 @@ export function useEditBusinessProfile(business: Business): UseEditBusinessProfi
       postal_code: formData.postal_code.trim() || null,
     };
 
+    // Add location object if both latitude and longitude are present
+    if (formData.latitude !== undefined && formData.longitude !== undefined) {
+      cleanData.location = {
+        lat: formData.latitude,
+        lng: formData.longitude,
+      };
+    }
+
+    // Add hours if present
+    if (formData.hours) {
+      cleanData.hours = formData.hours;
+    }
+
     // Remove null values to avoid sending them
     const trimmedData = Object.fromEntries(
       Object.entries(cleanData).filter(([_, value]) => value !== null)
@@ -198,6 +242,9 @@ export function useEditBusinessProfile(business: Business): UseEditBusinessProfi
       state_province: business.state_province || '',
       country: business.country || '',
       postal_code: business.postal_code || '',
+      latitude: business.location?.lat,
+      longitude: business.location?.lng,
+      hours: business.hours,
     });
     setError(null);
   };
@@ -207,6 +254,8 @@ export function useEditBusinessProfile(business: Business): UseEditBusinessProfi
     isLoading,
     error,
     updateField,
+    setCoordinates,
+    setHours,
     handleSave,
     resetForm,
   };
