@@ -8,7 +8,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Deal } from '../types/models';
 import { getCategoryImage } from '../utils/categoryImages';
-import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../theme';
+import { COLORS, TYPOGRAPHY, SPACING } from '../theme';
+import { STATIC_RADIUS } from '../theme/constants';
 import ImageCarousel from './ImageCarousel';
 import { haptics } from '../utils/haptics';
 
@@ -18,6 +19,7 @@ interface FeedDealCardProps {
   onBusinessPress?: () => void;
   onWishlistPress?: () => void;
   isWishlisted?: boolean;
+  showDistance?: boolean;  // Show distance badge (default: true)
 }
 
 export default function FeedDealCard({
@@ -26,6 +28,7 @@ export default function FeedDealCard({
   onBusinessPress,
   onWishlistPress,
   isWishlisted = false,
+  showDistance = true,
 }: FeedDealCardProps) {
   const [timeRemaining, setTimeRemaining] = useState('');
 
@@ -129,8 +132,6 @@ export default function FeedDealCard({
         <View style={styles.imageContainer}>
           <ImageCarousel
             images={deal.images || []}
-            height={180}
-            width={180}
             borderRadius={0}
             showPagination={true}
             fallbackImage={getCategoryImage(deal.category)}
@@ -144,16 +145,25 @@ export default function FeedDealCard({
           >
             <Text style={styles.wishlistIcon}>{isWishlisted ? '❤️' : '🤍'}</Text>
           </TouchableOpacity>
+
+          {/* Distance Badge - Only show if distance exists and showDistance is true */}
+          {showDistance && ((deal as any).distance != null || deal.distance_km != null) && (
+            <View style={styles.distanceBadge}>
+              <Text style={styles.distanceText}>
+                📍 {(((deal as any).distance ?? deal.distance_km) as number).toFixed(1)} km away
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Product Info */}
         <View style={styles.productInfo}>
           {/* Title */}
-          <Text style={styles.productTitle} numberOfLines={2} ellipsizeMode="tail">
+          <Text style={styles.productTitle} numberOfLines={1} ellipsizeMode="tail">
             {deal.title}
           </Text>
 
-          {/* Shop Name */}
+          {/* Shop Name - ONLY DIFFERENCE from ShopDealCard */}
           {deal.business && (
             <TouchableOpacity
               style={styles.shopNameContainer}
@@ -195,8 +205,8 @@ export default function FeedDealCard({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.white,
-    borderRadius: 20,
-    width: 180,
+    borderRadius: 0,
+    width: '100%', // Fill wrapper width
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
@@ -206,8 +216,8 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     position: 'relative',
-    width: 180,
-    height: 180,
+    width: '100%',
+    aspectRatio: 1, // Square image container
     backgroundColor: '#f8f9fa',
     overflow: 'hidden',
   },
@@ -231,21 +241,20 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   productInfo: {
-    padding: 12,
+    padding: 8,
   },
   productTitle: {
     fontSize: 14,
     fontWeight: '600',
     color: '#1a1a1a',
-    lineHeight: 18.2,
-    marginBottom: 6,
-    minHeight: 36,
+    lineHeight: 18,
+    marginBottom: 2,
   },
   shopNameContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginBottom: 10,
+    marginBottom: 5,
   },
   shopName: {
     fontSize: 12,
@@ -256,7 +265,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'baseline',
     gap: 8,
-    marginBottom: 10,
+    marginBottom: 5,
   },
   originalPrice: {
     fontSize: 14,
@@ -303,5 +312,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#ff5252',
     fontWeight: '500',
+  },
+  distanceBadge: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    backgroundColor: `${COLORS.secondary}E6`, // 90% opacity
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: STATIC_RADIUS.md,
+  },
+  distanceText: {
+    color: COLORS.white,
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
 });

@@ -170,8 +170,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderBottomWidth: 1,
     borderBottomColor: COLORS.borderLight,
-    marginTop: SPACING.md,
-    marginBottom: SPACING.md,
+    marginTop: 4,
+    marginBottom: 0,
   },
   tab: {
     flex: 1,
@@ -202,7 +202,8 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     lineHeight: 20,
     textAlign: 'center',
-    paddingVertical: SPACING.md,
+    paddingTop: SPACING.md,
+    paddingBottom: 0,
   },
   description: {
     fontSize: TYPOGRAPHY.fontSize.md,

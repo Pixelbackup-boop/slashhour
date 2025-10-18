@@ -13,6 +13,7 @@ import FeedDealCard from '../../components/FeedDealCard';
 import DealCardSkeleton from '../../components/DealCardSkeleton';
 import { useFeed } from '../../hooks/useFeed';
 import { COLORS, TYPOGRAPHY, SPACING, LAYOUT } from '../../theme';
+import { STATIC_RADIUS } from '../../theme/constants';
 
 export default function FeedScreen() {
   const navigation = useNavigation<any>();
@@ -169,9 +170,13 @@ const styles = StyleSheet.create({
   },
   errorMessage: {
     fontSize: TYPOGRAPHY.fontSize.md,
-    color: COLORS.error,
+    color: COLORS.white,
+    backgroundColor: COLORS.error,
+    padding: SPACING.md,
+    borderRadius: STATIC_RADIUS.md,
     textAlign: 'center',
     marginBottom: SPACING.sm,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
   emptyText: {
     fontSize: 64,

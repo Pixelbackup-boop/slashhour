@@ -24,10 +24,16 @@ interface NearYouFeedResponse {
 }
 
 export const feedService = {
-  getYouFollowFeed: async (page: number = 1, limit: number = 20): Promise<FeedResponse> => {
-    const response = await apiClient.get<FeedResponse>(
-      `/feed/you-follow?page=${page}&limit=${limit}`
-    );
+  getYouFollowFeed: async (
+    page: number = 1,
+    limit: number = 20,
+    location?: { lat: number; lng: number }
+  ): Promise<FeedResponse> => {
+    let url = `/feed/you-follow?page=${page}&limit=${limit}`;
+    if (location) {
+      url += `&lat=${location.lat}&lng=${location.lng}`;
+    }
+    const response = await apiClient.get<FeedResponse>(url);
     return response;
   },
 

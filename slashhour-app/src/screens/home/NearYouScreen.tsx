@@ -16,7 +16,8 @@ import { useNavigation } from '@react-navigation/native';
 import { Deal } from '../../types/models';
 import FeedDealCard from '../../components/FeedDealCard';
 import { useNearbyDeals } from '../../hooks/useNearbyDeals';
-import { COLORS, TYPOGRAPHY, SPACING, RADIUS, LAYOUT } from '../../theme';
+import { COLORS, TYPOGRAPHY, SPACING, LAYOUT } from '../../theme';
+import { STATIC_RADIUS } from '../../theme/constants';
 
 export default function NearYouScreen() {
   const navigation = useNavigation<any>();
@@ -149,10 +150,11 @@ export default function NearYouScreen() {
             styles.cardWrapper,
             index % 2 === 0 ? styles.leftCard : styles.rightCard
           ]}>
-            <FeedDealCard deal={item} onPress={() => handleDealPress(item)} />
-            <View style={styles.distanceBadge}>
-              <Text style={styles.distanceText}>📍 {item.distance.toFixed(1)} km away</Text>
-            </View>
+            <FeedDealCard
+              deal={item}
+              onPress={() => handleDealPress(item)}
+              showDistance={true}
+            />
           </View>
         )}
         numColumns={2}
@@ -196,14 +198,13 @@ const styles = StyleSheet.create({
   radiusButton: {
     backgroundColor: COLORS.secondary,
     paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.full,
+    borderRadius: STATIC_RADIUS.round,
   },
   radiusButtonLarge: {
     backgroundColor: COLORS.secondary,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
-    borderRadius: RADIUS.full,
+    borderRadius: STATIC_RADIUS.round,
     marginTop: SPACING.md,
   },
   radiusButtonText: {
@@ -227,20 +228,6 @@ const styles = StyleSheet.create({
     marginLeft: SPACING.xs,
     marginRight: -SPACING.xs,
   },
-  distanceBadge: {
-    position: 'absolute',
-    top: SPACING.sm,
-    right: SPACING.lg,
-    backgroundColor: `${COLORS.secondary}E6`, // 90% opacity
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.md,
-  },
-  distanceText: {
-    color: COLORS.white,
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -258,9 +245,13 @@ const styles = StyleSheet.create({
   },
   errorMessage: {
     fontSize: TYPOGRAPHY.fontSize.md,
-    color: COLORS.error,
+    color: COLORS.white,
+    backgroundColor: COLORS.error,
+    padding: SPACING.md,
+    borderRadius: STATIC_RADIUS.md,
     textAlign: 'center',
     marginBottom: SPACING.md,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
   errorButtonsContainer: {
     flexDirection: 'row',
@@ -271,7 +262,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
-    borderRadius: RADIUS.md,
+    borderRadius: STATIC_RADIUS.md,
   },
   settingsButton: {
     backgroundColor: COLORS.secondary,

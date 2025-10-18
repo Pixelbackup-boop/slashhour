@@ -35,6 +35,7 @@ export interface Business {
   description?: string;
   category: BusinessCategory;
   subcategory?: string;
+  category_last_changed_at?: string;
   location: Location;
   address: string;
   city: string;

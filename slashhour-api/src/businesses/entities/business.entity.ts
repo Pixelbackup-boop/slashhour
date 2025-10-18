@@ -59,6 +59,10 @@ export class Business {
   @Column({ type: 'varchar', length: 50, nullable: true })
   subcategory?: string;
 
+  // Track when category was last changed (can only change once per month)
+  @Column({ type: 'timestamp', nullable: true })
+  category_last_changed_at?: Date;
+
   // Location stored as JSON: {lat: number, lng: number}
   @Column({ type: 'jsonb' })
   location: { lat: number; lng: number };

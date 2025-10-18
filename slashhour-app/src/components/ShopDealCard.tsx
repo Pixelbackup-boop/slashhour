@@ -8,7 +8,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Deal } from '../types/models';
 import { getCategoryImage } from '../utils/categoryImages';
-import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../theme';
+import { COLORS, TYPOGRAPHY, SPACING } from '../theme';
 import ImageCarousel from './ImageCarousel';
 import { haptics } from '../utils/haptics';
 
@@ -17,6 +17,9 @@ interface ShopDealCardProps {
   onPress?: () => void;
   onWishlistPress?: () => void;
   isWishlisted?: boolean;
+  isOwner?: boolean;
+  onEditPress?: () => void;
+  onDeletePress?: () => void;
   style?: import('react-native').StyleProp<import('react-native').ViewStyle>;
 }
 
@@ -25,6 +28,9 @@ export default function ShopDealCard({
   onPress,
   onWishlistPress,
   isWishlisted = false,
+  isOwner = false,
+  onEditPress,
+  onDeletePress,
   style,
 }: ShopDealCardProps) {
   const [timeRemaining, setTimeRemaining] = useState('');
@@ -129,14 +135,40 @@ export default function ShopDealCard({
             fallbackImage={getCategoryImage(deal.category)}
           />
 
-          {/* Wishlist Button */}
-          <TouchableOpacity
-            style={styles.wishlistBtn}
-            onPress={handleWishlistPress}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.wishlistIcon}>{isWishlisted ? '❤️' : '🤍'}</Text>
-          </TouchableOpacity>
+          {/* Owner Actions (Edit/Delete) */}
+          {isOwner ? (
+            <View style={styles.ownerActions}>
+              <TouchableOpacity
+                style={styles.ownerBtn}
+                onPress={() => {
+                  haptics.light();
+                  onEditPress?.();
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.ownerBtnIcon}>✏️</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.ownerBtn, styles.deleteBtn]}
+                onPress={() => {
+                  haptics.medium();
+                  onDeletePress?.();
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.ownerBtnIcon}>🗑️</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            /* Wishlist Button */
+            <TouchableOpacity
+              style={styles.wishlistBtn}
+              onPress={handleWishlistPress}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.wishlistIcon}>{isWishlisted ? '❤️' : '🤍'}</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Product Info */}
@@ -209,6 +241,32 @@ const styles = StyleSheet.create({
   },
   wishlistIcon: {
     fontSize: 18,
+  },
+  ownerActions: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    flexDirection: 'row',
+    gap: 8,
+  },
+  ownerBtn: {
+    width: 34,
+    height: 34,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  deleteBtn: {
+    backgroundColor: 'rgba(255, 82, 82, 0.95)',
+  },
+  ownerBtnIcon: {
+    fontSize: 16,
   },
   productInfo: {
     padding: 8,

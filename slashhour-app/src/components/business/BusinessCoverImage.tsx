@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
     top: SPACING.md,
     right: SPACING.md,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    borderRadius: RADIUS.full,
+    borderRadius: RADIUS.round,
     padding: SPACING.sm,
     paddingHorizontal: SPACING.md,
   },

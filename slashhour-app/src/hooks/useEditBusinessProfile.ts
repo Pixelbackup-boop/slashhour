@@ -14,6 +14,7 @@ interface BusinessHours {
 
 interface EditBusinessFormData {
   business_name: string;
+  slug: string;
   description: string;
   category: string;
   phone: string;
@@ -43,6 +44,7 @@ interface UseEditBusinessProfileReturn {
 export function useEditBusinessProfile(business: Business): UseEditBusinessProfileReturn {
   const [formData, setFormData] = useState<EditBusinessFormData>({
     business_name: business.business_name || '',
+    slug: business.slug || '',
     description: business.description || '',
     category: business.category || '',
     phone: business.phone || '',
@@ -87,6 +89,16 @@ export function useEditBusinessProfile(business: Business): UseEditBusinessProfi
   const validateForm = (): boolean => {
     if (!formData.business_name.trim()) {
       setError('Business name is required');
+      return false;
+    }
+
+    if (!formData.slug.trim()) {
+      setError('URL slug is required');
+      return false;
+    }
+
+    if (formData.slug.length < 3 || formData.slug.length > 50) {
+      setError('URL slug must be between 3 and 50 characters');
       return false;
     }
 
@@ -157,6 +169,7 @@ export function useEditBusinessProfile(business: Business): UseEditBusinessProfi
     // This is important because backend @IsOptional() only works with null/undefined, not empty strings
     const cleanData: any = {
       business_name: formData.business_name.trim(),
+      slug: formData.slug.trim(),
       description: formData.description.trim() || null,
       category: formData.category,
       phone: formData.phone.trim() || null,
@@ -232,6 +245,7 @@ export function useEditBusinessProfile(business: Business): UseEditBusinessProfi
   const resetForm = () => {
     setFormData({
       business_name: business.business_name || '',
+      slug: business.slug || '',
       description: business.description || '',
       category: business.category || '',
       phone: business.phone || '',

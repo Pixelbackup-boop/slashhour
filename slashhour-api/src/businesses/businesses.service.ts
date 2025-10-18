@@ -6,6 +6,7 @@ import { Deal, DealStatus } from '../deals/entities/deal.entity';
 import { UserRedemption } from '../users/entities/user-redemption.entity';
 import { CreateBusinessDto } from './dto/create-business.dto';
 import { UpdateBusinessDto } from './dto/update-business.dto';
+import { UploadService } from '../upload/upload.service';
 
 @Injectable()
 export class BusinessesService {
@@ -16,6 +17,7 @@ export class BusinessesService {
     private dealRepository: Repository<Deal>,
     @InjectRepository(UserRedemption)
     private redemptionRepository: Repository<UserRedemption>,
+    private uploadService: UploadService,
   ) {}
 
   async create(userId: string, createBusinessDto: CreateBusinessDto) {
@@ -127,6 +129,27 @@ export class BusinessesService {
       if (existingBusiness) {
         throw new ConflictException('Business slug already exists');
       }
+    }
+
+    // Check if category is being changed and enforce one-month restriction
+    if (updateBusinessDto.category && updateBusinessDto.category !== business.category) {
+      if (business.category_last_changed_at) {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        if (business.category_last_changed_at > thirtyDaysAgo) {
+          // Calculate days remaining
+          const daysUntilCanChange = Math.ceil(
+            (business.category_last_changed_at.getTime() + 30 * 24 * 60 * 60 * 1000 - Date.now()) / (24 * 60 * 60 * 1000)
+          );
+          throw new ForbiddenException(
+            `Category can only be changed once per month. You can change it again in ${daysUntilCanChange} day(s).`
+          );
+        }
+      }
+
+      // Update the timestamp when category is changed
+      business.category_last_changed_at = new Date();
     }
 
     Object.assign(business, updateBusinessDto);
@@ -265,9 +288,9 @@ export class BusinessesService {
       throw new ForbiddenException('You do not have permission to update this business');
     }
 
-    // Convert to base64 data URI
-    const base64Image = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
-    business.logo_url = base64Image;
+    // Save file to disk and get public URL
+    const logoUrl = await this.uploadService.saveFile(file, 'businesses/logos');
+    business.logo_url = logoUrl;
 
     return await this.businessRepository.save(business);
   }
@@ -286,9 +309,9 @@ export class BusinessesService {
       throw new ForbiddenException('You do not have permission to update this business');
     }
 
-    // Convert to base64 data URI
-    const base64Image = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
-    business.cover_image_url = base64Image;
+    // Save file to disk and get public URL
+    const coverUrl = await this.uploadService.saveFile(file, 'businesses/covers');
+    business.cover_image_url = coverUrl;
 
     return await this.businessRepository.save(business);
   }

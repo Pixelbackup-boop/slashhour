@@ -5,13 +5,20 @@ import { AppModule } from './app.module';
 import { initSentry } from './config/sentry.config';
 import { SentryExceptionFilter } from './common/filters/sentry-exception.filter';
 import { LoggerService } from './common/services/logger.service';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 
 // Initialize Sentry error tracking before anything else
 initSentry();
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bufferLogs: true,
+  });
+
+  // Serve static files from uploads directory
+  app.useStaticAssets(join(process.cwd(), 'uploads'), {
+    prefix: '/uploads',
   });
 
   // Use custom logger

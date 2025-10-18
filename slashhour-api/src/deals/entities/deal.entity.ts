@@ -85,9 +85,6 @@ export class Deal {
   @Column({ type: 'text', array: true, default: '{}' })
   terms_conditions: string[];
 
-  @Column({ type: 'varchar', length: 7, default: '1111111' })
-  valid_days: string; // Mon-Sun bitmap
-
   // Media
   @Column({ type: 'jsonb', default: '[]' })
   images: Array<{ url: string; caption?: string; order: number }>;

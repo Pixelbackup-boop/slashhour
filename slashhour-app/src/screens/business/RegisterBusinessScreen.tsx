@@ -538,10 +538,14 @@ const styles = StyleSheet.create({
     color: COLORS.textInverse,
   },
   error: {
-    color: COLORS.error,
+    color: COLORS.white,
+    backgroundColor: COLORS.error,
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
     marginBottom: SPACING.sm,
     textAlign: 'center',
     fontSize: TYPOGRAPHY.fontSize.sm,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
   requiredNote: {
     fontSize: TYPOGRAPHY.fontSize.sm,

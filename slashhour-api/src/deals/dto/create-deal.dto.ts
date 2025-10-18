@@ -73,11 +73,6 @@ export class CreateDealDto {
   terms_conditions?: string[];
 
   @IsOptional()
-  @IsString()
-  @Length(7, 7)
-  valid_days?: string;
-
-  @IsOptional()
   @IsArray()
   @IsObject({ each: true })
   images?: Array<{ url: string; caption?: string; order: number }>;

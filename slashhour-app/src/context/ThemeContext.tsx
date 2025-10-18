@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useColorScheme } from 'react-native';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { paperTheme, paperDarkTheme } from '../theme/paperTheme';
-import { getColors } from '../theme';
+import { getColors } from '../theme/tokens';
 
 /**
  * Theme Context for managing dark mode state

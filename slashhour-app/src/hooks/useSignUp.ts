@@ -134,8 +134,6 @@ export const useSignUp = (): UseSignUpReturn => {
 
       return { success: true, data: response };
     } catch (err: any) {
-      console.error('❌ Sign up error:', err);
-
       let errorMessage = 'Failed to create account';
 
       if (err.response?.data?.message) {
@@ -154,10 +152,16 @@ export const useSignUp = (): UseSignUpReturn => {
       }
 
       setError(errorMessage);
-      logError(err, {
-        context: 'useSignUp',
-        email: formData.email,
-      });
+
+      // Only log unexpected errors (not validation errors or duplicate user errors)
+      // 400 = Bad Request (validation errors)
+      // 409 = Conflict (duplicate email/phone)
+      if (err.response?.status !== 400 && err.response?.status !== 409) {
+        logError(err, {
+          context: 'useSignUp',
+          email: formData.email,
+        });
+      }
 
       return { success: false };
     } finally {

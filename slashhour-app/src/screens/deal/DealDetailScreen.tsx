@@ -40,16 +40,6 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
     closeRedemptionModal,
   } = useDealDetail(deal);
 
-  // Debug logging for images
-  React.useEffect(() => {
-    console.log('🔍 DealDetailScreen - Deal images:', {
-      hasImages: !!deal.images,
-      imageCount: deal.images?.length || 0,
-      images: deal.images,
-      category: deal.category
-    });
-  }, [deal]);
-
   const getDiscountText = () => {
     if (savings.percentage > 0) {
       return `${savings.percentage}% OFF`;
@@ -252,7 +242,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.full,
+    borderRadius: RADIUS.round,
     alignSelf: 'flex-start',
     marginBottom: SPACING.md,
   },

@@ -17,7 +17,7 @@ export const useLogin = (): UseLoginReturn => {
   const handleLogin = useCallback(async (emailOrPhone: string, password: string) => {
     // Validation
     if (!emailOrPhone || !password) {
-      Alert.alert('Error', 'Please enter email and password');
+      loginFailure('Please enter email and password');
       return;
     }
 
@@ -37,11 +37,27 @@ export const useLogin = (): UseLoginReturn => {
 
       Alert.alert('Success', 'Logged in successfully!');
     } catch (err: any) {
-      console.error('Login failed:', err);
-      const errorMessage = err.response?.data?.message || 'Login failed. Please try again.';
+      // Extract error message from different possible structures
+      let errorMessage = 'Login failed. Please try again.';
+
+      if (err.response?.data?.message) {
+        // NestJS standard error format
+        errorMessage = err.response.data.message;
+      } else if (err.response?.data?.error) {
+        errorMessage = err.response.data.error;
+      } else if (err.message) {
+        // Network or other errors
+        errorMessage = err.message;
+      }
+
       loginFailure(errorMessage);
-      Alert.alert('Login Failed', errorMessage);
-      logError(err, { context: 'useLogin', emailOrPhone });
+
+      // Only log unexpected errors (not authentication failures or validation errors)
+      // 401 = Unauthorized (wrong credentials)
+      // 400 = Bad Request (validation errors like short password)
+      if (err.response?.status !== 401 && err.response?.status !== 400) {
+        logError(err, { context: 'useLogin', emailOrPhone });
+      }
     }
   }, [loginStart, loginSuccess, loginFailure]);
 

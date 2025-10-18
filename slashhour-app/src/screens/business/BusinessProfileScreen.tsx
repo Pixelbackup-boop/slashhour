@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import { useBusinessProfile } from '../../hooks/useBusinessProfile';
 import { useBusinessImageUpload } from '../../hooks/useBusinessImageUpload';
 import { useConversations } from '../../hooks/useConversations';
 import { trackScreenView } from '../../services/analytics';
+import { dealService } from '../../services/api/dealService';
 import ShopDealCard from '../../components/ShopDealCard';
 import DealCardSkeleton from '../../components/DealCardSkeleton';
 import BusinessProfileSkeleton from '../../components/BusinessProfileSkeleton';
@@ -80,15 +81,15 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
     return unsubscribe;
   }, [navigation, refresh]);
 
-  const handleDealPress = (deal: Deal) => {
+  const handleDealPress = useCallback((deal: Deal) => {
     navigation.navigate('DealDetail', { deal });
-  };
+  }, [navigation]);
 
-  const handleEditPress = () => {
+  const handleEditPress = useCallback(() => {
     navigation.navigate('EditBusinessProfile', { business });
-  };
+  }, [navigation, business]);
 
-  const handleLogoPress = async () => {
+  const handleLogoPress = useCallback(async () => {
     if (!isOwner || isUploading) return;
 
     const newLogoUrl = await uploadLogo(businessId);
@@ -99,9 +100,9 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
     } else if (uploadError) {
       Alert.alert('Error', uploadError);
     }
-  };
+  }, [isOwner, isUploading, uploadLogo, businessId, refresh, uploadError]);
 
-  const handleCoverPress = async () => {
+  const handleCoverPress = useCallback(async () => {
     if (!isOwner || isUploading) return;
 
     const newCoverUrl = await uploadCover(businessId);
@@ -112,9 +113,9 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
     } else if (uploadError) {
       Alert.alert('Error', uploadError);
     }
-  };
+  }, [isOwner, isUploading, uploadCover, businessId, refresh, uploadError]);
 
-  const handleMessagePress = async () => {
+  const handleMessagePress = useCallback(async () => {
     if (!business || !user) return;
 
     try {
@@ -133,12 +134,58 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
       console.error('Error starting conversation:', err);
       Alert.alert('Error', 'Failed to start conversation. Please try again.');
     }
-  };
+  }, [business, user, createOrGetConversation, navigation]);
+
+  const handleEditDeal = useCallback((deal: Deal) => {
+    navigation.navigate('EditDeal', {
+      deal,
+      businessId: business!.id,
+      businessName: business!.business_name
+    });
+  }, [navigation, business]);
+
+  const handleDeleteDeal = useCallback(async (deal: Deal) => {
+    Alert.alert(
+      'Delete Deal',
+      'Are you sure you want to delete this deal? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await dealService.deleteDeal(deal.id);
+              refresh();
+              Alert.alert('Success', 'Deal deleted successfully');
+            } catch (error) {
+              console.error('Error deleting deal:', error);
+              Alert.alert('Error', 'Failed to delete deal. Please try again.');
+            }
+          }
+        }
+      ]
+    );
+  }, [refresh]);
 
   const isOwner = user?.id === business?.owner_id;
 
+  // Memoize card style calculation
+  const getCardStyle = useCallback((index: number) => {
+    const isLeftColumn = index % 2 === 0;
+    const isFirstRow = index < 2;
+
+    return {
+      flex: 1,
+      paddingLeft: isLeftColumn ? EDGE_SPACING : COLUMN_GAP / 2,
+      paddingRight: isLeftColumn ? COLUMN_GAP / 2 : EDGE_SPACING,
+      paddingTop: isFirstRow ? ROW_GAP : 0,
+      paddingBottom: ROW_GAP,
+    };
+  }, []);
+
   // Render header component for FlatList
-  const renderListHeader = () => (
+  const renderListHeader = useCallback(() => (
     <>
       <BusinessCoverImage
         coverUrl={coverUrl}
@@ -157,6 +204,7 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
           isUploading={isUploading}
           onLogoPress={handleLogoPress}
           onMessagePress={handleMessagePress}
+          onEditPress={handleEditPress}
         />
 
         <BusinessTabs business={business!} isOwner={isOwner} />
@@ -187,10 +235,10 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
         </View>
       </View>
     </>
-  );
+  ), [coverUrl, isOwner, isUploading, handleCoverPress, business, stats, logoUrl, handleLogoPress, handleMessagePress, handleEditPress, activeBottomTab]);
 
   // Render empty state when no deals
-  const renderEmptyDeals = () => (
+  const renderEmptyDeals = useCallback(() => (
     <View style={styles.bottomTabContent}>
       <View style={styles.emptyState}>
         <Text style={styles.emptyIcon}>📭</Text>
@@ -201,10 +249,10 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
       </View>
       <View style={{ height: LAYOUT.tabBarHeight + SPACING.lg }} />
     </View>
-  );
+  ), []);
 
   // Render reviews tab (coming soon)
-  const renderReviewsTab = () => (
+  const renderReviewsTab = useCallback(() => (
     <View style={styles.bottomTabContent}>
       <View style={styles.comingSoonContainer}>
         <Text style={styles.comingSoonIcon}>⭐</Text>
@@ -215,7 +263,7 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
       </View>
       <View style={{ height: LAYOUT.tabBarHeight + SPACING.lg }} />
     </View>
-  );
+  ), []);
 
   if (isLoading) {
     return (
@@ -268,11 +316,6 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
-        {isOwner && (
-          <TouchableOpacity onPress={handleEditPress} style={styles.editButton}>
-            <Text style={styles.editButtonText}>✏️ Edit</Text>
-          </TouchableOpacity>
-        )}
       </View>
 
       {/* Main Content */}
@@ -296,24 +339,17 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
         ) : (
           <FlashList
             data={deals}
-            renderItem={({ item, index }) => {
-              const isLeftColumn = index % 2 === 0;
-              const isFirstRow = index < 2;
-
-              return (
-                <View
-                  style={{
-                    flex: 1,
-                    paddingLeft: isLeftColumn ? EDGE_SPACING : COLUMN_GAP / 2,
-                    paddingRight: isLeftColumn ? COLUMN_GAP / 2 : EDGE_SPACING,
-                    paddingTop: isFirstRow ? ROW_GAP : 0,
-                    paddingBottom: ROW_GAP,
-                  }}
-                >
-                  <ShopDealCard deal={item} onPress={() => handleDealPress(item)} />
-                </View>
-              );
-            }}
+            renderItem={({ item, index }) => (
+              <View style={getCardStyle(index)}>
+                <ShopDealCard
+                  deal={item}
+                  onPress={() => handleDealPress(item)}
+                  isOwner={isOwner}
+                  onEditPress={() => handleEditDeal(item)}
+                  onDeletePress={() => handleDeleteDeal(item)}
+                />
+              </View>
+            )}
             keyExtractor={(item, index) => `${item.id}-${index}`}
             ListHeaderComponent={renderListHeader}
             numColumns={2}
@@ -412,9 +448,13 @@ const styles = StyleSheet.create({
   },
   errorMessage: {
     fontSize: TYPOGRAPHY.fontSize.md,
-    color: COLORS.error,
+    color: COLORS.white,
+    backgroundColor: COLORS.error,
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
     textAlign: 'center',
     marginBottom: SPACING.lg,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
   retryButton: {
     backgroundColor: COLORS.primary,

@@ -5,6 +5,7 @@ import { Deal, DealStatus } from './entities/deal.entity';
 import { Business } from '../businesses/entities/business.entity';
 import { CreateDealDto } from './dto/create-deal.dto';
 import { UpdateDealDto } from './dto/update-deal.dto';
+import { UploadService } from '../upload/upload.service';
 
 @Injectable()
 export class DealsService {
@@ -13,6 +14,7 @@ export class DealsService {
     private dealRepository: Repository<Deal>,
     @InjectRepository(Business)
     private businessRepository: Repository<Business>,
+    private uploadService: UploadService,
   ) {}
 
   async create(userId: string, businessId: string, createDealDto: CreateDealDto) {
@@ -109,13 +111,13 @@ export class DealsService {
       terms_conditions: body.terms_conditions
         ? JSON.parse(body.terms_conditions)
         : undefined,
-      valid_days: body.valid_days || undefined,
     };
 
-    // Convert uploaded files to base64 data URLs (server-side conversion is faster)
+    // Save uploaded files to disk and get public URLs
     if (files && files.length > 0) {
-      const images = files.map((file, index) => ({
-        url: `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
+      const imageUrls = await this.uploadService.saveFiles(files, 'deals');
+      const images = imageUrls.map((url, index) => ({
+        url,
         order: index,
       }));
       createDealDto.images = images;

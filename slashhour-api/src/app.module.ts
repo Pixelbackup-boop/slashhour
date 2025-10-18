@@ -13,6 +13,7 @@ import { DealsModule } from './deals/deals.module';
 import { SearchModule } from './search/search.module';
 import { RedemptionsModule } from './redemptions/redemptions.module';
 import { ConversationsModule } from './conversations/conversations.module';
+import { UploadModule } from './upload/upload.module';
 import { LoggerService } from './common/services/logger.service';
 
 @Module({
@@ -47,6 +48,7 @@ import { LoggerService } from './common/services/logger.service';
     SearchModule,
     RedemptionsModule,
     ConversationsModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [

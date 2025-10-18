@@ -436,7 +436,7 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.fontSize.md,
     color: COLORS.textPrimary,
     backgroundColor: COLORS.gray100,
-    borderRadius: RADIUS.full,
+    borderRadius: RADIUS.round,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
     paddingTop: Platform.OS === 'ios' ? SPACING.sm : SPACING.xs,
@@ -453,7 +453,7 @@ const styles = StyleSheet.create({
   },
   sendButton: {
     backgroundColor: COLORS.primary,
-    borderRadius: RADIUS.full,
+    borderRadius: RADIUS.round,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
   },
@@ -536,9 +536,13 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: TYPOGRAPHY.fontSize.md,
-    color: COLORS.error,
+    color: COLORS.white,
+    backgroundColor: COLORS.error,
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
     textAlign: 'center',
     marginBottom: SPACING.lg,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
   retryButton: {
     backgroundColor: COLORS.primary,

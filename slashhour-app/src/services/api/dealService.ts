@@ -26,6 +26,10 @@ export interface CreateDealFormData extends Omit<CreateDealData, 'images'> {
   imageUris?: string[]; // URIs from ImagePicker
 }
 
+export interface UpdateDealData extends Partial<CreateDealData> {
+  imageUris?: string[];
+}
+
 export const dealService = {
   /**
    * @deprecated Use createDealWithMultipart instead for better performance

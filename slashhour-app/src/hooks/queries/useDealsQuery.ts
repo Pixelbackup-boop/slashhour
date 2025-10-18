@@ -170,13 +170,18 @@ export function useDeleteDeal() {
  *
  * Example:
  * const { data, isLoading, refetch } = useYouFollowFeed();
+ * const { data, isLoading } = useYouFollowFeed(1, 20, { lat: 40.7, lng: -74.0 });
  */
-export function useYouFollowFeed(page: number = 1, limit: number = 20) {
+export function useYouFollowFeed(
+  page: number = 1,
+  limit: number = 20,
+  location?: { lat: number; lng: number }
+) {
   const { feedService } = require('../../services/api/feedService');
 
   return useQuery({
-    queryKey: ['feed', 'you-follow', { page, limit }],
-    queryFn: () => feedService.getYouFollowFeed(page, limit),
+    queryKey: ['feed', 'you-follow', { page, limit, location }],
+    queryFn: () => feedService.getYouFollowFeed(page, limit, location),
     ...queryOptions.dynamic,
   });
 }

@@ -20,6 +20,7 @@ import BusinessProfileScreen from '../screens/business/BusinessProfileScreen';
 import EditBusinessProfileScreen from '../screens/business/EditBusinessProfileScreen';
 import RegisterBusinessScreen from '../screens/business/RegisterBusinessScreen';
 import CreateDealScreen from '../screens/post/CreateDealScreen';
+import EditDealScreen from '../screens/post/EditDealScreen';
 import { Deal, Business } from '../types/models';
 
 type RootStackParamList = {
@@ -33,6 +34,7 @@ type RootStackParamList = {
   EditBusinessProfile: { business: Business };
   RegisterBusiness: undefined;
   CreateDeal: { businessId: string; businessName: string };
+  EditDeal: { deal: Deal; businessId: string; businessName: string };
   Chat: {
     conversationId: string;
     businessId: string;
@@ -218,6 +220,14 @@ export default function AppNavigator() {
             <Stack.Screen
               name="CreateDeal"
               component={CreateDealScreen}
+              options={{
+                animation: 'fade',
+                animationDuration: 200,
+              }}
+            />
+            <Stack.Screen
+              name="EditDeal"
+              component={EditDealScreen}
               options={{
                 animation: 'fade',
                 animationDuration: 200,

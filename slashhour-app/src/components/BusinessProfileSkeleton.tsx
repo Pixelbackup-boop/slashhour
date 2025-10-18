@@ -14,7 +14,7 @@ export default function BusinessProfileSkeleton() {
         {/* Profile info row */}
         <View style={styles.profileRow}>
           {/* Logo skeleton */}
-          <Skeleton width={80} height={80} borderRadius={RADIUS.full} />
+          <Skeleton width={80} height={80} borderRadius={RADIUS.round} />
 
           {/* Stats skeleton */}
           <View style={styles.stats}>

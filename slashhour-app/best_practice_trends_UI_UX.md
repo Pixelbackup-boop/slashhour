@@ -173,6 +173,340 @@ Label:    10-12px (600)  - Form labels (uppercase)
 
 ---
 
+## 🎨 Theme Constants & Circular Dependencies (Critical Lessons)
+
+### Using STATIC_RADIUS for Early-Load Screens
+**Problem**: Auth screens (LoginScreen, SignUpScreen) load BEFORE the JavaScript module system is fully ready. Importing `RADIUS` from `theme/index.ts` causes "[runtime not ready]: ReferenceError: Property 'RADIUS' doesn't exist"
+
+**Root Cause**: Circular dependency chain during module initialization:
+```
+App.tsx → ThemeContext → paperTheme.ts → (attempts to import from theme/index.ts)
+```
+
+**Solution**: Created `theme/constants.ts` with static values safe to import at module load time:
+
+```typescript
+// ✅ CORRECT - Use STATIC_RADIUS for early-load screens
+import { COLORS, TYPOGRAPHY, SPACING, SIZES } from '../../theme';
+import { STATIC_RADIUS } from '../../theme/constants';
+
+const styles = StyleSheet.create({
+  input: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: STATIC_RADIUS.md,  // Safe, no circular dependency
+    padding: SPACING.md,
+  },
+  button: {
+    backgroundColor: COLORS.primary,
+    borderRadius: STATIC_RADIUS.md,
+  },
+  error: {
+    backgroundColor: COLORS.error,
+    borderRadius: STATIC_RADIUS.md,
+    color: COLORS.white,
+  },
+});
+```
+
+```typescript
+// ❌ WRONG - Don't use RADIUS in early-load screens
+import { RADIUS } from '../../theme';
+
+const styles = StyleSheet.create({
+  input: {
+    borderRadius: RADIUS.md,  // ❌ Error: "[runtime not ready]"
+  },
+});
+```
+
+### When to Use Each Theme Constant
+
+| Constant | Source File | Use Case | Safety |
+|----------|------------|----------|---------|
+| `STATIC_RADIUS` | `theme/constants.ts` | Auth screens, early-load screens, StyleSheet.create() | ✅ Always safe |
+| `RADIUS` | `theme/index.ts` | Authenticated screens, dynamic styles | ✅ Safe after login |
+| `COLORS` | `theme/index.ts` or `tokens.ts` | All screens | ✅ Always safe |
+| `SPACING` | `theme/index.ts` | All screens | ✅ Always safe |
+| `TYPOGRAPHY` | `theme/tokens.ts` | All screens | ✅ Always safe |
+
+### Circular Dependency Prevention Architecture
+
+✅ **Current safe structure** (after fix):
+```
+App.tsx → ThemeContext → paperTheme.ts → tokens.ts ✓
+                      ↘ constants.ts (standalone) ✓
+theme/index.ts → tokens.ts + responsive.ts ✓ (no circles)
+```
+
+❌ **Previous broken structure** (before fix):
+```
+App.tsx → ThemeContext → paperTheme.ts → theme/index.ts ✗ (circular!)
+                                      ↗ responsive.ts ↗
+```
+
+### Files Created to Prevent Circular Dependencies
+
+1. **`theme/constants.ts`** (NEW)
+   - Static values safe to import anywhere
+   - No dependencies on other theme files
+   - Perfect for early-load screens
+   ```typescript
+   export const STATIC_RADIUS = {
+     none: 0,
+     sm: 4,
+     md: 8,      // Most common
+     lg: 12,
+     xl: 16,
+     round: 9999,
+   } as const;
+   ```
+
+2. **`theme/tokens.ts`** (Created earlier for dark mode)
+   - Colors and typography separated from main theme
+   - Imported by both ThemeContext and theme/index.ts
+   - Breaks circular dependency
+
+### Lesson Learned: Module Load Order Matters
+
+**Key insight**: In React Native, screens loaded at app startup (LoginScreen, SignUpScreen) are initialized BEFORE the full module system is ready. Any circular dependencies or complex imports will fail with "[runtime not ready]" errors.
+
+**Best practice**:
+- Keep early-load screens simple
+- Use standalone constants files
+- Avoid complex theme imports in auth screens
+- Test with `--clear` flag after theme changes
+
+### Verification Commands
+
+```bash
+# Check for circular dependencies
+npx madge --circular src/theme/
+
+# Find hardcoded values that should use constants
+grep -r "borderRadius: [0-9]" src/screens --include="*.tsx"
+
+# Test with fresh Metro cache
+npx expo start --clear
+```
+
+## ⚠️ Error & Warning Message Patterns (Critical Lessons)
+
+### Error Message Styling - ALWAYS Follow This Pattern
+**Problem**: Error messages with poor contrast are unreadable
+**Solution**: Consistent error styling across all screens - WHITE text on SOLID color background
+
+```typescript
+error: {
+  color: COLORS.white,                     // WHITE text for maximum contrast
+  backgroundColor: COLORS.error,           // Solid red background (NOT errorLight)
+  padding: SPACING.md,                     // Adequate padding
+  borderRadius: RADIUS.md,                 // Rounded corners
+  marginBottom: SPACING.md,                // Space below error
+  textAlign: 'center',                     // Centered text
+  fontSize: TYPOGRAPHY.fontSize.sm,        // Slightly smaller text
+  fontWeight: TYPOGRAPHY.fontWeight.medium, // Medium weight for readability
+}
+```
+
+### Warning Message Styling
+**Problem**: Yellow text on yellow background is invisible
+**Solution**: Use solid background with white text
+
+```typescript
+warning: {
+  backgroundColor: COLORS.warning,         // Solid warning color (yellow/orange)
+  padding: SPACING.md,
+  borderRadius: RADIUS.md,
+  color: COLORS.white,                     // WHITE text, NOT same color as bg
+  fontSize: TYPOGRAPHY.fontSize.xs,
+  fontWeight: TYPOGRAPHY.fontWeight.medium,
+  textAlign: 'center',
+}
+```
+
+### Button Text Cutoff Prevention
+**Problem**: Button text appears cut off, especially on Android
+**Solution**: Use minHeight instead of height, add proper padding
+
+```typescript
+button: {
+  backgroundColor: COLORS.primary,
+  paddingHorizontal: SPACING.lg,          // Separate horizontal padding
+  paddingVertical: SPACING.md,            // Separate vertical padding
+  borderRadius: RADIUS.md,
+  alignItems: 'center',
+  marginTop: SPACING.sm,
+  minHeight: SIZES.button.lg,             // minHeight instead of height
+  justifyContent: 'center',               // Center content
+},
+buttonText: {
+  ...TYPOGRAPHY.styles.button,
+  color: COLORS.textInverse,
+  lineHeight: Platform.OS === 'android' ? 24 : undefined, // Fix Android clipping
+},
+```
+
+### API Interceptor Patterns - Token Refresh
+**Problem**: 401 interceptor trying to refresh token on login endpoint causes infinite loading
+**Solution**: Skip token refresh for auth endpoints
+
+```typescript
+// In ApiClient.ts response interceptor
+async (error) => {
+  const originalRequest = error.config;
+
+  // Skip token refresh for auth endpoints (login, register, refresh)
+  const isAuthEndpoint = originalRequest.url?.includes('/auth/login') ||
+                         originalRequest.url?.includes('/auth/register') ||
+                         originalRequest.url?.includes('/auth/refresh');
+
+  // Handle 401 Unauthorized (but not for auth endpoints)
+  if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
+    originalRequest._retry = true;
+    // ... token refresh logic
+  }
+
+  return Promise.reject(error);
+}
+```
+
+### Error Logging Best Practices
+**Problem**: Console flooded with expected errors (like login failures, validation errors)
+**Solution**: Only log unexpected errors to monitoring services - NOT user errors
+
+```typescript
+// In Login error handling
+} catch (err: any) {
+  // Extract user-friendly message
+  let errorMessage = 'Login failed. Please try again.';
+  if (err.response?.data?.message) {
+    errorMessage = err.response.data.message;
+  }
+
+  loginFailure(errorMessage);
+
+  // Only log unexpected errors (not authentication or validation failures)
+  // 401 = Unauthorized (wrong credentials) - Expected user error
+  // 400 = Bad Request (validation errors) - Expected user error
+  if (err.response?.status !== 401 && err.response?.status !== 400) {
+    logError(err, { context: 'useLogin', emailOrPhone });
+  }
+}
+```
+
+```typescript
+// In SignUp error handling
+} catch (err: any) {
+  let errorMessage = 'Failed to create account';
+  if (err.response?.data?.message) {
+    errorMessage = err.response.data.message;
+  }
+
+  setError(errorMessage);
+
+  // Only log unexpected errors (not validation or duplicate user errors)
+  // 400 = Bad Request (validation errors) - Expected user error
+  // 409 = Conflict (duplicate email/phone) - Expected user error
+  if (err.response?.status !== 400 && err.response?.status !== 409) {
+    logError(err, { context: 'useSignUp', email: formData.email });
+  }
+}
+```
+
+**IMPORTANT**: Never log expected user errors to Sentry/monitoring services:
+- ❌ Don't log: Wrong passwords (401), validation errors (400), duplicate users (409)
+- ✅ Do log: Server errors (500), network failures, unexpected crashes
+
+### User-Friendly Error Messages
+**Problem**: Technical error messages confuse users
+**Solution**: Translate technical errors to user-friendly messages
+
+❌ **DON'T**: "Invalid credentials"
+✅ **DO**: "Your email or password is wrong, please check"
+
+❌ **DON'T**: "Validation failed: password length"
+✅ **DO**: "Password must be at least 8 characters"
+
+❌ **DON'T**: "Network request failed"
+✅ **DO**: "Unable to connect. Please check your internet connection"
+
+### Consistent Styling Across Similar Screens
+**Rule**: Auth screens (Login, SignUp, etc.) should have IDENTICAL styling
+
+**Checklist for Consistency**:
+- [ ] Error message styles match exactly
+- [ ] Button styles match exactly
+- [ ] Input field styles match exactly
+- [ ] Loading states match exactly
+- [ ] Platform-specific fixes applied to all (Android lineHeight, etc.)
+- [ ] Spacing and padding consistent
+- [ ] Color usage consistent
+
+### Platform-Specific Input Handling
+**Android-specific issues to watch for**:
+
+1. **Text Cutoff**: Always add `lineHeight` for Android
+2. **Input Height**: Android needs explicit height (e.g., 56) vs iOS uses minHeight
+3. **Eye Button Position**: Android positioning differs from iOS
+
+```typescript
+input: {
+  height: Platform.OS === 'android' ? 56 : SIZES.input.md,
+  textAlignVertical: 'center',      // Android needs this
+  includeFontPadding: false,        // Android needs this
+},
+eyeButton: {
+  position: 'absolute',
+  right: SPACING.md,
+  top: Platform.OS === 'android' ? 16 : SPACING.md,  // Different positioning
+  padding: SPACING.xs,
+},
+```
+
+### Backend Error Response Format
+**Always return consistent error structure from backend**:
+
+```typescript
+throw new UnauthorizedException('Your email or password is wrong, please check');
+```
+
+**Frontend should handle**:
+```typescript
+if (err.response?.data?.message) {
+  errorMessage = err.response.data.message;  // NestJS standard format
+} else if (err.response?.data?.error) {
+  errorMessage = err.response.data.error;
+} else if (err.message) {
+  errorMessage = err.message;  // Network errors
+}
+```
+
+### Testing Error States
+**Always test these scenarios**:
+1. Wrong credentials on login
+2. Weak password on signup
+3. Network timeout
+4. Server error (500)
+5. Invalid form data
+6. Token expiration
+7. Platform-specific rendering (iOS and Android)
+
+### Color Contrast Requirements
+**Minimum contrast ratios**:
+- Normal text (14-16px): 4.5:1 ratio
+- Large text (18px+): 3:1 ratio
+- Interactive elements: 3:1 ratio
+
+**Common mistakes**:
+- ❌ Yellow text on yellow background
+- ❌ Light gray text on white background
+- ❌ Primary color text on primary light background
+- ✅ Dark text on light background (7:1+ ratio)
+- ✅ White text on dark background (7:1+ ratio)
+
+---
+
 ## 🔔 Notifications & Messaging
 
 ### Push Notifications
@@ -278,6 +612,98 @@ Elevated Card:  Higher shadow, interactive
 Outlined Card:  Border only, no shadow
 Image Card:     Image + overlay text
 ```
+
+### Deal Card Consistency Pattern
+**Rule**: Cards should have consistent design across the app with conditional sections based on context
+
+**Implementation Pattern**:
+- **ShopDealCard** (Business Profile) = Base card WITHOUT business name
+- **FeedDealCard** (Feed/Search/Near You) = Same card WITH business name added
+
+**Key Styling Requirements**:
+```typescript
+// Both cards MUST share these exact styles:
+card: {
+  backgroundColor: COLORS.white,
+  borderRadius: 0,               // No border radius for grid layouts
+  width: '100%',                 // Fill wrapper width (not fixed 180px)
+  overflow: 'hidden',
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 10 },
+  shadowOpacity: 0.1,
+  shadowRadius: 30,
+  elevation: 5,
+},
+imageContainer: {
+  width: '100%',
+  aspectRatio: 1,               // Square images (not fixed height/width)
+  backgroundColor: '#f8f9fa',
+},
+productInfo: {
+  padding: 8,                    // Compact padding
+},
+productTitle: {
+  fontSize: 14,
+  fontWeight: '600',
+  lineHeight: 18,
+  marginBottom: 2,               // Tight spacing
+},
+priceSection: {
+  marginBottom: 5,               // Consistent spacing
+},
+```
+
+**Only Difference Between Card Types**:
+```typescript
+// FeedDealCard ONLY adds this section between title and price:
+{deal.business && (
+  <TouchableOpacity
+    style={styles.shopNameContainer}
+    onPress={handleBusinessPress}
+  >
+    <Text style={styles.shopName} numberOfLines={1}>
+      {deal.business.business_name}
+    </Text>
+  </TouchableOpacity>
+)}
+```
+
+**Layout Usage** (2-column grid):
+```typescript
+// FlatList/FlashList with numColumns={2}
+<FlatList
+  data={deals}
+  numColumns={2}
+  renderItem={({ item, index }) => (
+    <View style={[
+      styles.cardWrapper,
+      index % 2 === 0 ? styles.leftCard : styles.rightCard
+    ]}>
+      <FeedDealCard deal={item} onPress={() => handleDealPress(item)} />
+    </View>
+  )}
+/>
+
+// Wrapper styles for proper grid spacing
+cardWrapper: {
+  marginBottom: SPACING.md,
+},
+leftCard: {
+  marginRight: SPACING.xs,
+  marginLeft: -SPACING.xs,
+},
+rightCard: {
+  marginLeft: SPACING.xs,
+  marginRight: -SPACING.xs,
+},
+```
+
+**Why This Pattern**:
+- ✅ Consistent visual design across all screens
+- ✅ No duplicate code - one card component per context
+- ✅ Responsive width fills column space properly
+- ✅ Conditional sections based on context (business name only where needed)
+- ✅ Easy to maintain - changes to base styling update both card types
 
 ### Modal Types
 ```
@@ -418,6 +844,8 @@ When the user asks for a feature, **always suggest**:
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0.0 | 2025-10-15 | Initial creation - Comprehensive best practices guide |
+| 1.1.0 | 2025-10-18 | Added critical section: Error & Warning Message Patterns - Lessons from production issues including API interceptor patterns, button text cutoff fixes, color contrast requirements, and platform-specific Android handling |
+| 1.2.0 | 2025-10-18 | Added Deal Card Consistency Pattern - Documented approach for maintaining consistent card designs across different contexts (FeedDealCard vs ShopDealCard) with responsive layouts and conditional sections |
 
 ---
 

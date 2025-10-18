@@ -19,7 +19,7 @@ import { useCreateDeal } from '../../hooks/useCreateDeal';
 import { useBusinessProfile } from '../../hooks/useBusinessProfile';
 import { trackScreenView } from '../../services/analytics';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../../theme';
-import { BusinessCategory } from '../../types/models';
+import { DEAL_CATEGORIES, formatDealDate } from '../../utils/dealUtils';
 
 interface CreateDealScreenProps {
   route: {
@@ -30,30 +30,6 @@ interface CreateDealScreenProps {
   };
   navigation: any;
 }
-
-const CATEGORIES: { value: BusinessCategory; label: string }[] = [
-  { value: 'restaurant', label: 'Restaurant' },
-  { value: 'grocery', label: 'Grocery' },
-  { value: 'fashion', label: 'Fashion' },
-  { value: 'shoes', label: 'Shoes' },
-  { value: 'electronics', label: 'Electronics' },
-  { value: 'home_living', label: 'Home & Living' },
-  { value: 'beauty', label: 'Beauty' },
-  { value: 'health', label: 'Health' },
-];
-
-const VALID_DAYS_OPTIONS = [
-  { value: 'all', label: 'All Days' },
-  { value: 'weekdays', label: 'Weekdays Only' },
-  { value: 'weekends', label: 'Weekends Only' },
-  { value: 'monday', label: 'Monday' },
-  { value: 'tuesday', label: 'Tuesday' },
-  { value: 'wednesday', label: 'Wednesday' },
-  { value: 'thursday', label: 'Thursday' },
-  { value: 'friday', label: 'Friday' },
-  { value: 'saturday', label: 'Saturday' },
-  { value: 'sunday', label: 'Sunday' },
-];
 
 export default function CreateDealScreen({ route, navigation }: CreateDealScreenProps) {
   const { businessId, businessName } = route.params;
@@ -102,11 +78,6 @@ export default function CreateDealScreen({ route, navigation }: CreateDealScreen
         ]
       );
     }
-  };
-
-  const formatDate = (date: Date | null) => {
-    if (!date) return 'Select date';
-    return date.toLocaleDateString();
   };
 
   const pickImage = async () => {
@@ -213,7 +184,7 @@ export default function CreateDealScreen({ route, navigation }: CreateDealScreen
                 Category <Text style={styles.required}>*</Text>
               </Text>
               <View style={styles.categoriesGrid}>
-                {CATEGORIES.map((cat) => (
+                {DEAL_CATEGORIES.map((cat) => (
                   <TouchableOpacity
                     key={cat.value}
                     style={[
@@ -334,7 +305,7 @@ export default function CreateDealScreen({ route, navigation }: CreateDealScreen
                 style={styles.dateButton}
                 onPress={() => setShowEndDatePicker(true)}
               >
-                <Text style={styles.dateButtonText}>{formatDate(formData.expires_at)}</Text>
+                <Text style={styles.dateButtonText}>{formatDealDate(formData.expires_at)}</Text>
               </TouchableOpacity>
               {showEndDatePicker && (
                 <DateTimePicker
@@ -349,31 +320,6 @@ export default function CreateDealScreen({ route, navigation }: CreateDealScreen
                   }}
                 />
               )}
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Valid Days</Text>
-              <View style={styles.validDaysGrid}>
-                {VALID_DAYS_OPTIONS.map((option) => (
-                  <TouchableOpacity
-                    key={option.value}
-                    style={[
-                      styles.validDayChip,
-                      formData.valid_days === option.value && styles.validDayChipActive,
-                    ]}
-                    onPress={() => updateField('valid_days', option.value)}
-                  >
-                    <Text
-                      style={[
-                        styles.validDayChipText,
-                        formData.valid_days === option.value && styles.validDayChipTextActive,
-                      ]}
-                    >
-                      {option.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
             </View>
 
             <View style={styles.inputGroup}>
@@ -455,12 +401,10 @@ const styles = StyleSheet.create({
   errorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.errorLight,
+    backgroundColor: COLORS.error,
     padding: SPACING.md,
     margin: SPACING.md,
     borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.error,
   },
   errorIcon: {
     fontSize: 20,
@@ -469,7 +413,7 @@ const styles = StyleSheet.create({
   errorText: {
     flex: 1,
     fontSize: TYPOGRAPHY.fontSize.sm,
-    color: COLORS.error,
+    color: COLORS.white,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
   businessInfo: {
@@ -545,7 +489,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.backgroundSecondary,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.full,
+    borderRadius: RADIUS.round,
     borderWidth: 1,
     borderColor: COLORS.borderLight,
   },
@@ -583,31 +527,6 @@ const styles = StyleSheet.create({
   dateButtonText: {
     fontSize: TYPOGRAPHY.fontSize.md,
     color: COLORS.textPrimary,
-  },
-  validDaysGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.sm,
-  },
-  validDayChip: {
-    backgroundColor: COLORS.backgroundSecondary,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.borderLight,
-  },
-  validDayChipActive: {
-    backgroundColor: COLORS.secondary,
-    borderColor: COLORS.secondary,
-  },
-  validDayChipText: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    color: COLORS.textSecondary,
-  },
-  validDayChipTextActive: {
-    color: COLORS.white,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
   imagesGrid: {
     flexDirection: 'row',

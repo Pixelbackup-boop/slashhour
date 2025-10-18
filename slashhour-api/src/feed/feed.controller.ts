@@ -12,8 +12,15 @@ export class FeedController {
     @Request() req,
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 20,
+    @Query('lat') lat?: number,
+    @Query('lng') lng?: number,
   ) {
-    return this.feedService.getYouFollowFeed(req.user.id, page, limit);
+    return this.feedService.getYouFollowFeed(
+      req.user.id,
+      page,
+      limit,
+      { lat, lng },
+    );
   }
 
   @Get('near-you')

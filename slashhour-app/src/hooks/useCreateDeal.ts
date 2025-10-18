@@ -3,6 +3,7 @@ import { dealService, CreateDealData, CreateDealFormData as CreateDealMultipartD
 import { logError } from '../config/sentry';
 import { trackEvent, AnalyticsEvent } from '../services/analytics';
 import { BusinessCategory } from '../types/models';
+import { convertValidDaysToBinary } from '../utils/dealUtils';
 
 interface CreateDealFormData {
   title: string;
@@ -186,26 +187,6 @@ export function useCreateDeal(businessId: string): UseCreateDealReturn {
     }
 
     return true;
-  };
-
-  const convertValidDaysToBinary = (validDays: string): string => {
-    // Convert user-friendly format to 7-character binary string (Mon-Sun)
-    // Format: "1111111" where 1 = valid, 0 = not valid
-    // Positions: M T W T F S S
-    const daysMap: { [key: string]: string } = {
-      'all': '1111111',
-      'weekdays': '1111100',
-      'weekends': '0000011',
-      'monday': '1000000',
-      'tuesday': '0100000',
-      'wednesday': '0010000',
-      'thursday': '0001000',
-      'friday': '0000100',
-      'saturday': '0000010',
-      'sunday': '0000001',
-    };
-
-    return daysMap[validDays] || '1111111'; // Default to all days
   };
 
   const handleCreate = async (): Promise<boolean> => {

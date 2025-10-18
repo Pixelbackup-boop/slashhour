@@ -20,6 +20,14 @@ export const businessService = {
   },
 
   /**
+   * Get business by URL slug
+   */
+  getBusinessBySlug: async (slug: string): Promise<Business> => {
+    const response = await apiClient.get<Business>(`/businesses/slug/${slug}`);
+    return response;
+  },
+
+  /**
    * Get all active deals from a business
    */
   getBusinessDeals: async (businessId: string): Promise<Deal[]> => {

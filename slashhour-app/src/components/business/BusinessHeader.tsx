@@ -18,6 +18,7 @@ interface BusinessHeaderProps {
   isUploading: boolean;
   onLogoPress: () => void;
   onMessagePress: () => void;
+  onEditPress: () => void;
 }
 
 function BusinessHeader({
@@ -29,6 +30,7 @@ function BusinessHeader({
   isUploading,
   onLogoPress,
   onMessagePress,
+  onEditPress,
 }: BusinessHeaderProps) {
   return (
     <>
@@ -114,7 +116,14 @@ function BusinessHeader({
         </View>
       </View>
 
-      <Text style={styles.businessName}>{businessName}</Text>
+      <View style={styles.nameRow}>
+        <Text style={styles.businessName}>{businessName}</Text>
+        {isOwner && (
+          <TouchableOpacity onPress={onEditPress} style={styles.editButton}>
+            <Text style={styles.editIcon}>✏️</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </>
   );
 }
@@ -122,7 +131,7 @@ function BusinessHeader({
 const styles = StyleSheet.create({
   topSection: {
     flexDirection: 'row',
-    marginBottom: 0,
+    marginBottom: 8,
     alignItems: 'flex-start',
   },
   logoContainer: {
@@ -160,9 +169,7 @@ const styles = StyleSheet.create({
   logoEditBadge: {
     position: 'absolute',
     bottom: 0,
-    right: 0,
-    backgroundColor: COLORS.primary,
-    borderRadius: RADIUS.full,
+borderRadius: RADIUS.round,
     width: 32,
     height: 32,
     justifyContent: 'center',
@@ -178,15 +185,40 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY.fontWeight.bold,
     color: COLORS.white,
   },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginTop: 0,
+    marginBottom: 0,
+  },
   businessName: {
     ...TYPOGRAPHY.styles.displayMedium,
     color: COLORS.textPrimary,
-    marginBottom: SPACING.sm,
+  },
+  editButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIUS.round,
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.white,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  editIcon: {
+    fontSize: 14,
   },
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginBottom: SPACING.md,
+    marginTop: -8,
   },
   statItem: {
     alignItems: 'center',
@@ -197,6 +229,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: SPACING.sm,
+    marginTop: -8,
   },
   iconButton: {
     width: 40,
@@ -204,7 +237,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderWidth: 1,
     borderColor: COLORS.borderLight,
-    borderRadius: RADIUS.full,
+    borderRadius: RADIUS.round,
     justifyContent: 'center',
     alignItems: 'center',
   },

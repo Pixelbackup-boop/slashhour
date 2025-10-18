@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,13 +10,23 @@ import {
   Platform,
 } from 'react-native';
 import { useLogin } from '../../hooks/useLogin';
-import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SIZES } from '../../theme';
+import { useAuthStore } from '../../stores/useAuthStore';
+import { COLORS, TYPOGRAPHY, SPACING, SIZES } from '../../theme';
+import { STATIC_RADIUS } from '../../theme/constants';
 
 export default function LoginScreen({ navigation }: any) {
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const { isLoading, error, handleLogin: login } = useLogin();
+  const { clearError } = useAuthStore();
+
+  // Clear error when user starts typing
+  useEffect(() => {
+    if (error) {
+      clearError();
+    }
+  }, [emailOrPhone, password]);
 
   const handleLoginPress = () => {
     login(emailOrPhone, password);
@@ -134,7 +144,7 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: RADIUS.md,
+    borderRadius: STATIC_RADIUS.md,
     padding: SPACING.md,
     fontSize: TYPOGRAPHY.fontSize.md,
     marginBottom: SPACING.lg,
@@ -148,7 +158,7 @@ const styles = StyleSheet.create({
   passwordInput: {
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: RADIUS.md,
+    borderRadius: STATIC_RADIUS.md,
     padding: SPACING.md,
     paddingRight: 50,
     fontSize: TYPOGRAPHY.fontSize.md,
@@ -166,11 +176,12 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: COLORS.primary,
-    padding: SPACING.md,
-    borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    borderRadius: STATIC_RADIUS.md,
     alignItems: 'center',
     marginTop: SPACING.sm,
-    height: SIZES.button.lg,
+    minHeight: SIZES.button.lg,
     justifyContent: 'center',
   },
   buttonDisabled: {
@@ -179,12 +190,17 @@ const styles = StyleSheet.create({
   buttonText: {
     ...TYPOGRAPHY.styles.button,
     color: COLORS.textInverse,
+    lineHeight: Platform.OS === 'android' ? 24 : undefined,
   },
   error: {
-    color: COLORS.error,
-    marginBottom: SPACING.sm,
+    color: COLORS.white,
+    backgroundColor: COLORS.error,
+    padding: SPACING.md,
+    borderRadius: STATIC_RADIUS.md,
+    marginBottom: SPACING.md,
     textAlign: 'center',
     fontSize: TYPOGRAPHY.fontSize.sm,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
   signUpLink: {
     marginTop: SPACING.lg,

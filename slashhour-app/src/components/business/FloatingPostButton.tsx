@@ -25,7 +25,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.lg,
-    borderRadius: RADIUS.full,
+    borderRadius: RADIUS.round,
     ...SHADOWS.lg,
     elevation: 8,
   },

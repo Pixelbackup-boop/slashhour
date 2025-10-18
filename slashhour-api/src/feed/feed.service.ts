@@ -19,7 +19,12 @@ export class FeedService {
     private userRepository: Repository<User>,
   ) {}
 
-  async getYouFollowFeed(userId: string, page: number = 1, limit: number = 20) {
+  async getYouFollowFeed(
+    userId: string,
+    page: number = 1,
+    limit: number = 20,
+    locationParams?: LocationParams,
+  ) {
     const skip = (page - 1) * limit;
 
     // Get deals from businesses the user follows, ordered by created_at DESC
@@ -43,6 +48,43 @@ export class FeedService {
       .skip(skip)
       .take(limit)
       .getManyAndCount();
+
+    // If location is provided, calculate distance for each deal
+    if (locationParams?.lat != null && locationParams?.lng != null) {
+      const userLat = locationParams.lat;
+      const userLng = locationParams.lng;
+
+      const dealsWithDistance = deals.map((deal) => {
+        const businessLat = (deal.business.location as any)?.lat;
+        const businessLng = (deal.business.location as any)?.lng;
+
+        let distance = 0;
+        if (businessLat != null && businessLng != null) {
+          distance = this.calculateDistance(
+            userLat,
+            userLng,
+            businessLat,
+            businessLng,
+          );
+        }
+
+        return {
+          ...deal,
+          distance: Math.round(distance * 100) / 100, // Round to 2 decimal places
+        };
+      });
+
+      return {
+        deals: dealsWithDistance,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+          hasMore: page * limit < total,
+        },
+      };
+    }
 
     return {
       deals,

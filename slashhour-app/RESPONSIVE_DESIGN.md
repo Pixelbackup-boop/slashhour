@@ -239,7 +239,7 @@ RADIUS.sm    // 4-6pt (responsive)
 RADIUS.md    // 8-10pt
 RADIUS.lg    // 12-14pt
 RADIUS.xl    // 16-20pt
-RADIUS.full  // 9999 (fully rounded)
+RADIUS.round  // 9999 (fully rounded)
 ```
 
 ### Shadows

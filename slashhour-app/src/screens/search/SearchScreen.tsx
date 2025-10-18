@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primaryBackground,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.full,
+    borderRadius: RADIUS.round,
     borderWidth: 1,
     borderColor: COLORS.primary,
   },

@@ -7,7 +7,8 @@
 
 import { MD3LightTheme, MD3DarkTheme, configureFonts } from 'react-native-paper';
 import type { MD3Theme } from 'react-native-paper';
-import { COLORS_LIGHT, COLORS_DARK, TYPOGRAPHY, RADIUS } from './index';
+import { COLORS_LIGHT, COLORS_DARK, TYPOGRAPHY } from './tokens';
+import { BORDER_RADIUS } from '../utils/responsive';
 
 /**
  * Custom fonts configuration for Paper
@@ -199,7 +200,7 @@ export const paperTheme: MD3Theme = {
     // Backdrop
     backdrop: COLORS_LIGHT.overlay,
   },
-  roundness: RADIUS.md,
+  roundness: BORDER_RADIUS.md,
 };
 
 /**
@@ -273,7 +274,7 @@ export const paperDarkTheme: MD3Theme = {
     // Backdrop
     backdrop: COLORS_DARK.overlay,
   },
-  roundness: RADIUS.md,
+  roundness: BORDER_RADIUS.md,
 };
 
 export default paperTheme;

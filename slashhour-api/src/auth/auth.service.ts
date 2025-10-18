@@ -64,16 +64,16 @@ export class AuthService {
       .getOne();
 
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Your email or password is wrong, please check');
     }
 
     // Verify password
     if (!user.password) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Your email or password is wrong, please check');
     }
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Your email or password is wrong, please check');
     }
 
     // Generate tokens

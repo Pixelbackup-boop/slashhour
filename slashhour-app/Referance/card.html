@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mobile Product Card Component</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .demo-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .demo-label {
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        /* Product Card */
+        .product-card {
+            background: white;
+            border-radius: 20px;
+            width: 180px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor: pointer;
+        }
+
+        .product-card:active {
+            transform: scale(0.97);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Image Container */
+        .image-container {
+            position: relative;
+            width: 100%;
+            height: 180px;
+            background: #f8f9fa;
+            overflow: hidden;
+        }
+
+        .product-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Image Carousel Dots */
+        .carousel-dots {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 6px;
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .dot.active {
+            background: white;
+            width: 18px;
+            border-radius: 3px;
+        }
+
+        /* Wishlist Button */
+        .wishlist-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 34px;
+            height: 34px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .wishlist-btn:active {
+            transform: scale(0.9);
+            background: white;
+        }
+
+        .wishlist-btn svg {
+            width: 18px;
+            height: 18px;
+            stroke: #333;
+            fill: none;
+            stroke-width: 2;
+        }
+
+        .wishlist-btn.liked svg {
+            fill: #ff3b5c;
+            stroke: #ff3b5c;
+        }
+
+        /* Product Info */
+        .product-info {
+            padding: 12px;
+        }
+
+        .product-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1a1a;
+            line-height: 1.3;
+            margin-bottom: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-height: 36px;
+        }
+
+        .shop-name {
+            font-size: 12px;
+            color: #757575;
+            margin-bottom: 10px;
+            font-weight: 400;
+        }
+
+        /* Price Section */
+        .price-section {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .original-price {
+            font-size: 14px;
+            color: #999;
+            text-decoration: line-through;
+            font-weight: 400;
+        }
+
+        .discounted-price {
+            font-size: 20px;
+            font-weight: 700;
+            color: #00BFA5;
+        }
+
+        /* Discount Badge and Timer */
+        .discount-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .discount-badge {
+            background: #ff5252;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            box-shadow: 0 2px 6px rgba(255, 82, 82, 0.3);
+        }
+
+        .timer {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            color: #ff5252;
+            font-weight: 500;
+        }
+
+        .timer-icon {
+            width: 16px;
+            height: 16px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+    
+
+        /* Improved version with gradient accent */
+        .product-card.premium {
+            position: relative;
+            overflow: visible;
+        }
+
+        .product-card.premium::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #ff6ec7, #7873f5, #4fc3f7);
+            border-radius: 22px;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .product-card.premium:hover::before {
+            opacity: 1;
+        }
+
+        /* Mobile specific styles */
+        @media (max-width: 320px) {
+            .product-card {
+                width: 160px;
+            }
+            
+            .image-container {
+                height: 160px;
+            }
+            
+            .discounted-price {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="demo-label">Tap the card to see interaction</div>
+        
+        <!-- Product Card -->
+        <div class="product-card">
+            <div class="image-container">
+                <img class="product-image" src="https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?w=400&h=400&fit=crop" alt="Nike Air Max">
+                
+                <!-- Carousel Dots -->
+                <div class="carousel-dots">
+                    <div class="dot active"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+                
+                <!-- Wishlist Button -->
+                <button class="wishlist-btn" onclick="toggleWishlist(this)">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="product-info">
+                <div class="product-title">Nike Air Max 270 React</div>
+                <div class="shop-name">Nike Official Store</div>
+                
+                <div class="price-section">
+                    <span class="original-price">$150.00</span>
+                    <span class="discounted-price">$89.00</span>
+                </div>
+                
+                <div class="discount-row">
+                    <span class="discount-badge">41% OFF</span>
+                    <div class="timer">
+                        <svg class="timer-icon" fill="#ff5252" viewBox="0 0 24 24">
+                            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.2 3.2.8-1.3-4.5-2.7V7z"/>
+                        </svg>
+                        <span>1d 11h</span>
+                    </div>
+                </div>
+                
+       
+ 
