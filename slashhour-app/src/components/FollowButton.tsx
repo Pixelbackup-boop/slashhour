@@ -99,7 +99,7 @@ export default function FollowButton({
       {isProcessing ? (
         <ActivityIndicator
           size="small"
-          color={isFollowing || variant === 'outline' ? '#FF6B6B' : '#fff'}
+          color={variant === 'outline' ? '#FF6B6B' : '#fff'}
         />
       ) : (
         <Text
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FF6B6B',
   },
   followingButton: {
-    backgroundColor: '#E0E0E0',
+    backgroundColor: '#FF6B6B',
   },
   outlineButton: {
     backgroundColor: 'transparent',
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   followingText: {
-    color: '#666',
+    color: '#fff',
   },
   outlineFollowText: {
     color: '#FF6B6B',

@@ -15,11 +15,12 @@ import { Type } from 'class-transformer';
 
 export class CreateDealDto {
   @IsString()
-  @Length(1, 200)
+  @Length(1, 50)
   title: string;
 
   @IsOptional()
   @IsString()
+  @Length(0, 500)
   description?: string;
 
   @IsNumber({ maxDecimalPlaces: 2 })

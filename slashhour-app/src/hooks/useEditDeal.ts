@@ -3,7 +3,6 @@ import { dealService, UpdateDealData } from '../services/api/dealService';
 import { logError } from '../config/sentry';
 import { trackEvent, AnalyticsEvent } from '../services/analytics';
 import { BusinessCategory, Deal } from '../types/models';
-import { convertValidDaysToBinary, convertBinaryToValidDays } from '../utils/dealUtils';
 
 interface EditDealFormData {
   title: string;
@@ -18,7 +17,6 @@ interface EditDealFormData {
   quantity_available: string;
   max_per_user: string;
   terms_conditions: string[];
-  valid_days: string;
   // For existing images (URLs from server)
   existingImages: { url: string; order: number }[];
   // For new images (local URIs to upload)
@@ -54,7 +52,6 @@ export function useEditDeal(deal: Deal, businessId: string): UseEditDealReturn {
     quantity_available: deal.quantity_available?.toString() || '',
     max_per_user: deal.max_per_user?.toString() || '1',
     terms_conditions: deal.terms_conditions || [],
-    valid_days: convertBinaryToValidDays(deal.valid_days),
     existingImages: deal.images || [],
     newImages: [],
   });
@@ -236,7 +233,6 @@ export function useEditDeal(deal: Deal, businessId: string): UseEditDealReturn {
           ? parseInt(formData.max_per_user, 10)
           : undefined,
         terms_conditions: formData.terms_conditions.length > 0 ? formData.terms_conditions : undefined,
-        valid_days: formData.valid_days ? convertValidDaysToBinary(formData.valid_days) : undefined,
         // Include existing images (keep them) + upload new ones if any
         images: [
           ...formData.existingImages,

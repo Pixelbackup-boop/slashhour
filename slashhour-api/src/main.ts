@@ -7,6 +7,7 @@ import { SentryExceptionFilter } from './common/filters/sentry-exception.filter'
 import { LoggerService } from './common/services/logger.service';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+import * as bodyParser from 'body-parser';
 
 // Initialize Sentry error tracking before anything else
 initSentry();
@@ -14,7 +15,12 @@ initSentry();
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bufferLogs: true,
+    bodyParser: false, // Disable default body parser so we can configure it
   });
+
+  // Configure body parser with increased limits for image uploads
+  app.use(bodyParser.json({ limit: '50mb' }));
+  app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
   // Serve static files from uploads directory
   app.useStaticAssets(join(process.cwd(), 'uploads'), {

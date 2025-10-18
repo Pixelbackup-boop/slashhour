@@ -164,7 +164,7 @@ export default function EditDealScreen({ route, navigation }: EditDealScreenProp
                 placeholder="e.g., 50% Off All Shoes"
                 value={formData.title}
                 onChangeText={(value) => updateField('title', value)}
-                maxLength={100}
+                maxLength={50}
               />
             </View>
 
