@@ -233,12 +233,12 @@ export function useEditDeal(deal: Deal, businessId: string): UseEditDealReturn {
           ? parseInt(formData.max_per_user, 10)
           : undefined,
         terms_conditions: formData.terms_conditions.length > 0 ? formData.terms_conditions : undefined,
-        // Include existing images (keep them) + upload new ones if any
+        // Include existing images (keep them)
+        // Note: Adding new images during update is not currently supported by backend
+        // User can only keep or remove existing images
         images: [
           ...formData.existingImages,
-          // New images will be uploaded separately via multipart if needed
         ],
-        imageUris: formData.newImages.length > 0 ? formData.newImages.map(img => img.uri) : undefined,
       };
 
       // Remove undefined values

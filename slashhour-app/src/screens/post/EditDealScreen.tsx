@@ -14,7 +14,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import * as ImagePicker from 'expo-image-picker';
 import { useEditDeal } from '../../hooks/useEditDeal';
 import { useBusinessProfile } from '../../hooks/useBusinessProfile';
 import { trackScreenView } from '../../services/analytics';
@@ -40,8 +39,6 @@ export default function EditDealScreen({ route, navigation }: EditDealScreenProp
     isLoading,
     error,
     updateField,
-    addNewImage,
-    removeNewImage,
     removeExistingImage,
     handleUpdate,
   } = useEditDeal(deal, businessId);
@@ -49,9 +46,8 @@ export default function EditDealScreen({ route, navigation }: EditDealScreenProp
 
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
 
-  // Determine max images based on verification status
-  const maxImages = business?.is_verified ? 10 : 5;
-  const totalImages = formData.existingImages.length + formData.newImages.length;
+  // Show number of existing images
+  const totalImages = formData.existingImages.length;
 
   React.useEffect(() => {
     trackScreenView('EditDealScreen', { businessId, dealId: deal.id });
@@ -80,35 +76,6 @@ export default function EditDealScreen({ route, navigation }: EditDealScreenProp
           },
         ]
       );
-    }
-  };
-
-  const pickImage = async () => {
-    // Check if max images reached
-    if (totalImages >= maxImages) {
-      Alert.alert(
-        'Maximum Images Reached',
-        `You can upload up to ${maxImages} images${business?.is_verified ? ' (Verified Business)' : ''}. ${!business?.is_verified ? 'Verify your business to upload up to 10 images!' : ''}`
-      );
-      return;
-    }
-
-    // Request permission
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permissionResult.granted) {
-      Alert.alert('Permission Required', 'Please allow access to your photo library to upload images.');
-      return;
-    }
-
-    // Launch image picker
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: false,
-      quality: 0.8,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      addNewImage(result.assets[0].uri);
     }
   };
 
@@ -261,15 +228,12 @@ export default function EditDealScreen({ route, navigation }: EditDealScreenProp
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>📸 Images</Text>
             <Text style={styles.imageCount}>
-              {totalImages} / {maxImages}
-              {business?.is_verified && <Text style={styles.verifiedBadge}> ✓ Verified</Text>}
+              {totalImages} {totalImages === 1 ? 'image' : 'images'}
             </Text>
           </View>
           <View style={styles.card}>
             <Text style={styles.hint}>
-              {business?.is_verified
-                ? 'As a verified business, you can upload up to 10 images.'
-                : `Upload up to 5 images. Get verified to upload up to 10!`}
+              You can remove existing images, but adding new images during edit is not currently supported. To change images, please delete and recreate the deal.
             </Text>
 
             <View style={styles.imagesGrid}>
@@ -285,29 +249,6 @@ export default function EditDealScreen({ route, navigation }: EditDealScreenProp
                   </TouchableOpacity>
                 </View>
               ))}
-
-              {/* New images to upload */}
-              {formData.newImages.map((image, index) => (
-                <View key={`new-${index}`} style={styles.imagePreview}>
-                  <Image source={{ uri: image.uri }} style={styles.imagePreviewImage} />
-                  <View style={styles.newImageBadge}>
-                    <Text style={styles.newImageBadgeText}>NEW</Text>
-                  </View>
-                  <TouchableOpacity
-                    style={styles.imageRemoveButton}
-                    onPress={() => removeNewImage(index)}
-                  >
-                    <Text style={styles.imageRemoveText}>×</Text>
-                  </TouchableOpacity>
-                </View>
-              ))}
-
-              {totalImages < maxImages && (
-                <TouchableOpacity style={styles.addImageButton} onPress={pickImage}>
-                  <Text style={styles.addImageIcon}>+</Text>
-                  <Text style={styles.addImageText}>Add Image</Text>
-                </TouchableOpacity>
-              )}
             </View>
           </View>
         </View>
