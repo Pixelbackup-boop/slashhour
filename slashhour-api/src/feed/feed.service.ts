@@ -1,8 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, LessThanOrEqual, MoreThan } from 'typeorm';
-import { Deal, DealStatus } from '../deals/entities/deal.entity';
-import { User } from '../users/entities/user.entity';
+import { DealStatus } from '../deals/entities/deal.entity';
+import { PrismaService } from '../prisma/prisma.service';
 
 interface LocationParams {
   lat?: number;
@@ -13,10 +11,7 @@ interface LocationParams {
 @Injectable()
 export class FeedService {
   constructor(
-    @InjectRepository(Deal)
-    private dealRepository: Repository<Deal>,
-    @InjectRepository(User)
-    private userRepository: Repository<User>,
+    private prisma: PrismaService,
   ) {}
 
   async getYouFollowFeed(
@@ -28,15 +23,17 @@ export class FeedService {
     const skip = (page - 1) * limit;
 
     // Get user's followed business IDs first
-    const followedBusinessIds = await this.userRepository
-      .createQueryBuilder('user')
-      .innerJoin('follows', 'follow', 'follow.user_id = user.id')
-      .where('user.id = :userId', { userId })
-      .andWhere('follow.status = :status', { status: 'active' })
-      .select('follow.business_id')
-      .getRawMany();
+    const followedBusinesses = await this.prisma.follows.findMany({
+      where: {
+        user_id: userId,
+        status: 'active' as any,
+      },
+      select: {
+        business_id: true,
+      },
+    });
 
-    const businessIds = followedBusinessIds.map(row => row.follow_business_id);
+    const businessIds = followedBusinesses.map(f => f.business_id);
 
     if (businessIds.length === 0) {
       return {
@@ -51,19 +48,31 @@ export class FeedService {
       };
     }
 
+    const now = new Date();
+
     // Get deals from followed businesses with proper relation loading
-    const [deals, total] = await this.dealRepository.findAndCount({
-      where: {
-        business_id: In(businessIds),
-        status: DealStatus.ACTIVE,
-        starts_at: LessThanOrEqual(new Date()),
-        expires_at: MoreThan(new Date()),
-      },
-      relations: ['business'],
-      order: { created_at: 'DESC' },
-      skip,
-      take: limit,
-    });
+    const [deals, total] = await Promise.all([
+      this.prisma.deals.findMany({
+        where: {
+          business_id: { in: businessIds },
+          status: DealStatus.ACTIVE as any,
+          starts_at: { lte: now },
+          expires_at: { gt: now },
+        },
+        include: { businesses: true },
+        orderBy: { created_at: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.deals.count({
+        where: {
+          business_id: { in: businessIds },
+          status: DealStatus.ACTIVE as any,
+          starts_at: { lte: now },
+          expires_at: { gt: now },
+        },
+      }),
+    ]);
 
     // If location is provided, calculate distance for each deal
     if (locationParams?.lat != null && locationParams?.lng != null) {
@@ -71,8 +80,8 @@ export class FeedService {
       const userLng = locationParams.lng;
 
       const dealsWithDistance = deals.map((deal) => {
-        const businessLat = (deal.business.location as any)?.lat;
-        const businessLng = (deal.business.location as any)?.lng;
+        const businessLat = (deal.businesses.location as any)?.lat;
+        const businessLng = (deal.businesses.location as any)?.lng;
 
         let distance = 0;
         if (businessLat != null && businessLng != null) {
@@ -123,13 +132,13 @@ export class FeedService {
     const skip = (page - 1) * limit;
 
     // Get user's default location and radius if not provided
-    const user = await this.userRepository.findOne({ where: { id: userId } });
+    const user = await this.prisma.users.findUnique({ where: { id: userId } });
     if (!user) {
       throw new Error('User not found');
     }
 
-    const lat = locationParams.lat ?? user.default_location?.lat;
-    const lng = locationParams.lng ?? user.default_location?.lng;
+    const lat = locationParams.lat ?? (user.default_location as any)?.lat;
+    const lng = locationParams.lng ?? (user.default_location as any)?.lng;
     const radius = locationParams.radius ?? user.default_radius_km ?? 5;
 
     if (!lat || !lng) {
@@ -137,41 +146,138 @@ export class FeedService {
     }
 
     // Calculate distance using Haversine formula and filter by radius
-    // Using JSONB for location storage, we'll calculate distance in the database
-    const query = this.dealRepository
-      .createQueryBuilder('deal')
-      .leftJoinAndSelect('deal.business', 'business')  // ← Changed from innerJoin + addSelect
-      .where('deal.status = :dealStatus', { dealStatus: 'active' })
-      .andWhere('deal.expires_at > NOW()')
-      .andWhere('deal.starts_at <= NOW()')
-      // Calculate distance using Haversine formula
-      .andWhere(
-        `(
+    // Using raw query for complex geospatial calculation
+    const deals = await this.prisma.$queryRaw<any[]>`
+      SELECT
+        d.*,
+        b.id as "business_id",
+        b.owner_id as "business_owner_id",
+        b.business_name as "business_business_name",
+        b.slug as "business_slug",
+        b.description as "business_description",
+        b.category as "business_category",
+        b.subcategory as "business_subcategory",
+        b.category_last_changed_at as "business_category_last_changed_at",
+        b.location as "business_location",
+        b.address as "business_address",
+        b.city as "business_city",
+        b.state_province as "business_state_province",
+        b.country as "business_country",
+        b.postal_code as "business_postal_code",
+        b.phone as "business_phone",
+        b.email as "business_email",
+        b.website as "business_website",
+        b.hours as "business_hours",
+        b.logo_url as "business_logo_url",
+        b.cover_image_url as "business_cover_image_url",
+        b.images as "business_images",
+        b.follower_count as "business_follower_count",
+        b.total_deals_posted as "business_total_deals_posted",
+        b.total_redemptions as "business_total_redemptions",
+        b.average_rating as "business_average_rating",
+        b.subscription_tier as "business_subscription_tier",
+        b.subscription_expires_at as "business_subscription_expires_at",
+        b.is_verified as "business_is_verified",
+        b.verification_date as "business_verification_date",
+        b.stripe_account_id as "business_stripe_account_id",
+        b.payment_enabled as "business_payment_enabled",
+        b.created_at as "business_created_at",
+        b.updated_at as "business_updated_at"
+      FROM deals d
+      LEFT JOIN businesses b ON d.business_id = b.id
+      WHERE d.status = 'active'
+        AND d.expires_at > NOW()
+        AND d.starts_at <= NOW()
+        AND (
           6371 * acos(
-            cos(radians(:lat)) *
-            cos(radians((business.location->>'lat')::float)) *
-            cos(radians((business.location->>'lng')::float) - radians(:lng)) +
-            sin(radians(:lat)) *
-            sin(radians((business.location->>'lat')::float))
+            cos(radians(${lat})) *
+            cos(radians((b.location->>'lat')::float)) *
+            cos(radians((b.location->>'lng')::float) - radians(${lng})) +
+            sin(radians(${lat})) *
+            sin(radians((b.location->>'lat')::float))
           )
-        ) <= :radius`,
-        { lat, lng, radius },
-      )
-      .orderBy('deal.created_at', 'DESC')
-      .skip(skip)
-      .take(limit);
+        ) <= ${radius}
+      ORDER BY d.created_at DESC
+      LIMIT ${limit}
+      OFFSET ${skip}
+    `;
 
-    const [deals, total] = await query.getManyAndCount();
+    // Get total count for pagination
+    const countResult = await this.prisma.$queryRaw<[{ count: bigint }]>`
+      SELECT COUNT(*) as count
+      FROM deals d
+      LEFT JOIN businesses b ON d.business_id = b.id
+      WHERE d.status = 'active'
+        AND d.expires_at > NOW()
+        AND d.starts_at <= NOW()
+        AND (
+          6371 * acos(
+            cos(radians(${lat})) *
+            cos(radians((b.location->>'lat')::float)) *
+            cos(radians((b.location->>'lng')::float) - radians(${lng})) +
+            sin(radians(${lat})) *
+            sin(radians((b.location->>'lat')::float))
+          )
+        ) <= ${radius}
+    `;
 
-    // Calculate actual distance for each deal
-    const dealsWithDistance = deals.map((deal) => {
-      const businessLat = (deal.business.location as any)?.lat;
-      const businessLng = (deal.business.location as any)?.lng;
+    const total = Number(countResult[0].count);
+
+    // Transform raw results to include business object and calculate distance
+    const dealsWithDistance = deals.map((row) => {
+      // Extract business fields from flattened result
+      const business = {
+        id: row.business_id,
+        owner_id: row.business_owner_id,
+        business_name: row.business_business_name,
+        slug: row.business_slug,
+        description: row.business_description,
+        category: row.business_category,
+        subcategory: row.business_subcategory,
+        category_last_changed_at: row.business_category_last_changed_at,
+        location: row.business_location,
+        address: row.business_address,
+        city: row.business_city,
+        state_province: row.business_state_province,
+        country: row.business_country,
+        postal_code: row.business_postal_code,
+        phone: row.business_phone,
+        email: row.business_email,
+        website: row.business_website,
+        hours: row.business_hours,
+        logo_url: row.business_logo_url,
+        cover_image_url: row.business_cover_image_url,
+        images: row.business_images,
+        follower_count: row.business_follower_count,
+        total_deals_posted: row.business_total_deals_posted,
+        total_redemptions: row.business_total_redemptions,
+        average_rating: row.business_average_rating,
+        subscription_tier: row.business_subscription_tier,
+        subscription_expires_at: row.business_subscription_expires_at,
+        is_verified: row.business_is_verified,
+        verification_date: row.business_verification_date,
+        stripe_account_id: row.business_stripe_account_id,
+        payment_enabled: row.business_payment_enabled,
+        created_at: row.business_created_at,
+        updated_at: row.business_updated_at,
+      };
+
+      const businessLat = (business.location as any)?.lat;
+      const businessLng = (business.location as any)?.lng;
 
       let distance = 0;
       if (businessLat && businessLng) {
         distance = this.calculateDistance(lat, lng, businessLat, businessLng);
       }
+
+      // Remove business_ prefixed fields and add business object
+      const deal: any = { ...row };
+      Object.keys(deal).forEach(key => {
+        if (key.startsWith('business_')) {
+          delete deal[key];
+        }
+      });
+      deal.businesses = business;
 
       return {
         ...deal,
