@@ -20,7 +20,7 @@ interface DealCardProps {
   onBusinessPress?: () => void;
 }
 
-export default function DealCard({ deal, onPress, onBusinessPress }: DealCardProps) {
+export default React.memo(function DealCard({ deal, onPress, onBusinessPress }: DealCardProps) {
   const [timeRemaining, setTimeRemaining] = useState('');
 
   // Animation values
@@ -159,7 +159,7 @@ export default function DealCard({ deal, onPress, onBusinessPress }: DealCardPro
       </Animated.View>
     </Animated.View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   card: {

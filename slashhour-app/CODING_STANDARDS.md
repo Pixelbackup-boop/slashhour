@@ -450,6 +450,558 @@ export interface UserStats {
 
 ---
 
+## 🎓 TypeScript 2025 Best Practices
+
+### Our Codebase Audit Results (January 2025):
+
+**Overall Grade: C+**
+- React Native App: B-
+- NestJS API: D+
+
+**Critical Issues Found:**
+- ❌ NestJS API has strict mode DISABLED
+- ❌ 100+ uses of `any` type in React Native app
+- ❌ 12+ uses of `any` type in NestJS API
+- ❌ Type assertions (`as any`) instead of type guards
+- ❌ Missing discriminated unions for API responses
+
+**Good Practices Found:**
+- ✅ Consistent snake_case usage (avoiding transformation bugs)
+- ✅ React Native app has strict mode enabled
+- ✅ Good utility types usage (Partial, Omit, Record)
+- ✅ Proper literal union types for status fields
+
+---
+
+### ✅ 1. Strict Mode (MUST HAVE)
+
+**Why It Matters:**
+Strict mode catches bugs at compile time instead of runtime. It's the #1 TypeScript best practice for 2025.
+
+**Best Practice:**
+```json
+// tsconfig.json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true
+  }
+}
+```
+
+**Our Status:**
+- ✅ React Native app: `"strict": true` enabled
+- ❌ NestJS API: Missing `"strict": true` - **CRITICAL FIX NEEDED**
+
+**Action Required:**
+Add to `slashhour-api/tsconfig.json`:
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitReturns": true
+  }
+}
+```
+
+---
+
+### ✅ 2. Use `unknown` Over `any` (Type Safety)
+
+**Why It Matters:**
+`any` disables ALL type checking. `unknown` forces you to check types before using values.
+
+**❌ BAD - Found 100+ times in our codebase:**
+```typescript
+function processData(data: any) {
+  return data.value; // No type safety! Runtime error if data.value doesn't exist
+}
+
+// Real example from our code:
+const handleError = (error: any) => {
+  console.error(error.message); // What if error is null?
+};
+```
+
+**✅ GOOD - 2025 way:**
+```typescript
+function processData(data: unknown): string {
+  if (typeof data === 'object' && data !== null && 'value' in data) {
+    return String((data as { value: string }).value);
+  }
+  throw new Error('Invalid data');
+}
+
+// Better error handling:
+const handleError = (error: unknown) => {
+  if (error instanceof Error) {
+    console.error(error.message);
+  } else if (typeof error === 'string') {
+    console.error(error);
+  } else {
+    console.error('Unknown error occurred');
+  }
+};
+```
+
+**Our Violations:**
+```typescript
+// slashhour-app/src/hooks/useEditDeal.ts:266
+catch (err: any) {  // ❌ Should be: catch (err: unknown)
+  if (err.message) {
+    errorMessage = err.message;
+  }
+}
+
+// slashhour-api/src/deals/deals.service.ts:73
+async createWithMultipart(userId: string, businessId: string, body: any, files: Express.Multer.File[]) {
+  // ❌ body should be typed, not any
+}
+```
+
+**Fix Examples:**
+```typescript
+// BEFORE (BAD):
+catch (err: any) {
+  console.error(err.message);
+}
+
+// AFTER (GOOD):
+catch (err: unknown) {
+  if (err instanceof Error) {
+    console.error(err.message);
+  } else {
+    console.error('Unknown error:', err);
+  }
+}
+```
+
+---
+
+### ✅ 3. Avoid Type Assertions (Use Type Guards)
+
+**Why It Matters:**
+Type assertions (`as any`, `as User`) bypass TypeScript's type checking and can cause runtime errors.
+
+**❌ BAD - Found 10+ times in our codebase:**
+```typescript
+const user = data as User; // Unsafe! What if data isn't a User?
+
+// Real example from our code:
+const category = formData.category as BusinessCategory;
+```
+
+**✅ GOOD - Use Type Guards:**
+```typescript
+// Create a type guard
+function isUser(data: unknown): data is User {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'id' in data &&
+    'email' in data &&
+    'username' in data
+  );
+}
+
+// Use it safely
+if (isUser(data)) {
+  console.log(data.email); // Type-safe!
+} else {
+  throw new Error('Invalid user data');
+}
+```
+
+**Create Type Guards for Common Types:**
+```typescript
+// slashhour-app/src/types/guards.ts (NEW FILE to create)
+export function isBusinessCategory(value: unknown): value is BusinessCategory {
+  const validCategories = ['food', 'shopping', 'services', 'entertainment'];
+  return typeof value === 'string' && validCategories.includes(value);
+}
+
+export function isDeal(data: unknown): data is Deal {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'id' in data &&
+    'title' in data &&
+    'original_price' in data &&
+    'discounted_price' in data
+  );
+}
+
+export function isApiError(error: unknown): error is { message: string; status: number } {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    'status' in error
+  );
+}
+```
+
+---
+
+### ✅ 4. Discriminated Unions (Pattern Matching)
+
+**Why It Matters:**
+TypeScript can narrow types automatically when you use discriminated unions.
+
+**❌ BAD - Current in our codebase:**
+```typescript
+// Current ApiResponse allows invalid states:
+interface ApiResponse<T> {
+  success: boolean;
+  data?: T;      // Can be undefined even when success is true!
+  error?: string; // Can be undefined even when success is false!
+}
+
+// This is INVALID but TypeScript allows it:
+const response: ApiResponse<User> = {
+  success: true,
+  // Missing data! Runtime error waiting to happen
+};
+```
+
+**✅ GOOD - 2025 way:**
+```typescript
+// Discriminated union - success determines which properties exist
+type ApiResponse<T> =
+  | { success: true; data: T }
+  | { success: false; error: string; message?: string };
+
+// TypeScript enforces correctness:
+function handleResponse<T>(response: ApiResponse<T>) {
+  if (response.success) {
+    // TypeScript KNOWS data exists here
+    return response.data;
+  } else {
+    // TypeScript KNOWS error exists here
+    throw new Error(response.error);
+  }
+}
+
+// This would fail to compile (good!):
+const invalid: ApiResponse<User> = {
+  success: true,
+  // Error: Property 'data' is missing
+};
+```
+
+**Action Required:**
+Update `slashhour-app/src/types/models.ts` and `slashhour-api/src/common/interfaces/api-response.interface.ts`
+
+---
+
+### ✅ 5. Advanced Utility Types
+
+**Why It Matters:**
+Utility types help you derive new types from existing ones, maintaining type safety.
+
+**Common Utility Types:**
+```typescript
+// Partial - Make all properties optional
+type PartialUser = Partial<User>;
+// Use for: Update operations where not all fields are required
+
+// Pick - Select specific properties
+type UserCredentials = Pick<User, 'email' | 'password'>;
+// Use for: Login forms, DTOs
+
+// Omit - Exclude specific properties
+type UserWithoutPassword = Omit<User, 'password'>;
+// Use for: API responses
+
+// Required - Make all properties required
+type RequiredConfig = Required<AppConfig>;
+// Use for: Validation
+
+// Record - Create object type with specific keys
+type UserMap = Record<string, User>;
+// Use for: Dictionaries, caches
+
+// ReturnType - Extract return type
+type ApiResult = ReturnType<typeof apiClient.getUser>;
+// Use for: Type inference from functions
+```
+
+**Our Usage (Good!):**
+```typescript
+// slashhour-app/src/hooks/useEditDeal.ts
+interface EditDealFormData {
+  // ... fields
+}
+
+// In dealService.ts
+export interface UpdateDealData extends Partial<CreateDealData> {
+  imageUris?: string[];
+}
+// ✅ Good use of Partial for updates
+```
+
+**More Examples:**
+```typescript
+// Extract specific fields for a form
+type DealFormData = Pick<Deal, 'title' | 'description' | 'original_price' | 'discounted_price'>;
+
+// Omit sensitive data from API response
+type PublicUser = Omit<User, 'password' | 'refresh_token'>;
+
+// Create a map of deals by ID
+type DealCache = Record<string, Deal>;
+```
+
+---
+
+### ✅ 6. Template Literal Types (2025 Feature)
+
+**Why It Matters:**
+Enforce specific string patterns at compile time.
+
+**Best Practice:**
+```typescript
+// Enforce specific string patterns
+type DealStatus = 'pending' | 'active' | 'expired' | 'sold_out';
+type DealId = `deal_${string}`;
+type UserId = `user_${string}`;
+type ApiRoute = `/api/v1/${string}`;
+
+// Template literal types for type safety
+function getDeal(id: DealId): Promise<Deal> {
+  // TypeScript ensures id follows the pattern
+  return fetch(`/api/deals/${id}`);
+}
+
+// ✅ Valid
+getDeal('deal_123');
+
+// ❌ Compile error
+getDeal('123'); // Type '"123"' is not assignable to type '`deal_${string}`'
+```
+
+**Our Current Usage (Good!):**
+```typescript
+// slashhour-app/src/types/models.ts
+export type DealStatus = 'pending' | 'active' | 'expired' | 'sold_out';
+export type BusinessCategory = 'food' | 'shopping' | 'services' | 'entertainment';
+// ✅ Good use of literal types
+```
+
+**Enhancement Opportunity:**
+```typescript
+// Add template literal types for IDs:
+type UUID = `${string}-${string}-${string}-${string}-${string}`;
+type DealId = UUID;
+type BusinessId = UUID;
+
+// Enforce in function signatures:
+async function getDealById(id: DealId): Promise<Deal> {
+  // ...
+}
+```
+
+---
+
+### ✅ 7. Type Inference (Let TypeScript Work)
+
+**Why It Matters:**
+Over-annotating reduces readability and makes refactoring harder.
+
+**❌ BAD - Over-annotating:**
+```typescript
+const name: string = "John"; // Redundant
+const age: number = 25; // Redundant
+const active: boolean = true; // Redundant
+const users: User[] = await getUsers(); // Redundant if getUsers() is properly typed
+```
+
+**✅ GOOD - Leverage inference:**
+```typescript
+const name = "John"; // TypeScript infers string
+const age = 25; // TypeScript infers number
+const active = true; // TypeScript infers boolean
+const users = await getUsers(); // Inferred from function return type
+
+// Only annotate when necessary:
+const data: User[] = []; // Good - can't infer empty array type
+const result: ApiResponse<Deal> = await api.post(...); // Good - helps with generic types
+
+// Annotate function parameters (required):
+function processUser(user: User, options: ProcessOptions) {
+  // ...
+}
+
+// Annotate function return types (best practice):
+async function fetchDeals(): Promise<Deal[]> {
+  // ...
+}
+```
+
+**When to Annotate:**
+1. ✅ Function parameters (always)
+2. ✅ Function return types (best practice)
+3. ✅ Empty arrays/objects
+4. ✅ Complex generic types
+5. ❌ Variable assignments where type is obvious
+
+---
+
+### 🔧 TypeScript Error Patterns in Our Codebase
+
+#### Error Pattern 1: Type Inference Failure
+**Symptom:**
+```
+Type '{ url: string; order: number; }[]' is not assignable to type 'never[]'
+```
+
+**Root Cause:**
+```typescript
+// TypeScript infers this as never[]
+let existingImages = [];
+existingImages.push({ url: 'test.jpg', order: 0 }); // ❌ Error!
+```
+
+**Fix:**
+```typescript
+// Add explicit type annotation
+let existingImages: Array<{ url: string; order: number }> = [];
+existingImages.push({ url: 'test.jpg', order: 0 }); // ✅ Works!
+```
+
+**Real Example from Our Code:**
+```typescript
+// slashhour-api/src/deals/deals.service.ts:277-278 (BEFORE FIX)
+let existingImages = [];  // ❌ Inferred as never[]
+let newImages = [];       // ❌ Inferred as never[]
+
+// AFTER FIX:
+let existingImages: Array<{ url: string; order: number }> = [];
+let newImages: Array<{ url: string; order: number }> = [];
+```
+
+#### Error Pattern 2: Property Access on `any`
+**Symptom:**
+No compile error, but runtime error: `Cannot read property 'x' of undefined`
+
+**Root Cause:**
+```typescript
+function handleData(data: any) {
+  console.log(data.user.name); // No compile error, but crashes if data.user is undefined
+}
+```
+
+**Fix:**
+```typescript
+function handleData(data: unknown) {
+  if (
+    typeof data === 'object' &&
+    data !== null &&
+    'user' in data &&
+    typeof data.user === 'object' &&
+    data.user !== null &&
+    'name' in data.user
+  ) {
+    console.log(data.user.name); // Type-safe!
+  }
+}
+
+// Or use optional chaining with proper typing:
+interface DataWithUser {
+  user?: {
+    name: string;
+  };
+}
+
+function handleData(data: DataWithUser) {
+  console.log(data.user?.name); // Type-safe with optional chaining
+}
+```
+
+---
+
+### 📊 TypeScript Best Practices Checklist
+
+#### Before Writing Code:
+- [ ] Is `"strict": true` enabled in tsconfig.json?
+- [ ] Have I read the TypeScript section of TYPESCRIPT_NEXTJS_2025_BEST_PRACTICES.md?
+
+#### While Writing Code:
+- [ ] Am I using `unknown` instead of `any` for error handling?
+- [ ] Am I using `unknown` for uncertain external data?
+- [ ] Are my function parameters properly typed?
+- [ ] Are my function return types explicitly defined?
+- [ ] Am I using type guards instead of type assertions?
+- [ ] Am I using utility types (Partial, Pick, Omit) where appropriate?
+- [ ] Are my empty arrays/objects explicitly typed?
+- [ ] Am I avoiding over-annotation where TypeScript can infer?
+
+#### Before Committing:
+- [ ] Run `npx tsc --noEmit` to check for type errors
+- [ ] Search for `any` in files I modified - can they be `unknown`?
+- [ ] Search for `as any` or `as Type` - can I use type guards instead?
+- [ ] Are all new API response types using discriminated unions?
+- [ ] Have I created type guards for new complex types?
+
+#### Code Review Checklist:
+- [ ] No new `any` types introduced (use `unknown`)
+- [ ] No type assertions without justification
+- [ ] All functions have return type annotations
+- [ ] All error handling uses proper type guards
+- [ ] API responses use discriminated unions
+- [ ] Complex validations use type guard functions
+
+---
+
+### 🎯 Priority Actions for Our Codebase
+
+#### HIGH PRIORITY (Do First):
+1. ❌ **Enable strict mode in NestJS API**
+   - Add `"strict": true` to `slashhour-api/tsconfig.json`
+   - Fix compilation errors that arise
+
+2. ❌ **Replace `any` with `unknown` in error handling**
+   - Search for `catch (err: any)` → replace with `catch (err: unknown)`
+   - Add proper type guards in catch blocks
+
+3. ❌ **Update ApiResponse to discriminated union**
+   - Update all API response interfaces
+   - Ensures compile-time safety for API responses
+
+#### MEDIUM PRIORITY:
+4. ❌ **Create type guards file**
+   - `slashhour-app/src/types/guards.ts`
+   - Add guards for: User, Deal, Business, Category
+
+5. ❌ **Replace type assertions with type guards**
+   - Search for `as User`, `as Deal`, etc.
+   - Replace with proper type guard checks
+
+6. ❌ **Add return type annotations to all functions**
+   - Especially async functions
+   - Makes refactoring safer
+
+#### LOW PRIORITY:
+7. Template literal types for IDs
+8. More comprehensive use of utility types
+9. Stricter tsconfig options (noUncheckedIndexedAccess, etc.)
+
+---
+
+### 📚 TypeScript 2025 References
+
+- [TypeScript 2025 Best Practices](https://dev.to/sovannaro/typescript-best-practices-2025-elevate-your-code-quality-1gh3)
+- [TypeScript Handbook](https://www.typescriptlang.org/docs/handbook/intro.html)
+- [Type Guards and Narrowing](https://www.typescriptlang.org/docs/handbook/2/narrowing.html)
+- [Utility Types](https://www.typescriptlang.org/docs/handbook/utility-types.html)
+- Our internal doc: `TYPESCRIPT_NEXTJS_2025_BEST_PRACTICES.md`
+
+---
+
 ## 🏗️ Clean Architecture
 
 ### Folder Structure:

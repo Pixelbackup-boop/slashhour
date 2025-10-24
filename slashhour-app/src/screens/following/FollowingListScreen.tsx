@@ -78,10 +78,7 @@ export default function FollowingListScreen({ navigation }: any) {
         renderItem={({ item }) => (
           <BusinessCard
             business={item}
-            onPress={() => {
-              // TODO: Navigate to business detail screen when implemented
-              console.log('Tapped business:', item.business_name);
-            }}
+            onPress={() => navigation.navigate('BusinessProfile', { businessId: item.id })}
           />
         )}
         contentContainerStyle={

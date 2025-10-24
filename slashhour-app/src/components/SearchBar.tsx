@@ -40,7 +40,6 @@ export default function SearchBar({
           autoCapitalize="none"
           autoCorrect={false}
           textAlignVertical="center"
-          includeFontPadding={false}
         />
         {value.length > 0 && (
           <TouchableOpacity

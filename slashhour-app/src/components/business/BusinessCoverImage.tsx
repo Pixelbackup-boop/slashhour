@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ImageBackground, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Image } from 'expo-image';
 import { COLORS, SPACING, RADIUS } from '../../theme';
 
 interface BusinessCoverImageProps {
@@ -17,11 +18,14 @@ function BusinessCoverImage({ coverUrl, isOwner, isUploading, onPress }: Busines
       disabled={!isOwner}
     >
       {coverUrl ? (
-        <ImageBackground
-          source={{ uri: coverUrl }}
-          style={styles.coverImage}
-          resizeMode="cover"
-        >
+        <View style={styles.coverImage}>
+          <Image
+            source={{ uri: coverUrl }}
+            style={styles.coverImageBackground}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            transition={200}
+          />
           {isOwner && (
             <View style={styles.coverEditBadge}>
               {isUploading ? (
@@ -31,7 +35,7 @@ function BusinessCoverImage({ coverUrl, isOwner, isUploading, onPress }: Busines
               )}
             </View>
           )}
-        </ImageBackground>
+        </View>
       ) : (
         <View style={styles.coverImagePlaceholder}>
           {isOwner && (
@@ -54,6 +58,11 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 120,
     backgroundColor: COLORS.gray200,
+    position: 'relative',
+  },
+  coverImageBackground: {
+    width: '100%',
+    height: '100%',
   },
   coverImagePlaceholder: {
     width: '100%',

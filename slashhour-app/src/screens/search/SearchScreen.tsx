@@ -41,8 +41,8 @@ export default function SearchScreen({ navigation }: any) {
   };
 
   const handleBusinessPress = (business: any) => {
-    // TODO: Navigate to business detail screen when implemented
-    console.log('Tapped business:', business.business_name);
+    // Navigate to business profile screen
+    navigation.navigate('BusinessProfile', { businessId: business.id });
   };
 
   const renderEmptyState = () => {

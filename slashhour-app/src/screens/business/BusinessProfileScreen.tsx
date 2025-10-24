@@ -15,6 +15,7 @@ import { useUser } from '../../stores/useAuthStore';
 import { useBusinessProfile } from '../../hooks/useBusinessProfile';
 import { useBusinessImageUpload } from '../../hooks/useBusinessImageUpload';
 import { useConversations } from '../../hooks/useConversations';
+import { useTheme } from '../../context/ThemeContext';
 import { trackScreenView } from '../../services/analytics';
 import { dealService } from '../../services/api/dealService';
 import ShopDealCard from '../../components/ShopDealCard';
@@ -26,7 +27,7 @@ import {
   BusinessTabs,
   FloatingPostButton,
 } from '../../components/business';
-import { COLORS, TYPOGRAPHY, SPACING, RADIUS, LAYOUT } from '../../theme';
+import { TYPOGRAPHY, SPACING, RADIUS, LAYOUT } from '../../theme';
 import { Deal } from '../../types/models';
 
 interface BusinessProfileScreenProps {
@@ -40,6 +41,7 @@ interface BusinessProfileScreenProps {
 }
 
 export default function BusinessProfileScreen({ route, navigation }: BusinessProfileScreenProps) {
+  const { colors } = useTheme();
   const { businessId } = route.params;
   const user = useUser();
   const { business, deals, isLoading, isRefreshing, error, stats, refresh } = useBusinessProfile(businessId);
@@ -80,6 +82,9 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
     });
     return unsubscribe;
   }, [navigation, refresh]);
+
+  // Calculate isOwner early so it can be used in callbacks
+  const isOwner = user?.id === business?.owner_id;
 
   const handleDealPress = useCallback((deal: Deal) => {
     navigation.navigate('DealDetail', { deal });
@@ -168,8 +173,6 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
     );
   }, [refresh]);
 
-  const isOwner = user?.id === business?.owner_id;
-
   // Memoize card style calculation
   const getCardStyle = useCallback((index: number) => {
     const isLeftColumn = index % 2 === 0;
@@ -183,6 +186,197 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
       paddingBottom: ROW_GAP,
     };
   }, []);
+
+  // Memoize renderItem for FlashList
+  const renderDealItem = useCallback(
+    ({ item, index }: { item: Deal; index: number }) => (
+      <View style={getCardStyle(index)}>
+        <ShopDealCard
+          deal={item}
+          onPress={() => handleDealPress(item)}
+          isOwner={isOwner}
+          onEditPress={() => handleEditDeal(item)}
+          onDeletePress={() => handleDeleteDeal(item)}
+        />
+      </View>
+    ),
+    [getCardStyle, handleDealPress, isOwner, handleEditDeal, handleDeleteDeal]
+  );
+
+  // Memoize keyExtractor for FlashList
+  const dealKeyExtractor = useCallback(
+    (item: Deal, index: number) => `${item.id}-${index}`,
+    []
+  );
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.backgroundSecondary,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: SPACING.md,
+      backgroundColor: colors.white,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.borderLight,
+    },
+    backButton: {
+      padding: SPACING.sm,
+    },
+    backButtonText: {
+      fontSize: TYPOGRAPHY.fontSize.md,
+      color: colors.primary,
+      fontWeight: TYPOGRAPHY.fontWeight.semibold,
+    },
+    editButton: {
+      backgroundColor: colors.primary,
+      paddingHorizontal: SPACING.md,
+      paddingVertical: SPACING.sm,
+      borderRadius: RADIUS.md,
+    },
+    editButtonText: {
+      color: colors.white,
+      fontSize: TYPOGRAPHY.fontSize.sm,
+      fontWeight: TYPOGRAPHY.fontWeight.semibold,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    centerContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: SPACING.xxl,
+    },
+    errorIcon: {
+      fontSize: 64,
+      marginBottom: SPACING.md,
+    },
+    errorMessage: {
+      fontSize: TYPOGRAPHY.fontSize.md,
+      color: colors.white,
+      backgroundColor: colors.error,
+      padding: SPACING.md,
+      borderRadius: RADIUS.md,
+      textAlign: 'center',
+      marginBottom: SPACING.lg,
+      fontWeight: TYPOGRAPHY.fontWeight.medium,
+    },
+    retryButton: {
+      backgroundColor: colors.primary,
+      paddingHorizontal: SPACING.lg,
+      paddingVertical: SPACING.md,
+      borderRadius: RADIUS.md,
+    },
+    retryButtonText: {
+      color: colors.white,
+      fontSize: TYPOGRAPHY.fontSize.md,
+      fontWeight: TYPOGRAPHY.fontWeight.semibold,
+    },
+    businessCard: {
+      backgroundColor: colors.white,
+      padding: SPACING.lg,
+      paddingTop: SPACING.lg,
+      paddingBottom: 0,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.borderLight,
+    },
+    dealsReviewsSection: {
+      backgroundColor: colors.white,
+      paddingTop: 0,
+    },
+    bottomTabNavigation: {
+      flexDirection: 'row',
+      borderBottomWidth: 1,
+      borderBottomColor: colors.borderLight,
+      paddingHorizontal: SPACING.md,
+    },
+    bottomTab: {
+      flex: 1,
+      paddingTop: SPACING.md,
+      paddingBottom: SPACING.sm,
+      alignItems: 'center',
+      borderBottomWidth: 2,
+      borderBottomColor: 'transparent',
+    },
+    activeBottomTab: {
+      borderBottomColor: colors.primary,
+    },
+    bottomTabText: {
+      fontSize: TYPOGRAPHY.fontSize.md,
+      color: colors.textSecondary,
+      fontWeight: TYPOGRAPHY.fontWeight.medium,
+    },
+    activeBottomTabText: {
+      color: colors.primary,
+      fontWeight: TYPOGRAPHY.fontWeight.bold,
+    },
+    bottomTabContent: {
+      padding: SPACING.md,
+    },
+    comingSoonContainer: {
+      alignItems: 'center',
+      paddingVertical: SPACING.xxl,
+    },
+    comingSoonIcon: {
+      fontSize: 64,
+      marginBottom: SPACING.md,
+    },
+    comingSoonText: {
+      fontSize: TYPOGRAPHY.fontSize.lg,
+      fontWeight: TYPOGRAPHY.fontWeight.bold,
+      color: colors.textPrimary,
+      marginBottom: SPACING.sm,
+    },
+    comingSoonSubtext: {
+      fontSize: TYPOGRAPHY.fontSize.sm,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      paddingHorizontal: SPACING.lg,
+    },
+    emptyState: {
+      backgroundColor: colors.white,
+      borderRadius: RADIUS.lg,
+      padding: SPACING.xxl,
+      alignItems: 'center',
+    },
+    emptyIcon: {
+      fontSize: 64,
+      marginBottom: SPACING.md,
+    },
+    emptyText: {
+      ...TYPOGRAPHY.styles.h3,
+      color: colors.textPrimary,
+      marginBottom: SPACING.sm,
+    },
+    emptySubtext: {
+      fontSize: TYPOGRAPHY.fontSize.sm,
+      color: colors.textSecondary,
+      textAlign: 'center',
+    },
+    dealsGrid: {
+      paddingTop: 0,
+      paddingBottom: SPACING.md,
+    },
+    dealsGridSkeleton: {
+      paddingHorizontal: SPACING.sm,
+      paddingBottom: SPACING.md,
+      backgroundColor: colors.backgroundSecondary,
+    },
+    dealsRowSkeleton: {
+      flexDirection: 'row',
+      justifyContent: 'flex-start',
+      gap: SPACING.sm,
+      marginBottom: SPACING.sm,
+      paddingHorizontal: SPACING.xs,
+    },
+    dealCardWrapper: {
+      flex: 1,
+    },
+  });
 
   // Render header component for FlatList
   const renderListHeader = useCallback(() => (
@@ -198,6 +392,7 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
         <BusinessHeader
           businessId={business!.id}
           businessName={business!.business_name}
+          businessCategory={business!.category}
           logoUrl={logoUrl}
           stats={stats}
           isOwner={isOwner}
@@ -328,8 +523,8 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
               <RefreshControl
                 refreshing={isRefreshing}
                 onRefresh={refresh}
-                colors={[COLORS.primary]}
-                tintColor={COLORS.primary}
+                colors={[colors.primary]}
+                tintColor={colors.primary}
               />
             }
           >
@@ -339,21 +534,10 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
         ) : (
           <FlashList
             data={deals}
-            renderItem={({ item, index }) => (
-              <View style={getCardStyle(index)}>
-                <ShopDealCard
-                  deal={item}
-                  onPress={() => handleDealPress(item)}
-                  isOwner={isOwner}
-                  onEditPress={() => handleEditDeal(item)}
-                  onDeletePress={() => handleDeleteDeal(item)}
-                />
-              </View>
-            )}
-            keyExtractor={(item, index) => `${item.id}-${index}`}
+            renderItem={renderDealItem}
+            keyExtractor={dealKeyExtractor}
             ListHeaderComponent={renderListHeader}
             numColumns={2}
-            estimatedItemSize={300}
             contentContainerStyle={styles.dealsGrid}
             showsVerticalScrollIndicator={false}
             ListFooterComponent={<View style={{ height: LAYOUT.tabBarHeight + SPACING.lg }} />}
@@ -361,8 +545,8 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
               <RefreshControl
                 refreshing={isRefreshing}
                 onRefresh={refresh}
-                colors={[COLORS.primary]}
-                tintColor={COLORS.primary}
+                colors={[colors.primary]}
+                tintColor={colors.primary}
               />
             }
           />
@@ -375,8 +559,8 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
             <RefreshControl
               refreshing={isRefreshing}
               onRefresh={refresh}
-              colors={[COLORS.primary]}
-              tintColor={COLORS.primary}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
             />
           }
         >
@@ -399,172 +583,3 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.backgroundSecondary,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: SPACING.md,
-    backgroundColor: COLORS.white,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderLight,
-  },
-  backButton: {
-    padding: SPACING.sm,
-  },
-  backButtonText: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    color: COLORS.primary,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
-  editButton: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.md,
-  },
-  editButtonText: {
-    color: COLORS.white,
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: SPACING.xxl,
-  },
-  errorIcon: {
-    fontSize: 64,
-    marginBottom: SPACING.md,
-  },
-  errorMessage: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    color: COLORS.white,
-    backgroundColor: COLORS.error,
-    padding: SPACING.md,
-    borderRadius: RADIUS.md,
-    textAlign: 'center',
-    marginBottom: SPACING.lg,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
-  },
-  retryButton: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    borderRadius: RADIUS.md,
-  },
-  retryButtonText: {
-    color: COLORS.white,
-    fontSize: TYPOGRAPHY.fontSize.md,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
-  businessCard: {
-    backgroundColor: COLORS.white,
-    padding: SPACING.lg,
-    paddingTop: SPACING.lg,
-    paddingBottom: 0,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderLight,
-  },
-  dealsReviewsSection: {
-    backgroundColor: COLORS.white,
-    paddingTop: 0,
-  },
-  bottomTabNavigation: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderLight,
-    paddingHorizontal: SPACING.md,
-  },
-  bottomTab: {
-    flex: 1,
-    paddingTop: SPACING.md,
-    paddingBottom: SPACING.sm,
-    alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  activeBottomTab: {
-    borderBottomColor: COLORS.primary,
-  },
-  bottomTabText: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    color: COLORS.textSecondary,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
-  },
-  activeBottomTabText: {
-    color: COLORS.primary,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
-  },
-  bottomTabContent: {
-    padding: SPACING.md,
-  },
-  comingSoonContainer: {
-    alignItems: 'center',
-    paddingVertical: SPACING.xxl,
-  },
-  comingSoonIcon: {
-    fontSize: 64,
-    marginBottom: SPACING.md,
-  },
-  comingSoonText: {
-    fontSize: TYPOGRAPHY.fontSize.lg,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
-    color: COLORS.textPrimary,
-    marginBottom: SPACING.sm,
-  },
-  comingSoonSubtext: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    paddingHorizontal: SPACING.lg,
-  },
-  emptyState: {
-    backgroundColor: COLORS.white,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.xxl,
-    alignItems: 'center',
-  },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: SPACING.md,
-  },
-  emptyText: {
-    ...TYPOGRAPHY.styles.h3,
-    color: COLORS.textPrimary,
-    marginBottom: SPACING.sm,
-  },
-  emptySubtext: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-  },
-  dealsGrid: {
-    paddingTop: 0,
-    paddingBottom: SPACING.md,
-  },
-  dealsGridSkeleton: {
-    paddingHorizontal: SPACING.sm,
-    paddingBottom: SPACING.md,
-    backgroundColor: COLORS.backgroundSecondary,
-  },
-  dealsRowSkeleton: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    gap: SPACING.sm,
-    marginBottom: SPACING.sm,
-    paddingHorizontal: SPACING.xs,
-  },
-  dealCardWrapper: {
-    flex: 1,
-  },
-});

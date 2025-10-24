@@ -61,7 +61,6 @@ export default function SignUpScreen({ navigation }: any) {
               autoCapitalize="words"
               editable={!isLoading}
               textAlignVertical="center"
-              includeFontPadding={false}
             />
 
             <Text style={styles.label}>Email</Text>
@@ -74,7 +73,6 @@ export default function SignUpScreen({ navigation }: any) {
               keyboardType="email-address"
               editable={!isLoading}
               textAlignVertical="center"
-              includeFontPadding={false}
             />
 
             <Text style={styles.label}>Phone (Optional)</Text>
@@ -86,7 +84,6 @@ export default function SignUpScreen({ navigation }: any) {
               keyboardType="phone-pad"
               editable={!isLoading}
               textAlignVertical="center"
-              includeFontPadding={false}
             />
 
             <Text style={styles.label}>Password</Text>
@@ -99,8 +96,7 @@ export default function SignUpScreen({ navigation }: any) {
                 secureTextEntry={!showPassword}
                 editable={!isLoading}
                 textAlignVertical="center"
-                includeFontPadding={false}
-              />
+                />
               <TouchableOpacity
                 style={styles.eyeButton}
                 onPress={() => setShowPassword(!showPassword)}
@@ -120,8 +116,7 @@ export default function SignUpScreen({ navigation }: any) {
                 secureTextEntry={!showConfirmPassword}
                 editable={!isLoading}
                 textAlignVertical="center"
-                includeFontPadding={false}
-              />
+                />
               <TouchableOpacity
                 style={styles.eyeButton}
                 onPress={() => setShowConfirmPassword(!showConfirmPassword)}

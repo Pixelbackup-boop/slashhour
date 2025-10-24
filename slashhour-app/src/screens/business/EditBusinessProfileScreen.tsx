@@ -147,14 +147,20 @@ export default function EditBusinessProfileScreen({ route, navigation }: EditBus
 
       // Get current GPS coordinates
       const location = await LocationService.getCurrentLocation();
-      console.log('📍 Got GPS coordinates:', location);
+
+      if (__DEV__) {
+        console.log('📍 Got GPS coordinates:', location);
+      }
 
       // Reverse geocode to get address
       const address = await ReverseGeocodeService.getAddressFromCoordinates(
         location.latitude,
         location.longitude
       );
-      console.log('📍 Got address:', address);
+
+      if (__DEV__) {
+        console.log('📍 Got address:', address);
+      }
 
       // Store GPS coordinates first
       setCoordinates(location.latitude, location.longitude);
@@ -166,8 +172,8 @@ export default function EditBusinessProfileScreen({ route, navigation }: EditBus
       if (address.city) {
         updateField('city', address.city);
       }
-      if (address.state) {
-        updateField('state_province', address.state);
+      if (address.region) {
+        updateField('state_province', address.region);
       }
       if (address.country) {
         updateField('country', address.country);
@@ -176,10 +182,12 @@ export default function EditBusinessProfileScreen({ route, navigation }: EditBus
         updateField('postal_code', address.postalCode);
       }
 
-      console.log('✅ Location auto-filled successfully with coordinates:', {
-        lat: location.latitude,
-        lng: location.longitude,
-      });
+      if (__DEV__) {
+        console.log('✅ Location auto-filled successfully with coordinates:', {
+          lat: location.latitude,
+          lng: location.longitude,
+        });
+      }
 
       Alert.alert(
         'Location Detected! ✅',

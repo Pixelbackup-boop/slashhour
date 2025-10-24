@@ -47,7 +47,9 @@ export default function RegisterBusinessScreen({ navigation }: any) {
       // 2. Requesting permissions (if not granted) - Native permission dialog (both platforms)
       const location = await LocationService.getCurrentLocation();
 
-      console.log('📍 Got GPS coordinates:', location);
+      if (__DEV__) {
+        console.log('📍 Got GPS coordinates:', location);
+      }
 
       // Reverse geocode to get address
       const address = await ReverseGeocodeService.getAddressFromCoordinates(
@@ -55,7 +57,9 @@ export default function RegisterBusinessScreen({ navigation }: any) {
         location.longitude
       );
 
-      console.log('📍 Got address:', address);
+      if (__DEV__) {
+        console.log('📍 Got address:', address);
+      }
 
       // Store GPS coordinates first
       setCoordinates(location.latitude, location.longitude);
@@ -77,10 +81,12 @@ export default function RegisterBusinessScreen({ navigation }: any) {
         updateField('postal_code', address.postalCode);
       }
 
-      console.log('✅ Location auto-filled successfully with coordinates:', {
-        lat: location.latitude,
-        lng: location.longitude,
-      });
+      if (__DEV__) {
+        console.log('✅ Location auto-filled successfully with coordinates:', {
+          lat: location.latitude,
+          lng: location.longitude,
+        });
+      }
 
       Alert.alert(
         'Location Detected! ✅',
@@ -101,15 +107,15 @@ export default function RegisterBusinessScreen({ navigation }: any) {
       if (error.message === 'LOCATION_SERVICES_DISABLED') {
         title = 'Location Services Required';
         message = 'You declined to enable location services. Please enable them manually in Settings to use this feature, or enter your address manually.';
-        console.log('ℹ️ User declined to enable location services');
+        if (__DEV__) console.log('ℹ️ User declined to enable location services');
       } else if (error.message === 'LOCATION_PERMISSION_DENIED') {
         title = 'Location Permission Required';
         message = 'You declined to grant location permission. Please enable it manually in Settings to use this feature, or enter your address manually.';
-        console.log('ℹ️ User declined location permission');
+        if (__DEV__) console.log('ℹ️ User declined location permission');
       } else if (error.message === 'LOCATION_TIMEOUT') {
         title = 'Location Timeout';
         message = 'Could not get your location. Please make sure you have good GPS signal and try again, or enter your address manually.';
-        console.log('ℹ️ Location timeout');
+        if (__DEV__) console.log('ℹ️ Location timeout');
       } else if (error.message?.includes('Network')) {
         title = 'Network Error';
         message = 'Could not convert your location to an address. Please check your internet connection and try again.';
@@ -205,7 +211,6 @@ export default function RegisterBusinessScreen({ navigation }: any) {
             autoCapitalize="words"
             editable={!isLoading}
             textAlignVertical="center"
-            includeFontPadding={false}
           />
 
           <Text style={styles.label}>Category *</Text>
@@ -275,7 +280,6 @@ export default function RegisterBusinessScreen({ navigation }: any) {
             autoCapitalize="words"
             editable={!isLoading}
             textAlignVertical="center"
-            includeFontPadding={false}
           />
 
           <Text style={styles.label}>City *</Text>
@@ -287,7 +291,6 @@ export default function RegisterBusinessScreen({ navigation }: any) {
             autoCapitalize="words"
             editable={!isLoading}
             textAlignVertical="center"
-            includeFontPadding={false}
           />
 
           <View style={styles.row}>
@@ -301,8 +304,7 @@ export default function RegisterBusinessScreen({ navigation }: any) {
                 autoCapitalize="characters"
                 editable={!isLoading}
                 textAlignVertical="center"
-                includeFontPadding={false}
-              />
+                  />
             </View>
 
             <View style={styles.halfWidth}>
@@ -315,8 +317,7 @@ export default function RegisterBusinessScreen({ navigation }: any) {
                 keyboardType="default"
                 editable={!isLoading}
                 textAlignVertical="center"
-                includeFontPadding={false}
-              />
+                  />
             </View>
           </View>
 
@@ -330,7 +331,6 @@ export default function RegisterBusinessScreen({ navigation }: any) {
             maxLength={2}
             editable={!isLoading}
             textAlignVertical="center"
-            includeFontPadding={false}
           />
 
           <Text style={styles.sectionTitle}>Contact Information</Text>
@@ -344,7 +344,6 @@ export default function RegisterBusinessScreen({ navigation }: any) {
             keyboardType="phone-pad"
             editable={!isLoading}
             textAlignVertical="center"
-            includeFontPadding={false}
           />
 
           <Text style={styles.label}>Email</Text>
@@ -357,7 +356,6 @@ export default function RegisterBusinessScreen({ navigation }: any) {
             autoCapitalize="none"
             editable={!isLoading}
             textAlignVertical="center"
-            includeFontPadding={false}
           />
 
           <Text style={styles.label}>Website</Text>
@@ -370,7 +368,6 @@ export default function RegisterBusinessScreen({ navigation }: any) {
             autoCapitalize="none"
             editable={!isLoading}
             textAlignVertical="center"
-            includeFontPadding={false}
           />
 
           {error && <Text style={styles.error}>{error}</Text>}

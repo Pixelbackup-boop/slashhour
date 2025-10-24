@@ -1,13 +1,14 @@
 import React, { useState, useRef } from 'react';
 import {
   View,
-  Image,
   ScrollView,
   StyleSheet,
   NativeSyntheticEvent,
   NativeScrollEvent,
   LayoutChangeEvent,
+  DimensionValue,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { COLORS, SPACING, RADIUS } from '../theme';
 
 interface ImageCarouselProps {
@@ -60,7 +61,7 @@ export default function ImageCarousel({
   const actualHeight = height || containerHeight;
 
   // Determine container style
-  const containerStyle = width && height
+  const containerStyle: { width: DimensionValue; height: DimensionValue } = width && height
     ? { width, height }
     : { width: width || '100%', height: height || '100%' };
 
@@ -75,7 +76,9 @@ export default function ImageCarousel({
         <Image
           source={imageSource}
           style={[styles.image, { width: '100%', height: '100%', borderRadius }]}
-          resizeMode="cover"
+          contentFit="cover"
+          cachePolicy="memory-disk"
+          transition={200}
         />
       </View>
     );
@@ -101,7 +104,9 @@ export default function ImageCarousel({
             key={`${image.url}-${index}`}
             source={{ uri: image.url }}
             style={[styles.image, { width: actualWidth, height: actualHeight, borderRadius }]}
-            resizeMode="cover"
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            transition={200}
           />
         ))}
       </ScrollView>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,25 +12,126 @@ import { Deal } from '../../types/models';
 import FeedDealCard from '../../components/FeedDealCard';
 import DealCardSkeleton from '../../components/DealCardSkeleton';
 import { useFeed } from '../../hooks/useFeed';
-import { COLORS, TYPOGRAPHY, SPACING, LAYOUT } from '../../theme';
+import { useTheme } from '../../context/ThemeContext';
+import { TYPOGRAPHY, SPACING, LAYOUT } from '../../theme';
 import { STATIC_RADIUS } from '../../theme/constants';
 
 export default function FeedScreen() {
+  const { colors } = useTheme();
   const navigation = useNavigation<any>();
   const { deals, isLoading, error, isRefreshing, handleRefresh } = useFeed();
 
-  const handleDealPress = (deal: Deal) => {
+  const handleDealPress = useCallback((deal: Deal) => {
     navigation.navigate('DealDetail', { deal });
-  };
+  }, [navigation]);
 
-  const handleBusinessPress = (deal: Deal) => {
+  const handleBusinessPress = useCallback((deal: Deal) => {
     if (deal.business?.id) {
       navigation.navigate('BusinessProfile', {
         businessId: deal.business.id,
         businessName: deal.business.business_name,
       });
     }
-  };
+  }, [navigation]);
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.backgroundSecondary,
+    },
+    header: {
+      backgroundColor: colors.white,
+      padding: SPACING.md,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.borderLight,
+    },
+    headerTitle: {
+      ...TYPOGRAPHY.styles.h1,
+      color: colors.textPrimary,
+    },
+    headerSubtitle: {
+      fontSize: TYPOGRAPHY.fontSize.sm,
+      color: colors.textSecondary,
+      marginTop: SPACING.xs,
+    },
+    listContent: {
+      paddingHorizontal: SPACING.xs,
+      paddingTop: SPACING.md,
+      paddingBottom: LAYOUT.tabBarHeight + SPACING.xxl,
+    },
+    cardWrapper: {
+      marginBottom: SPACING.md,
+    },
+    leftCard: {
+      marginRight: SPACING.xs,
+      marginLeft: -SPACING.xs,
+    },
+    rightCard: {
+      marginLeft: SPACING.xs,
+      marginRight: -SPACING.xs,
+    },
+    centerContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: SPACING.xxl,
+    },
+    loadingText: {
+      marginTop: SPACING.md,
+      fontSize: TYPOGRAPHY.fontSize.md,
+      color: colors.textSecondary,
+    },
+    errorText: {
+      fontSize: 64,
+      marginBottom: SPACING.md,
+    },
+    errorMessage: {
+      fontSize: TYPOGRAPHY.fontSize.md,
+      color: colors.white,
+      backgroundColor: colors.error,
+      padding: SPACING.md,
+      borderRadius: STATIC_RADIUS.md,
+      textAlign: 'center',
+      marginBottom: SPACING.sm,
+      fontWeight: TYPOGRAPHY.fontWeight.medium,
+    },
+    emptyText: {
+      fontSize: 64,
+      marginBottom: SPACING.md,
+    },
+    emptyMessage: {
+      ...TYPOGRAPHY.styles.h3,
+      color: colors.textPrimary,
+      marginBottom: SPACING.sm,
+    },
+    emptySubtext: {
+      fontSize: TYPOGRAPHY.fontSize.sm,
+      color: colors.textSecondary,
+      textAlign: 'center',
+    },
+  });
+
+  // Memoize renderItem for FlashList (after styles is created)
+  const renderDealItem = useCallback(
+    ({ item, index }: { item: Deal; index: number }) => (
+      <View
+        style={[
+          styles.cardWrapper,
+          index % 2 === 0 ? styles.leftCard : styles.rightCard,
+        ]}
+      >
+        <FeedDealCard
+          deal={item}
+          onPress={() => handleDealPress(item)}
+          onBusinessPress={() => handleBusinessPress(item)}
+        />
+      </View>
+    ),
+    [handleDealPress, handleBusinessPress, styles]
+  );
+
+  // Memoize keyExtractor for FlashList
+  const feedKeyExtractor = useCallback((item: Deal) => item.id, []);
 
   if (isLoading) {
     return (
@@ -89,107 +190,19 @@ export default function FeedScreen() {
       </View>
       <FlashList
         data={deals}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item, index }) => (
-          <View style={[
-            styles.cardWrapper,
-            index % 2 === 0 ? styles.leftCard : styles.rightCard
-          ]}>
-            <FeedDealCard
-              deal={item}
-              onPress={() => handleDealPress(item)}
-              onBusinessPress={() => handleBusinessPress(item)}
-            />
-          </View>
-        )}
+        keyExtractor={feedKeyExtractor}
+        renderItem={renderDealItem}
         numColumns={2}
         contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={handleRefresh}
-            colors={[COLORS.primary]}
-            tintColor={COLORS.primary}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
           />
         }
       />
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.backgroundSecondary,
-  },
-  header: {
-    backgroundColor: COLORS.white,
-    padding: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderLight,
-  },
-  headerTitle: {
-    ...TYPOGRAPHY.styles.h1,
-    color: COLORS.textPrimary,
-  },
-  headerSubtitle: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    color: COLORS.textSecondary,
-    marginTop: SPACING.xs,
-  },
-  listContent: {
-    paddingHorizontal: SPACING.xs,
-    paddingTop: SPACING.md,
-    paddingBottom: LAYOUT.tabBarHeight + SPACING.xxl,
-  },
-  cardWrapper: {
-    marginBottom: SPACING.md,
-  },
-  leftCard: {
-    marginRight: SPACING.xs,
-    marginLeft: -SPACING.xs,
-  },
-  rightCard: {
-    marginLeft: SPACING.xs,
-    marginRight: -SPACING.xs,
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: SPACING.xxl,
-  },
-  loadingText: {
-    marginTop: SPACING.md,
-    fontSize: TYPOGRAPHY.fontSize.md,
-    color: COLORS.textSecondary,
-  },
-  errorText: {
-    fontSize: 64,
-    marginBottom: SPACING.md,
-  },
-  errorMessage: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    color: COLORS.white,
-    backgroundColor: COLORS.error,
-    padding: SPACING.md,
-    borderRadius: STATIC_RADIUS.md,
-    textAlign: 'center',
-    marginBottom: SPACING.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
-  },
-  emptyText: {
-    fontSize: 64,
-    marginBottom: SPACING.md,
-  },
-  emptyMessage: {
-    ...TYPOGRAPHY.styles.h3,
-    color: COLORS.textPrimary,
-    marginBottom: SPACING.sm,
-  },
-  emptySubtext: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-  },
-});

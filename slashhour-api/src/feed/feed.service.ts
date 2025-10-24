@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Deal } from '../deals/entities/deal.entity';
+import { Repository, In, LessThanOrEqual, MoreThan } from 'typeorm';
+import { Deal, DealStatus } from '../deals/entities/deal.entity';
 import { User } from '../users/entities/user.entity';
 
 interface LocationParams {
@@ -27,27 +27,43 @@ export class FeedService {
   ) {
     const skip = (page - 1) * limit;
 
-    // Get deals from businesses the user follows, ordered by created_at DESC
-    const [deals, total] = await this.dealRepository
-      .createQueryBuilder('deal')
-      .innerJoin('deal.business', 'business')
-      .addSelect([
-        'business.id',
-        'business.business_name',
-        'business.category',
-        'business.location',
-        'business.address',
-      ])
-      .innerJoin('follows', 'follow', 'follow.business_id = business.id')
-      .where('follow.user_id = :userId', { userId })
+    // Get user's followed business IDs first
+    const followedBusinessIds = await this.userRepository
+      .createQueryBuilder('user')
+      .innerJoin('follows', 'follow', 'follow.user_id = user.id')
+      .where('user.id = :userId', { userId })
       .andWhere('follow.status = :status', { status: 'active' })
-      .andWhere('deal.status = :dealStatus', { dealStatus: 'active' })
-      .andWhere('deal.expires_at > NOW()')
-      .andWhere('deal.starts_at <= NOW()')
-      .orderBy('deal.created_at', 'DESC')
-      .skip(skip)
-      .take(limit)
-      .getManyAndCount();
+      .select('follow.business_id')
+      .getRawMany();
+
+    const businessIds = followedBusinessIds.map(row => row.follow_business_id);
+
+    if (businessIds.length === 0) {
+      return {
+        deals: [],
+        pagination: {
+          page,
+          limit,
+          total: 0,
+          totalPages: 0,
+          hasMore: false,
+        },
+      };
+    }
+
+    // Get deals from followed businesses with proper relation loading
+    const [deals, total] = await this.dealRepository.findAndCount({
+      where: {
+        business_id: In(businessIds),
+        status: DealStatus.ACTIVE,
+        starts_at: LessThanOrEqual(new Date()),
+        expires_at: MoreThan(new Date()),
+      },
+      relations: ['business'],
+      order: { created_at: 'DESC' },
+      skip,
+      take: limit,
+    });
 
     // If location is provided, calculate distance for each deal
     if (locationParams?.lat != null && locationParams?.lng != null) {
@@ -124,14 +140,7 @@ export class FeedService {
     // Using JSONB for location storage, we'll calculate distance in the database
     const query = this.dealRepository
       .createQueryBuilder('deal')
-      .innerJoin('deal.business', 'business')
-      .addSelect([
-        'business.id',
-        'business.business_name',
-        'business.category',
-        'business.location',
-        'business.address',
-      ])
+      .leftJoinAndSelect('deal.business', 'business')  // ← Changed from innerJoin + addSelect
       .where('deal.status = :dealStatus', { dealStatus: 'active' })
       .andWhere('deal.expires_at > NOW()')
       .andWhere('deal.starts_at <= NOW()')

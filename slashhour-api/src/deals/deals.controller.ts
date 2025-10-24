@@ -92,6 +92,27 @@ export class DealsController {
     return this.dealsService.update(id, req.user.id, updateDealDto);
   }
 
+  /**
+   * NEW 2025 API: Update deal with multipart/form-data (native-like upload)
+   * Allows adding new images during update
+   */
+  @Put(':id/multipart')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FilesInterceptor('images', 10)) // Max 10 images
+  async updateWithMultipart(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() body: any, // FormData fields
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    return this.dealsService.updateWithMultipart(
+      id,
+      req.user.id,
+      body,
+      files,
+    );
+  }
+
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
   async delete(@Request() req, @Param('id') id: string) {

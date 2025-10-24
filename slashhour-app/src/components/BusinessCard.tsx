@@ -13,7 +13,7 @@ interface BusinessCardProps {
   onPress?: () => void;
 }
 
-export default function BusinessCard({ business, onPress }: BusinessCardProps) {
+export default React.memo(function BusinessCard({ business, onPress }: BusinessCardProps) {
   return (
     <TouchableOpacity
       style={styles.card}
@@ -48,7 +48,7 @@ export default function BusinessCard({ business, onPress }: BusinessCardProps) {
       </View>
     </TouchableOpacity>
   );
-}
+});
 
 const styles = StyleSheet.create({
   card: {

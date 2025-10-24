@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { Image } from 'expo-image';
 import FollowButton from '../FollowButton';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../../theme';
 
@@ -12,6 +13,7 @@ interface BusinessStats {
 interface BusinessHeaderProps {
   businessId: string;
   businessName: string;
+  businessCategory: string;
   logoUrl: string | null;
   stats: BusinessStats | null;
   isOwner: boolean;
@@ -24,6 +26,7 @@ interface BusinessHeaderProps {
 function BusinessHeader({
   businessId,
   businessName,
+  businessCategory,
   logoUrl,
   stats,
   isOwner,
@@ -45,7 +48,13 @@ function BusinessHeader({
         >
           <View style={styles.avatarBorderWrapper}>
             {logoUrl ? (
-              <Image source={{ uri: logoUrl }} style={styles.businessAvatar} />
+              <Image
+                source={{ uri: logoUrl }}
+                style={styles.businessAvatar}
+                contentFit="cover"
+                cachePolicy="memory-disk"
+                transition={200}
+              />
             ) : (
               <View style={styles.businessAvatar}>
                 <Text style={styles.businessAvatarText}>
@@ -108,6 +117,7 @@ function BusinessHeader({
               <FollowButton
                 businessId={businessId}
                 businessName={businessName}
+                businessCategory={businessCategory}
                 size="medium"
                 variant="primary"
               />

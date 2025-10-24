@@ -100,11 +100,13 @@ export const useSignUp = (): UseSignUpReturn => {
       setIsLoading(true);
       setError(null);
 
-      console.log('📝 Signing up user:', {
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-      });
+      if (__DEV__) {
+        console.log('📝 Signing up user:', {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+        });
+      }
 
       // Call backend registration API
       const response = await apiClient.post<{
@@ -120,13 +122,15 @@ export const useSignUp = (): UseSignUpReturn => {
         username: formData.email.split('@')[0], // Generate username from email
       });
 
-      console.log('✅ Sign up successful:', {
-        userId: response.user?.id,
-        email: response.user?.email,
-      });
+      if (__DEV__) {
+        console.log('✅ Sign up successful:', {
+          userId: response.user?.id,
+          email: response.user?.email,
+        });
+      }
 
       // Track analytics
-      trackEvent(AnalyticsEvent.USER_REGISTERED, {
+      trackEvent(AnalyticsEvent.REGISTER, {
         userType: 'consumer',
         email: formData.email,
         hasPhone: !!formData.phone,

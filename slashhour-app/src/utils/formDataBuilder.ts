@@ -1,5 +1,31 @@
 import { File } from 'expo-file-system';
-import { CreateDealFormData } from '../services/api/dealService';
+import { Deal, BusinessCategory } from '../types/models';
+
+export interface CreateDealData {
+  title: string;
+  description?: string;
+  original_price: number;
+  discounted_price: number;
+  category: BusinessCategory;
+  tags?: string[];
+  starts_at: Date | string;
+  expires_at: Date | string;
+  is_flash_deal?: boolean;
+  visibility_radius_km?: number;
+  quantity_available?: number;
+  max_per_user?: number;
+  terms_conditions?: string[];
+  valid_days?: string;
+  images?: Array<{ url: string; caption?: string; order: number }>;
+}
+
+export interface CreateDealFormData extends Omit<CreateDealData, 'images'> {
+  imageUris?: string[]; // URIs from ImagePicker
+}
+
+export interface UpdateDealData extends Partial<CreateDealData> {
+  imageUris?: string[];
+}
 
 /**
  * Build FormData from deal data for multipart upload

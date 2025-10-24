@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import * as ImagePicker from 'expo-image-picker';
 import { useEditDeal } from '../../hooks/useEditDeal';
 import { useBusinessProfile } from '../../hooks/useBusinessProfile';
 import { trackScreenView } from '../../services/analytics';
@@ -39,6 +40,8 @@ export default function EditDealScreen({ route, navigation }: EditDealScreenProp
     isLoading,
     error,
     updateField,
+    addNewImage,
+    removeNewImage,
     removeExistingImage,
     handleUpdate,
   } = useEditDeal(deal, businessId);
@@ -46,8 +49,8 @@ export default function EditDealScreen({ route, navigation }: EditDealScreenProp
 
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
 
-  // Show number of existing images
-  const totalImages = formData.existingImages.length;
+  // Show total images (existing + new)
+  const totalImages = formData.existingImages.length + formData.newImages.length;
 
   React.useEffect(() => {
     trackScreenView('EditDealScreen', { businessId, dealId: deal.id });
@@ -81,6 +84,38 @@ export default function EditDealScreen({ route, navigation }: EditDealScreenProp
 
   const handleCancel = () => {
     navigation.goBack();
+  };
+
+  const pickImage = async () => {
+    try {
+      // Check if max images reached
+      if (totalImages >= 10) {
+        Alert.alert('Maximum Images Reached', 'You can upload up to 10 images total.');
+        return;
+      }
+
+      // Request permissions
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (!permissionResult.granted) {
+        Alert.alert('Permission Required', 'Please allow access to your photo library to add images.');
+        return;
+      }
+
+      // Launch image picker
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: false, // Allow any aspect ratio without forced cropping
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets[0]) {
+        addNewImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Error', 'Failed to pick image. Please try again.');
+    }
   };
 
   return (
@@ -233,7 +268,7 @@ export default function EditDealScreen({ route, navigation }: EditDealScreenProp
           </View>
           <View style={styles.card}>
             <Text style={styles.hint}>
-              You can remove existing images, but adding new images during edit is not currently supported. To change images, please delete and recreate the deal.
+              You can add new images or remove existing ones. Maximum 10 images total.
             </Text>
 
             <View style={styles.imagesGrid}>
@@ -249,6 +284,30 @@ export default function EditDealScreen({ route, navigation }: EditDealScreenProp
                   </TouchableOpacity>
                 </View>
               ))}
+
+              {/* New images to be uploaded */}
+              {formData.newImages.map((image, index) => (
+                <View key={`new-${index}`} style={styles.imagePreview}>
+                  <Image source={{ uri: image.uri }} style={styles.imagePreviewImage} />
+                  <View style={styles.newImageBadge}>
+                    <Text style={styles.newImageBadgeText}>NEW</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.imageRemoveButton}
+                    onPress={() => removeNewImage(index)}
+                  >
+                    <Text style={styles.imageRemoveText}>×</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+
+              {/* Add image button */}
+              {totalImages < 10 && (
+                <TouchableOpacity style={styles.addImageButton} onPress={pickImage}>
+                  <Text style={styles.addImageIcon}>+</Text>
+                  <Text style={styles.addImageText}>Add</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         </View>

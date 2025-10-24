@@ -1,11 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUser, useIsAuthenticated } from '../stores/useAuthStore';
-import { COLORS, SHADOWS, SPACING } from '../theme';
+import { useTheme } from '../context/ThemeContext';
+import { SHADOWS, SPACING } from '../theme';
 import LoginScreen from '../screens/auth/LoginScreen';
 import SignUpScreen from '../screens/auth/SignUpScreen';
 import HomeScreen from '../screens/home/HomeScreen';
@@ -21,6 +22,7 @@ import EditBusinessProfileScreen from '../screens/business/EditBusinessProfileSc
 import RegisterBusinessScreen from '../screens/business/RegisterBusinessScreen';
 import CreateDealScreen from '../screens/post/CreateDealScreen';
 import EditDealScreen from '../screens/post/EditDealScreen';
+import SimpleTestScreen from '../screens/test/SimpleTestScreen';
 import { Deal, Business } from '../types/models';
 
 type RootStackParamList = {
@@ -35,6 +37,7 @@ type RootStackParamList = {
   RegisterBusiness: undefined;
   CreateDeal: { businessId: string; businessName: string };
   EditDeal: { deal: Deal; businessId: string; businessName: string };
+  UXTest: undefined;
   Chat: {
     conversationId: string;
     businessId: string;
@@ -55,6 +58,7 @@ const Tab = createBottomTabNavigator<TabParamList>();
 
 // Bottom Tab Navigator
 function MainTabNavigator() {
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const user = useUser();
 
@@ -69,12 +73,12 @@ function MainTabNavigator() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.gray400,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.gray400,
         tabBarStyle: {
-          backgroundColor: COLORS.white,
+          backgroundColor: colors.white,
           borderTopWidth: 1,
-          borderTopColor: COLORS.borderLight,
+          borderTopColor: colors.borderLight,
           height: tabBarHeight,
           paddingBottom: insets.bottom || SPACING.sm,
           paddingTop: SPACING.sm,
@@ -125,8 +129,8 @@ function MainTabNavigator() {
           // Show unread message count badge
           tabBarBadge: totalUnreadCount > 0 ? (totalUnreadCount > 99 ? '99+' : totalUnreadCount) : undefined,
           tabBarBadgeStyle: {
-            backgroundColor: COLORS.error,
-            color: COLORS.white,
+            backgroundColor: colors.error,
+            color: colors.white,
             fontSize: 10,
             fontWeight: 'bold',
             minWidth: 18,
@@ -175,10 +179,25 @@ const styles = StyleSheet.create({
 });
 
 export default function AppNavigator() {
+  const { isDark, colors } = useTheme();
   const isAuthenticated = useIsAuthenticated();
 
+  // Create custom navigation theme based on dark mode
+  const navigationTheme = {
+    ...(isDark ? DarkTheme : DefaultTheme),
+    colors: {
+      ...(isDark ? DarkTheme.colors : DefaultTheme.colors),
+      primary: colors.primary,
+      background: colors.background,
+      card: colors.white,
+      text: colors.textPrimary,
+      border: colors.borderLight,
+      notification: colors.error,
+    },
+  };
+
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={navigationTheme}>
       <Stack.Navigator
         screenOptions={{
           headerShown: false,
@@ -236,6 +255,11 @@ export default function AppNavigator() {
             <Stack.Screen
               name="Chat"
               component={ChatScreen}
+            />
+            <Stack.Screen
+              name="UXTest"
+              component={SimpleTestScreen}
+              options={{ title: '🧪 Test Screen' }}
             />
           </>
         )}

@@ -17,11 +17,13 @@ import { trackScreenView } from '../../services/analytics';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { useMyBusinesses } from '../../hooks/useMyBusinesses';
 import { useProfileEdit } from '../../hooks/useProfileEdit';
+import { useTheme } from '../../context/ThemeContext';
 import StatCard from '../../components/StatCard';
 import InfoRow from '../../components/InfoRow';
-import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, SIZES, LAYOUT } from '../../theme';
+import { TYPOGRAPHY, SPACING, RADIUS, SHADOWS, SIZES, LAYOUT, COLORS } from '../../theme';
 
 export default function ProfileScreen({ navigation }: any) {
+  const { colors } = useTheme();
   const { user, updateUser, logout } = useAuthStore();
   const { stats, isLoading, error } = useUserProfile();
   const { businesses, isLoading: businessesLoading } = useMyBusinesses();
@@ -106,16 +108,90 @@ export default function ProfileScreen({ navigation }: any) {
     navigation.navigate('BusinessProfile', { businessId, businessName });
   };
 
+  // Dynamic styles based on theme
+  const dynamicStyles = {
+    container: {
+      backgroundColor: colors.backgroundSecondary,
+    },
+    header: {
+      backgroundColor: colors.white,
+      borderBottomColor: colors.borderLight,
+    },
+    headerTitle: {
+      color: colors.textPrimary,
+    },
+    userCard: {
+      backgroundColor: colors.white,
+      borderBottomColor: colors.borderLight,
+    },
+    userName: {
+      color: colors.textPrimary,
+    },
+    userEmail: {
+      color: colors.textSecondary,
+    },
+    userUsername: {
+      color: colors.textTertiary,
+    },
+    nameInput: {
+      color: colors.textPrimary,
+      borderBottomColor: colors.primary,
+    },
+    sectionTitle: {
+      color: colors.textPrimary,
+    },
+    infoCard: {
+      backgroundColor: colors.white,
+    },
+    businessName: {
+      color: colors.textPrimary,
+    },
+    businessCategory: {
+      color: colors.textSecondary,
+    },
+    actionArrow: {
+      color: colors.textTertiary,
+    },
+    createShopCard: {
+      backgroundColor: colors.white,
+    },
+    createShopTitle: {
+      color: colors.textPrimary,
+    },
+    createShopDescription: {
+      color: colors.textSecondary,
+    },
+    actionButton: {
+      backgroundColor: colors.white,
+    },
+    actionText: {
+      color: colors.textPrimary,
+    },
+    logoutButton: {
+      backgroundColor: colors.error,
+    },
+    testButton: {
+      backgroundColor: colors.backgroundSecondary,
+      borderColor: colors.primary,
+    },
+    testButtonTitle: {
+      color: colors.textPrimary,
+    },
+    testButtonSubtitle: {
+      color: colors.textSecondary,
+    },
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, dynamicStyles.container]}>
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Profile</Text>
+      <View style={[styles.header, dynamicStyles.header]}>
+        <Text style={[styles.headerTitle, dynamicStyles.headerTitle]}>Profile</Text>
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* User Info Card */}
-        <View style={styles.userCard}>
+        <View style={[styles.userCard, dynamicStyles.userCard]}>
           {/* Avatar with Edit */}
           <TouchableOpacity
             style={styles.avatarContainer}
@@ -134,7 +210,7 @@ export default function ProfileScreen({ navigation }: any) {
             )}
             <View style={styles.avatarEditBadge}>
               {isUpdating ? (
-                <ActivityIndicator size="small" color={COLORS.white} />
+                <ActivityIndicator size="small" color={colors.white} />
               ) : (
                 <Text style={styles.avatarEditIcon}>✏️</Text>
               )}
@@ -144,26 +220,43 @@ export default function ProfileScreen({ navigation }: any) {
           {/* Editable Name */}
           {isEditingName ? (
             <TextInput
-              style={styles.nameInput}
+              style={[styles.nameInput, dynamicStyles.nameInput]}
               value={editableName}
               onChangeText={setEditableName}
               onBlur={handleNameSubmit}
               onSubmitEditing={handleNameSubmit}
               autoFocus
               placeholder="Enter your name"
-              placeholderTextColor={COLORS.textTertiary}
+              placeholderTextColor={colors.textTertiary}
               returnKeyType="done"
             />
           ) : (
             <TouchableOpacity onPress={() => setIsEditingName(true)} activeOpacity={0.7}>
-              <Text style={styles.userName}>{user?.name || user?.username || 'User'}</Text>
+              <Text style={[styles.userName, dynamicStyles.userName]}>{user?.name || user?.username || 'User'}</Text>
             </TouchableOpacity>
           )}
 
-          <Text style={styles.userEmail}>{user?.email || user?.phone || user?.username}</Text>
+          <Text style={[styles.userEmail, dynamicStyles.userEmail]}>{user?.email || user?.phone || user?.username}</Text>
           {user?.username && (
-            <Text style={styles.userUsername}>@{user.username}</Text>
+            <Text style={[styles.userUsername, dynamicStyles.userUsername]}>@{user.username}</Text>
           )}
+        </View>
+
+        {/* UX Features Test Button (Remove before production) */}
+        <View style={styles.section}>
+          <TouchableOpacity
+            style={[styles.testButton, dynamicStyles.testButton]}
+            onPress={() => navigation.navigate('UXTest')}
+          >
+            <Text style={styles.testButtonIcon}>🧪</Text>
+            <View style={styles.testButtonContent}>
+              <Text style={[styles.testButtonTitle, dynamicStyles.testButtonTitle]}>Test UX Features</Text>
+              <Text style={[styles.testButtonSubtitle, dynamicStyles.testButtonSubtitle]}>
+                Haptics, Bottom Sheets, Loading Spinners
+              </Text>
+            </View>
+            <Text style={[styles.actionArrow, dynamicStyles.actionArrow]}>›</Text>
+          </TouchableOpacity>
         </View>
 
         {/* My Shop or Create Your Shop */}
@@ -171,8 +264,8 @@ export default function ProfileScreen({ navigation }: any) {
           <View style={styles.section}>
             {businesses.length > 0 ? (
               <>
-                <Text style={styles.sectionTitle}>🏪 My Shop</Text>
-                <View style={styles.infoCard}>
+                <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>🏪 My Shop</Text>
+                <View style={[styles.infoCard, dynamicStyles.infoCard]}>
                   {businesses.map((business, index) => (
                     <View key={business.id}>
                       {index > 0 && <View style={styles.divider} />}
@@ -187,11 +280,11 @@ export default function ProfileScreen({ navigation }: any) {
                             </Text>
                           </View>
                           <View style={styles.businessInfo}>
-                            <Text style={styles.businessName}>{business.business_name}</Text>
-                            <Text style={styles.businessCategory}>{business.category}</Text>
+                            <Text style={[styles.businessName, dynamicStyles.businessName]}>{business.business_name}</Text>
+                            <Text style={[styles.businessCategory, dynamicStyles.businessCategory]}>{business.category}</Text>
                           </View>
                         </View>
-                        <Text style={styles.actionArrow}>›</Text>
+                        <Text style={[styles.actionArrow, dynamicStyles.actionArrow]}>›</Text>
                       </TouchableOpacity>
                     </View>
                   ))}
@@ -199,13 +292,13 @@ export default function ProfileScreen({ navigation }: any) {
               </>
             ) : (
               <>
-                <Text style={styles.sectionTitle}>🏪 Business</Text>
-                <View style={styles.createShopCard}>
+                <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>🏪 Business</Text>
+                <View style={[styles.createShopCard, dynamicStyles.createShopCard]}>
                   <View style={styles.createShopIcon}>
                     <Text style={styles.createShopIconText}>🏪</Text>
                   </View>
-                  <Text style={styles.createShopTitle}>Own a Business?</Text>
-                  <Text style={styles.createShopDescription}>
+                  <Text style={[styles.createShopTitle, dynamicStyles.createShopTitle]}>Own a Business?</Text>
+                  <Text style={[styles.createShopDescription, dynamicStyles.createShopDescription]}>
                     Register your shop and start posting deals to reach thousands of local customers
                   </Text>
                   <TouchableOpacity
@@ -223,14 +316,14 @@ export default function ProfileScreen({ navigation }: any) {
         {/* Statistics Section */}
         {isLoading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={COLORS.primary} />
+            <ActivityIndicator size="large" color={colors.primary} />
             <Text style={styles.loadingText}>Loading your stats...</Text>
           </View>
         ) : stats ? (
           <>
             {/* Savings Summary */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>💰 Your Savings</Text>
+              <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>💰 Your Savings</Text>
               <View style={styles.statsGrid}>
                 <StatCard value={formatCurrency(stats.totalSavings)} label="Total Saved" />
                 <StatCard value={formatCurrency(stats.monthlySavings)} label="This Month" />
@@ -239,7 +332,7 @@ export default function ProfileScreen({ navigation }: any) {
 
             {/* Redemptions */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>🎉 Deals Redeemed</Text>
+              <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>🎉 Deals Redeemed</Text>
               <View style={styles.statsGrid}>
                 <StatCard value={stats.totalRedemptions} label="Total Deals" />
                 <StatCard value={stats.monthlyRedemptions} label="This Month" />
@@ -248,8 +341,8 @@ export default function ProfileScreen({ navigation }: any) {
 
             {/* Activity */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>📊 Your Activity</Text>
-              <View style={styles.infoCard}>
+              <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>📊 Your Activity</Text>
+              <View style={[styles.infoCard, dynamicStyles.infoCard]}>
                 <InfoRow
                   label="Categories Explored"
                   value={`${stats.categoriesUsed} / ${stats.totalCategories}`}
@@ -286,17 +379,17 @@ export default function ProfileScreen({ navigation }: any) {
 
         {/* Quick Actions */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📋 Quick Actions</Text>
-          <View style={styles.infoCard}>
+          <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>📋 Quick Actions</Text>
+          <View style={[styles.infoCard, dynamicStyles.infoCard]}>
             <TouchableOpacity
               style={styles.actionRow}
               onPress={() => navigation.navigate('FollowingList')}
             >
               <View style={styles.actionLeft}>
                 <Text style={styles.actionIcon}>❤️</Text>
-                <Text style={styles.actionLabel}>Following</Text>
+                <Text style={[styles.actionLabel, dynamicStyles.actionText]}>Following</Text>
               </View>
-              <Text style={styles.actionArrow}>›</Text>
+              <Text style={[styles.actionArrow, dynamicStyles.actionArrow]}>›</Text>
             </TouchableOpacity>
 
             <View style={styles.divider} />
@@ -307,17 +400,17 @@ export default function ProfileScreen({ navigation }: any) {
             >
               <View style={styles.actionLeft}>
                 <Text style={styles.actionIcon}>🎫</Text>
-                <Text style={styles.actionLabel}>Redemption History</Text>
+                <Text style={[styles.actionLabel, dynamicStyles.actionText]}>Redemption History</Text>
               </View>
-              <Text style={styles.actionArrow}>›</Text>
+              <Text style={[styles.actionArrow, dynamicStyles.actionArrow]}>›</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Account Settings */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>⚙️ Account</Text>
-          <View style={styles.infoCard}>
+          <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>⚙️ Account</Text>
+          <View style={[styles.infoCard, dynamicStyles.infoCard]}>
             <InfoRow
               label="Member Since"
               value={
@@ -331,7 +424,7 @@ export default function ProfileScreen({ navigation }: any) {
 
         {/* Logout Button */}
         <TouchableOpacity
-          style={styles.logoutButton}
+          style={[styles.logoutButton, dynamicStyles.logoutButton]}
           onPress={handleLogout}
         >
           <Text style={styles.logoutButtonText}>Logout</Text>
@@ -622,5 +715,33 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.bold,
+  },
+  // Test Button Styles (Remove before production)
+  testButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0F4FF',
+    padding: SPACING.md,
+    borderRadius: RADIUS.lg,
+    borderWidth: 2,
+    borderColor: '#3B82F6',
+    borderStyle: 'dashed',
+  },
+  testButtonIcon: {
+    fontSize: 32,
+    marginRight: SPACING.md,
+  },
+  testButtonContent: {
+    flex: 1,
+  },
+  testButtonTitle: {
+    fontSize: TYPOGRAPHY.fontSize.md,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    color: '#1E40AF',
+    marginBottom: 2,
+  },
+  testButtonSubtitle: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    color: '#3B82F6',
   },
 });

@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Image } from 'expo-image';
 import { UserRedemption } from '../types/models';
 import { getCategoryImage } from '../utils/categoryImages';
 
@@ -8,7 +9,7 @@ interface RedemptionCardProps {
   onPress?: () => void;
 }
 
-export default function RedemptionCard({ redemption, onPress }: RedemptionCardProps) {
+export default React.memo(function RedemptionCard({ redemption, onPress }: RedemptionCardProps) {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -53,7 +54,9 @@ export default function RedemptionCard({ redemption, onPress }: RedemptionCardPr
       <Image
         source={getCategoryImage(redemption.dealCategory)}
         style={styles.image}
-        resizeMode="cover"
+        contentFit="cover"
+        cachePolicy="memory-disk"
+        transition={200}
       />
 
       {/* Content */}
@@ -93,7 +96,7 @@ export default function RedemptionCard({ redemption, onPress }: RedemptionCardPr
       </View>
     </TouchableOpacity>
   );
-}
+});
 
 const styles = StyleSheet.create({
   card: {

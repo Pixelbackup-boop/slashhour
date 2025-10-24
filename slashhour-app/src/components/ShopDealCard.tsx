@@ -23,7 +23,7 @@ interface ShopDealCardProps {
   style?: import('react-native').StyleProp<import('react-native').ViewStyle>;
 }
 
-export default function ShopDealCard({
+export default React.memo(function ShopDealCard({
   deal,
   onPress,
   onWishlistPress,
@@ -202,7 +202,7 @@ export default function ShopDealCard({
       </TouchableOpacity>
     </Animated.View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   card: {

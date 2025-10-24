@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { dealService, CreateDealData, CreateDealFormData as CreateDealMultipartData } from '../services/api/dealService';
+import { dealService } from '../services/api/dealService';
+import { CreateDealData, CreateDealFormData as CreateDealMultipartData } from '../utils/formDataBuilder';
 import { logError } from '../config/sentry';
 import { trackEvent, AnalyticsEvent } from '../services/analytics';
 import { BusinessCategory } from '../types/models';

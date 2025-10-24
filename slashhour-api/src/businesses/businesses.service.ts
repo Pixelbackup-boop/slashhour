@@ -226,18 +226,24 @@ export class BusinessesService {
       throw new NotFoundException('Business not found');
     }
 
-    // Get all active deals for this business
-    const deals = await this.dealRepository
-      .createQueryBuilder('deal')
-      .where('deal.business_id = :businessId', { businessId })
-      .andWhere('deal.status = :status', { status: DealStatus.ACTIVE })
-      .andWhere('deal.starts_at <= :now', { now: new Date() })
-      .andWhere('deal.expires_at > :now', { now: new Date() })
-      .orderBy('deal.created_at', 'DESC')
-      .getMany();
+    // Get all active deals for this business - SIMPLE & CLEAN with business relation
+    const now = new Date();
+    const deals = await this.dealRepository.find({
+      where: {
+        business_id: businessId,
+        status: DealStatus.ACTIVE,
+      },
+      relations: ['business'], // ← ALWAYS load business data
+      order: { created_at: 'DESC' },
+    });
+
+    // Filter by date in memory (simpler than complex query)
+    const activeDeals = deals.filter(
+      deal => deal.starts_at <= now && deal.expires_at > now
+    );
 
     return {
-      deals,
+      deals: activeDeals,
     };
   }
 

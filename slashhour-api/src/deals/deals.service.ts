@@ -232,6 +232,91 @@ export class DealsService {
     };
   }
 
+  /**
+   * NEW 2025 API: Update deal with multipart/form-data (native-like upload)
+   * Allows adding new images during update
+   */
+  async updateWithMultipart(
+    id: string,
+    userId: string,
+    body: any,
+    files: Express.Multer.File[],
+  ) {
+    const deal = await this.dealRepository.findOne({
+      where: { id },
+      relations: ['business'],
+    });
+
+    if (!deal) {
+      throw new NotFoundException('Deal not found');
+    }
+
+    // Check ownership
+    if (deal.business.owner_id !== userId) {
+      throw new ForbiddenException('You do not have permission to update this deal');
+    }
+
+    // Parse FormData fields
+    const updateDealDto: UpdateDealDto = {};
+
+    if (body.title) updateDealDto.title = body.title;
+    if (body.description !== undefined) updateDealDto.description = body.description;
+    if (body.original_price) updateDealDto.original_price = parseFloat(body.original_price);
+    if (body.discounted_price) updateDealDto.discounted_price = parseFloat(body.discounted_price);
+    if (body.category) updateDealDto.category = body.category;
+    if (body.tags) updateDealDto.tags = JSON.parse(body.tags);
+    if (body.starts_at) updateDealDto.starts_at = new Date(body.starts_at);
+    if (body.expires_at) updateDealDto.expires_at = new Date(body.expires_at);
+    if (body.is_flash_deal !== undefined) updateDealDto.is_flash_deal = body.is_flash_deal === 'true';
+    if (body.visibility_radius_km) updateDealDto.visibility_radius_km = parseFloat(body.visibility_radius_km);
+    if (body.quantity_available) updateDealDto.quantity_available = parseInt(body.quantity_available, 10);
+    if (body.max_per_user) updateDealDto.max_per_user = parseInt(body.max_per_user, 10);
+    if (body.terms_conditions) updateDealDto.terms_conditions = JSON.parse(body.terms_conditions);
+
+    // Handle existing images (parse JSON array of image URLs to keep)
+    let existingImages: Array<{ url: string; order: number }> = [];
+    if (body.existingImages) {
+      existingImages = JSON.parse(body.existingImages);
+    }
+
+    // Save new uploaded files to disk and get public URLs
+    let newImages: Array<{ url: string; order: number }> = [];
+    if (files && files.length > 0) {
+      const imageUrls = await this.uploadService.saveFiles(files, 'deals');
+      newImages = imageUrls.map((url, index) => ({
+        url,
+        order: existingImages.length + index,
+      }));
+    }
+
+    // Combine existing and new images
+    if (existingImages.length > 0 || newImages.length > 0) {
+      updateDealDto.images = [...existingImages, ...newImages];
+    }
+
+    // Validate dates if updating
+    const finalStartsAt = updateDealDto.starts_at || deal.starts_at;
+    const finalExpiresAt = updateDealDto.expires_at || deal.expires_at;
+    if (finalStartsAt >= finalExpiresAt) {
+      throw new BadRequestException('Start date must be before expiration date');
+    }
+
+    // Validate pricing if updating
+    const finalOriginalPrice = updateDealDto.original_price || deal.original_price;
+    const finalDiscountedPrice = updateDealDto.discounted_price || deal.discounted_price;
+    if (finalDiscountedPrice >= finalOriginalPrice) {
+      throw new BadRequestException('Discounted price must be less than original price');
+    }
+
+    Object.assign(deal, updateDealDto);
+    await this.dealRepository.save(deal);
+
+    return {
+      message: 'Deal updated successfully',
+      deal,
+    };
+  }
+
   async delete(id: string, userId: string) {
     const deal = await this.dealRepository.findOne({
       where: { id },

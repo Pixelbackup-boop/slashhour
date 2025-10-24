@@ -8,7 +8,7 @@ import { View, StyleSheet } from 'react-native';
 import { TextInput, HelperText } from 'react-native-paper';
 import type { TextInputProps } from 'react-native-paper';
 
-interface PaperInputProps extends Omit<TextInputProps, 'mode'> {
+interface PaperInputProps extends Omit<TextInputProps, 'mode' | 'error'> {
   label: string;
   value: string;
   onChangeText: (text: string) => void;

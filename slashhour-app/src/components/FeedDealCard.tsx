@@ -22,7 +22,7 @@ interface FeedDealCardProps {
   showDistance?: boolean;  // Show distance badge (default: true)
 }
 
-export default function FeedDealCard({
+export default React.memo(function FeedDealCard({
   deal,
   onPress,
   onBusinessPress,
@@ -200,7 +200,7 @@ export default function FeedDealCard({
       </TouchableOpacity>
     </Animated.View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   card: {

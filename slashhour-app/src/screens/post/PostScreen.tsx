@@ -69,8 +69,7 @@ export default function PostScreen({ navigation }: any) {
         {
           text: 'Register',
           onPress: () => {
-            // TODO: Navigate to business registration
-            Alert.alert('Business Registration', 'This feature will be available soon!');
+            navigation.navigate('RegisterBusiness');
           },
         },
       ]

@@ -127,9 +127,10 @@ export default function RedemptionHistoryScreen({ navigation }: any) {
             <RedemptionCard
               redemption={item}
               onPress={() => {
-                // Navigate to deal detail or redemption detail
-                // For now, just log
-                console.log('Redemption tapped:', item.id);
+                // Navigate to deal detail screen
+                if (item.deal) {
+                  navigation.navigate('DealDetail', { dealId: item.deal.id });
+                }
               }}
             />
           )}

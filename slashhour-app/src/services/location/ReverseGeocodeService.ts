@@ -106,8 +106,10 @@ class ReverseGeocodeService {
   /**
    * Convert country ISO code to 2-letter code
    * Expo returns country codes like "US", "CA", "GB" etc.
+   * @param isoCode - ISO country code (can be string, null, or undefined from Expo Location API)
+   * @returns Uppercase 2-letter country code or undefined
    */
-  private getCountryCode(isoCode: string | undefined): string | undefined {
+  private getCountryCode(isoCode: string | null | undefined): string | undefined {
     if (!isoCode) return undefined;
 
     // Expo already returns 2-letter ISO codes, but ensure it's uppercase

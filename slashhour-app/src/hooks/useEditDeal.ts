@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { dealService, UpdateDealData } from '../services/api/dealService';
+import { dealService } from '../services/api/dealService';
 import { logError } from '../config/sentry';
 import { trackEvent, AnalyticsEvent } from '../services/analytics';
 import { BusinessCategory, Deal } from '../types/models';
@@ -213,14 +213,18 @@ export function useEditDeal(deal: Deal, businessId: string): UseEditDealReturn {
         console.log('📝 Updating deal with', formData.newImages.length, 'new images');
       }
 
-      // Prepare update data
-      const updateData: UpdateDealData & { imageUris?: string[] } = {
+      // Extract URIs from new images
+      const imageUris = formData.newImages.map((img) => img.uri);
+
+      // Prepare update data for multipart
+      const updateData = {
         title: formData.title.trim(),
         description: formData.description.trim() || undefined,
         original_price: parseFloat(formData.original_price),
         discounted_price: parseFloat(formData.discounted_price),
         category: formData.category as BusinessCategory,
         tags: formData.tags.length > 0 ? formData.tags : undefined,
+        starts_at: deal.starts_at, // Keep original start date
         expires_at: formData.expires_at!,
         is_flash_deal: formData.is_flash_deal,
         visibility_radius_km: formData.visibility_radius_km.trim()
@@ -233,21 +237,17 @@ export function useEditDeal(deal: Deal, businessId: string): UseEditDealReturn {
           ? parseInt(formData.max_per_user, 10)
           : undefined,
         terms_conditions: formData.terms_conditions.length > 0 ? formData.terms_conditions : undefined,
-        // Include existing images (keep them)
-        // Note: Adding new images during update is not currently supported by backend
-        // User can only keep or remove existing images
-        images: [
-          ...formData.existingImages,
-        ],
+        existingImages: formData.existingImages, // Keep existing images
+        imageUris: imageUris.length > 0 ? imageUris : undefined, // Add new images
       };
 
       // Remove undefined values
       const cleanedUpdateData = Object.fromEntries(
         Object.entries(updateData).filter(([_, value]) => value !== undefined)
-      );
+      ) as any;
 
-      // Call update API
-      const updatedDeal = await dealService.updateDeal(deal.id, cleanedUpdateData);
+      // Call multipart update API
+      const updatedDeal = await dealService.updateDealWithMultipart(deal.id, cleanedUpdateData);
 
       if (__DEV__) {
         console.log('✅ Deal updated:', updatedDeal.id);
