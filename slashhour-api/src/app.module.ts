@@ -15,6 +15,7 @@ import { RedemptionsModule } from './redemptions/redemptions.module';
 import { ConversationsModule } from './conversations/conversations.module';
 import { UploadModule } from './upload/upload.module';
 import { LoggerService } from './common/services/logger.service';
+import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
   imports: [
@@ -24,6 +25,9 @@ import { LoggerService } from './common/services/logger.service';
       load: [databaseConfig],
       envFilePath: '.env',
     }),
+
+    // Prisma Module (Global)
+    PrismaModule,
 
     // TypeORM Module
     TypeOrmModule.forRootAsync({

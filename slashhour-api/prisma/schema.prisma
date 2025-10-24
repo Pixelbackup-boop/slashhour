@@ -1,0 +1,214 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model businesses {
+  id                       String                            @id(map: "PK_bc1bf63498dd2368ce3dc8686e8") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  owner_id                 String                            @db.Uuid
+  business_name            String                            @db.VarChar(200)
+  slug                     String                            @unique(map: "UQ_82ca19bc20713fdfa72626a5da0") @db.VarChar(200)
+  description              String?
+  category                 businesses_category_enum
+  subcategory              String?                           @db.VarChar(50)
+  location                 Json
+  address                  String
+  city                     String                            @db.VarChar(100)
+  state_province           String?                           @db.VarChar(100)
+  country                  String                            @db.VarChar(2)
+  postal_code              String?                           @db.VarChar(20)
+  phone                    String?                           @db.VarChar(20)
+  email                    String?                           @db.VarChar(255)
+  website                  String?                           @db.VarChar(500)
+  hours                    Json?
+  logo_url                 String?
+  cover_image_url          String?
+  images                   Json                              @default("[]")
+  follower_count           Int                               @default(0)
+  total_deals_posted       Int                               @default(0)
+  total_redemptions        Int                               @default(0)
+  average_rating           Decimal                           @default(0) @db.Decimal(3, 2)
+  subscription_tier        businesses_subscription_tier_enum @default(free)
+  subscription_expires_at  DateTime?                         @db.Timestamp(6)
+  is_verified              Boolean                           @default(false)
+  verification_date        DateTime?                         @db.Timestamp(6)
+  stripe_account_id        String?                           @db.VarChar(255)
+  payment_enabled          Boolean                           @default(false)
+  created_at               DateTime                          @default(now()) @db.Timestamp(6)
+  updated_at               DateTime                          @default(now()) @db.Timestamp(6)
+  category_last_changed_at DateTime?                         @db.Timestamp(6)
+  users                    users                             @relation(fields: [owner_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_8881b96819252080592fe1592ea")
+  conversations            conversations[]
+  deals                    deals[]
+  follows                  follows[]
+  user_redemptions         user_redemptions[]
+}
+
+model conversations {
+  id                String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  business_id       String     @db.Uuid
+  customer_id       String     @db.Uuid
+  last_message_at   DateTime?  @db.Timestamp(6)
+  last_message_text String?
+  unread_count      Int?       @default(0)
+  created_at        DateTime?  @default(now()) @db.Timestamp(6)
+  updated_at        DateTime?  @default(now()) @db.Timestamp(6)
+  businesses        businesses @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users             users      @relation(fields: [customer_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  messages          messages[]
+
+  @@unique([business_id, customer_id])
+  @@index([business_id], map: "idx_conversations_business")
+  @@index([customer_id], map: "idx_conversations_customer")
+  @@index([last_message_at(sort: Desc)], map: "idx_conversations_last_message")
+}
+
+model deals {
+  id                   String             @id(map: "PK_8c66f03b250f613ff8615940b4b") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  business_id          String             @db.Uuid
+  title                String             @db.VarChar(200)
+  description          String?
+  original_price       Decimal            @db.Decimal(10, 2)
+  discounted_price     Decimal            @db.Decimal(10, 2)
+  discount_percentage  Int?               @default(0)
+  savings_amount       Decimal?           @default(0) @db.Decimal(10, 2)
+  category             String             @db.VarChar(50)
+  tags                 String[]           @default([])
+  starts_at            DateTime           @db.Timestamp(6)
+  expires_at           DateTime           @db.Timestamp(6)
+  is_flash_deal        Boolean            @default(false)
+  visibility_radius_km Int                @default(5)
+  quantity_available   Int?
+  quantity_redeemed    Int                @default(0)
+  max_per_user         Int                @default(1)
+  terms_conditions     String[]           @default([])
+  images               Json               @default("[]")
+  view_count_followers Int                @default(0)
+  view_count_nearby    Int                @default(0)
+  save_count           Int                @default(0)
+  share_count          Int                @default(0)
+  status               deals_status_enum  @default(active)
+  created_at           DateTime           @default(now()) @db.Timestamp(6)
+  updated_at           DateTime           @default(now()) @db.Timestamp(6)
+  businesses           businesses         @relation(fields: [business_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_c90e9d39a174936dcf03351e146")
+  user_redemptions     user_redemptions[]
+}
+
+model follows {
+  id                 String              @id(map: "PK_8988f607744e16ff79da3b8a627") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id            String              @db.Uuid
+  business_id        String              @db.Uuid
+  status             follows_status_enum @default(active)
+  notify_new_deals   Boolean             @default(true)
+  notify_flash_deals Boolean             @default(false)
+  followed_at        DateTime            @default(now()) @db.Timestamp(6)
+  updated_at         DateTime            @default(now()) @db.Timestamp(6)
+  businesses         businesses          @relation(fields: [business_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_720c2933d2b2753b0b947f06ac4")
+  users              users               @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_941d172275662c2b9d8b9f4270c")
+}
+
+model messages {
+  id              String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  conversation_id String        @db.Uuid
+  sender_id       String        @db.Uuid
+  message_text    String
+  message_type    String?       @default("text") @db.VarChar(50)
+  is_read         Boolean?      @default(false)
+  read_at         DateTime?     @db.Timestamp(6)
+  created_at      DateTime?     @default(now()) @db.Timestamp(6)
+  conversations   conversations @relation(fields: [conversation_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users           users         @relation(fields: [sender_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([conversation_id], map: "idx_messages_conversation")
+  @@index([created_at(sort: Desc)], map: "idx_messages_created_at")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model spatial_ref_sys {
+  srid      Int     @id
+  auth_name String? @db.VarChar(256)
+  auth_srid Int?
+  srtext    String? @db.VarChar(2048)
+  proj4text String? @db.VarChar(2048)
+}
+
+model user_redemptions {
+  id             String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id        String     @db.Uuid
+  deal_id        String     @db.Uuid
+  business_id    String     @db.Uuid
+  original_price Decimal    @db.Decimal(10, 2)
+  paid_price     Decimal    @db.Decimal(10, 2)
+  savings_amount Decimal    @db.Decimal(10, 2)
+  deal_category  String     @db.VarChar(50)
+  redeemed_at    DateTime   @default(now()) @db.Timestamp(6)
+  businesses     businesses @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  deals          deals      @relation(fields: [deal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users          users      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model users {
+  id                       String             @id(map: "PK_a3ffb1c0c8416b9fc6f907b7433") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  phone                    String?            @unique(map: "UQ_a000cca60bcf04454e727699490") @db.VarChar(20)
+  email                    String?            @unique(map: "UQ_97672ac88f789774dd47f7c8be3") @db.VarChar(255)
+  username                 String             @unique(map: "UQ_fe0bb3f6520ee0469504521e710") @db.VarChar(30)
+  password                 String?            @db.VarChar(255)
+  name                     String?            @db.VarChar(100)
+  avatar_url               String?
+  default_location         Json?
+  default_radius_km        Int                @default(5)
+  preferred_categories     String[]           @default([])
+  language                 String             @default("en") @db.VarChar(10)
+  currency                 String             @default("USD") @db.VarChar(3)
+  timezone                 String             @default("America/New_York") @db.VarChar(50)
+  monthly_savings_goal     Decimal?           @db.Decimal(10, 2)
+  inflation_rate_reference Decimal            @default(7.5) @db.Decimal(5, 2)
+  status                   String             @default("active") @db.VarChar(20)
+  email_verified           Boolean            @default(false)
+  phone_verified           Boolean            @default(false)
+  created_at               DateTime           @default(now()) @db.Timestamp(6)
+  updated_at               DateTime           @default(now()) @db.Timestamp(6)
+  last_active_at           DateTime           @default(now()) @db.Timestamp(6)
+  user_type                String             @default("consumer") @db.VarChar(20)
+  businesses               businesses[]
+  conversations            conversations[]
+  follows                  follows[]
+  messages                 messages[]
+  user_redemptions         user_redemptions[]
+}
+
+enum businesses_category_enum {
+  restaurant
+  grocery
+  fashion
+  shoes
+  electronics
+  home_living
+  beauty
+  health
+}
+
+enum businesses_subscription_tier_enum {
+  free
+  essential
+  champion
+  anchor
+}
+
+enum deals_status_enum {
+  active
+  paused
+  expired
+  sold_out
+}
+
+enum follows_status_enum {
+  active
+  muted
+  unfollowed
+}
