@@ -179,7 +179,9 @@ const styles = StyleSheet.create({
   logoEditBadge: {
     position: 'absolute',
     bottom: 0,
-borderRadius: RADIUS.round,
+    right: 0,
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIUS.round,
     width: 32,
     height: 32,
     justifyContent: 'center',
