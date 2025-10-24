@@ -1,26 +1,17 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { UserRedemption } from '../users/entities/user-redemption.entity';
-import { Deal } from '../deals/entities/deal.entity';
-import { User } from '../users/entities/user.entity';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class RedemptionsService {
   constructor(
-    @InjectRepository(UserRedemption)
-    private redemptionRepository: Repository<UserRedemption>,
-    @InjectRepository(Deal)
-    private dealRepository: Repository<Deal>,
-    @InjectRepository(User)
-    private userRepository: Repository<User>,
+    private prisma: PrismaService,
   ) {}
 
   async redeemDeal(userId: string, dealId: string) {
     // Get the deal with business info
-    const deal = await this.dealRepository.findOne({
+    const deal = await this.prisma.deals.findUnique({
       where: { id: dealId },
-      relations: ['business'],
+      include: { businesses: true },
     });
 
     if (!deal) {
@@ -48,56 +39,50 @@ export class RedemptionsService {
     }
 
     // Load the user
-    const user = await this.userRepository.findOne({ where: { id: userId } });
+    const user = await this.prisma.users.findUnique({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
     // Check how many times user has redeemed this deal
-    const userRedemptions = await this.redemptionRepository
-      .createQueryBuilder('redemption')
-      .leftJoin('redemption.user', 'user')
-      .leftJoin('redemption.deal', 'deal')
-      .where('user.id = :userId', { userId })
-      .andWhere('deal.id = :dealId', { dealId })
-      .getCount();
+    const userRedemptions = await this.prisma.user_redemptions.count({
+      where: {
+        user_id: userId,
+        deal_id: dealId,
+      },
+    });
 
     if (userRedemptions >= deal.max_per_user) {
       throw new BadRequestException(`You can only redeem this deal ${deal.max_per_user} time(s)`);
     }
 
-    // Create redemption record with proper entity relations
+    // Create redemption record
     console.log('🔍 Creating redemption for:', {
       userId: user.id,
       dealId: deal.id,
-      businessId: deal.business.id,
+      businessId: deal.businesses.id,
     });
 
-    const redemption = this.redemptionRepository.create({
-      user,
-      deal,
-      business: deal.business,
-      original_price: deal.original_price,
-      paid_price: deal.discounted_price,
-      savings_amount: Number(deal.original_price) - Number(deal.discounted_price),
-      deal_category: deal.category,
+    const savingsAmount = Number(deal.original_price) - Number(deal.discounted_price);
+
+    const savedRedemption = await this.prisma.user_redemptions.create({
+      data: {
+        user_id: userId,
+        deal_id: dealId,
+        business_id: deal.business_id,
+        original_price: deal.original_price,
+        paid_price: deal.discounted_price,
+        savings_amount: savingsAmount,
+        deal_category: deal.category,
+      },
     });
 
-    console.log('✅ Redemption entity created:', {
-      hasUser: !!redemption.user,
-      hasDeal: !!redemption.deal,
-      hasBusiness: !!redemption.business,
-      originalPrice: redemption.original_price,
-      paidPrice: redemption.paid_price,
-    });
-
-    console.log('💾 Saving redemption to database...');
-    const savedRedemption = await this.redemptionRepository.save(redemption);
     console.log('✅ Redemption saved successfully! ID:', savedRedemption.id);
 
     // Increment quantity redeemed
-    await this.dealRepository.update(dealId, {
-      quantity_redeemed: deal.quantity_redeemed + 1,
+    await this.prisma.deals.update({
+      where: { id: dealId },
+      data: { quantity_redeemed: deal.quantity_redeemed + 1 },
     });
 
     return {
@@ -109,16 +94,22 @@ export class RedemptionsService {
   async getUserRedemptions(userId: string, page: number = 1, limit: number = 20) {
     const skip = (page - 1) * limit;
 
-    const [redemptions, total] = await this.redemptionRepository
-      .createQueryBuilder('redemption')
-      .leftJoinAndSelect('redemption.deal', 'deal')
-      .leftJoinAndSelect('redemption.business', 'business')
-      .leftJoinAndSelect('redemption.user', 'user')
-      .where('user.id = :userId', { userId })
-      .orderBy('redemption.redeemed_at', 'DESC')
-      .skip(skip)
-      .take(limit)
-      .getManyAndCount();
+    const [redemptions, total] = await Promise.all([
+      this.prisma.user_redemptions.findMany({
+        where: { user_id: userId },
+        include: {
+          deals: true,
+          businesses: true,
+          users: true,
+        },
+        orderBy: { redeemed_at: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.user_redemptions.count({
+        where: { user_id: userId },
+      }),
+    ]);
 
     // Transform to camelCase response
     const transformedRedemptions = redemptions.map(r => ({
@@ -128,20 +119,20 @@ export class RedemptionsService {
       savingsAmount: parseFloat(r.savings_amount.toString()),
       dealCategory: r.deal_category,
       redeemedAt: r.redeemed_at.toISOString(),
-      deal: r.deal ? {
-        id: r.deal.id,
-        title: r.deal.title,
-        description: r.deal.description,
-        category: r.deal.category,
-        images: r.deal.images || [],
+      deal: r.deals ? {
+        id: r.deals.id,
+        title: r.deals.title,
+        description: r.deals.description,
+        category: r.deals.category,
+        images: r.deals.images || [],
       } : null,
-      business: r.business ? {
-        id: r.business.id,
-        businessName: r.business.business_name,
-        category: r.business.category,
-        address: r.business.address,
-        city: r.business.city,
-        country: r.business.country,
+      business: r.businesses ? {
+        id: r.businesses.id,
+        businessName: r.businesses.business_name,
+        category: r.businesses.category,
+        address: r.businesses.address,
+        city: r.businesses.city,
+        country: r.businesses.country,
       } : null,
     }));
 
@@ -158,14 +149,17 @@ export class RedemptionsService {
   }
 
   async getRedemptionDetails(userId: string, redemptionId: string) {
-    const redemption = await this.redemptionRepository
-      .createQueryBuilder('redemption')
-      .leftJoinAndSelect('redemption.deal', 'deal')
-      .leftJoinAndSelect('redemption.business', 'business')
-      .leftJoinAndSelect('redemption.user', 'user')
-      .where('redemption.id = :redemptionId', { redemptionId })
-      .andWhere('user.id = :userId', { userId })
-      .getOne();
+    const redemption = await this.prisma.user_redemptions.findFirst({
+      where: {
+        id: redemptionId,
+        user_id: userId,
+      },
+      include: {
+        deals: true,
+        businesses: true,
+        users: true,
+      },
+    });
 
     if (!redemption) {
       throw new NotFoundException('Redemption not found');
