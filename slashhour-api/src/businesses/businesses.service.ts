@@ -1,28 +1,21 @@
 import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { Business } from './entities/business.entity';
-import { Deal, DealStatus } from '../deals/entities/deal.entity';
-import { UserRedemption } from '../users/entities/user-redemption.entity';
+import { DealStatus } from '../deals/entities/deal.entity';
 import { CreateBusinessDto } from './dto/create-business.dto';
 import { UpdateBusinessDto } from './dto/update-business.dto';
 import { UploadService } from '../upload/upload.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class BusinessesService {
   constructor(
-    @InjectRepository(Business)
-    private businessRepository: Repository<Business>,
-    @InjectRepository(Deal)
-    private dealRepository: Repository<Deal>,
-    @InjectRepository(UserRedemption)
-    private redemptionRepository: Repository<UserRedemption>,
+    private prisma: PrismaService,
     private uploadService: UploadService,
   ) {}
 
   async create(userId: string, createBusinessDto: CreateBusinessDto) {
     // Check if slug is already taken
-    const existingBusiness = await this.businessRepository.findOne({
+    const existingBusiness = await this.prisma.businesses.findUnique({
       where: { slug: createBusinessDto.slug },
     });
 
@@ -30,12 +23,12 @@ export class BusinessesService {
       throw new ConflictException('Business slug already exists');
     }
 
-    const business = this.businessRepository.create({
-      ...createBusinessDto,
-      owner_id: userId,
+    const business = await this.prisma.businesses.create({
+      data: {
+        ...createBusinessDto,
+        owner_id: userId,
+      } as any,
     });
-
-    await this.businessRepository.save(business);
 
     return {
       message: 'Business created successfully',
@@ -54,11 +47,14 @@ export class BusinessesService {
   async findAll(page: number = 1, limit: number = 20) {
     const skip = (page - 1) * limit;
 
-    const [businesses, total] = await this.businessRepository.findAndCount({
-      skip,
-      take: limit,
-      order: { created_at: 'DESC' },
-    });
+    const [businesses, total] = await Promise.all([
+      this.prisma.businesses.findMany({
+        skip,
+        take: limit,
+        orderBy: { created_at: 'desc' },
+      }),
+      this.prisma.businesses.count(),
+    ]);
 
     return {
       total,
@@ -69,9 +65,9 @@ export class BusinessesService {
   }
 
   async findOne(id: string) {
-    const business = await this.businessRepository.findOne({
+    const business = await this.prisma.businesses.findUnique({
       where: { id },
-      relations: ['owner'],
+      include: { users: true },
     });
 
     if (!business) {
@@ -82,9 +78,9 @@ export class BusinessesService {
   }
 
   async findBySlug(slug: string) {
-    const business = await this.businessRepository.findOne({
+    const business = await this.prisma.businesses.findUnique({
       where: { slug },
-      relations: ['owner'],
+      include: { users: true },
     });
 
     if (!business) {
@@ -95,9 +91,9 @@ export class BusinessesService {
   }
 
   async findByOwner(userId: string) {
-    const businesses = await this.businessRepository.find({
+    const businesses = await this.prisma.businesses.findMany({
       where: { owner_id: userId },
-      order: { created_at: 'DESC' },
+      orderBy: { created_at: 'desc' },
     });
 
     return {
@@ -107,7 +103,7 @@ export class BusinessesService {
   }
 
   async update(id: string, userId: string, updateBusinessDto: UpdateBusinessDto) {
-    const business = await this.businessRepository.findOne({
+    const business = await this.prisma.businesses.findUnique({
       where: { id },
     });
 
@@ -122,7 +118,7 @@ export class BusinessesService {
 
     // Check slug uniqueness if updating
     if (updateBusinessDto.slug && updateBusinessDto.slug !== business.slug) {
-      const existingBusiness = await this.businessRepository.findOne({
+      const existingBusiness = await this.prisma.businesses.findUnique({
         where: { slug: updateBusinessDto.slug },
       });
 
@@ -130,6 +126,9 @@ export class BusinessesService {
         throw new ConflictException('Business slug already exists');
       }
     }
+
+    // Prepare update data
+    const updateData: any = { ...updateBusinessDto };
 
     // Check if category is being changed and enforce one-month restriction
     if (updateBusinessDto.category && updateBusinessDto.category !== business.category) {
@@ -149,20 +148,22 @@ export class BusinessesService {
       }
 
       // Update the timestamp when category is changed
-      business.category_last_changed_at = new Date();
+      updateData.category_last_changed_at = new Date();
     }
 
-    Object.assign(business, updateBusinessDto);
-    await this.businessRepository.save(business);
+    const updatedBusiness = await this.prisma.businesses.update({
+      where: { id },
+      data: updateData,
+    });
 
     return {
       message: 'Business updated successfully',
-      business,
+      business: updatedBusiness,
     };
   }
 
   async delete(id: string, userId: string) {
-    const business = await this.businessRepository.findOne({
+    const business = await this.prisma.businesses.findUnique({
       where: { id },
     });
 
@@ -175,7 +176,9 @@ export class BusinessesService {
       throw new ForbiddenException('You do not have permission to delete this business');
     }
 
-    await this.businessRepository.remove(business);
+    await this.prisma.businesses.delete({
+      where: { id },
+    });
 
     return {
       message: 'Business deleted successfully',
@@ -183,32 +186,48 @@ export class BusinessesService {
   }
 
   async updateStats(businessId: string, stats: Partial<Business>) {
-    await this.businessRepository.update(businessId, stats);
+    await this.prisma.businesses.update({
+      where: { id: businessId },
+      data: stats as any,
+    });
   }
 
   async searchByLocation(lat: number, lng: number, radius: number = 5, category?: string) {
-    let query = this.businessRepository
-      .createQueryBuilder('business')
-      .where(
-        `(
-          6371 * acos(
-            cos(radians(:lat)) *
-            cos(radians((business.location->>'lat')::float)) *
-            cos(radians((business.location->>'lng')::float) - radians(:lng)) +
-            sin(radians(:lat)) *
-            sin(radians((business.location->>'lat')::float))
-          )
-        ) <= :radius`,
-        { lat, lng, radius },
-      );
+    // Use Prisma's $queryRaw for complex geospatial query
+    let businesses: any[];
 
     if (category) {
-      query = query.andWhere('business.category = :category', { category });
+      businesses = await this.prisma.$queryRaw`
+        SELECT *
+        FROM businesses
+        WHERE (
+          6371 * acos(
+            cos(radians(${lat})) *
+            cos(radians((location->>'lat')::float)) *
+            cos(radians((location->>'lng')::float) - radians(${lng})) +
+            sin(radians(${lat})) *
+            sin(radians((location->>'lat')::float))
+          )
+        ) <= ${radius}
+        AND category = ${category}
+        ORDER BY follower_count DESC
+      `;
+    } else {
+      businesses = await this.prisma.$queryRaw`
+        SELECT *
+        FROM businesses
+        WHERE (
+          6371 * acos(
+            cos(radians(${lat})) *
+            cos(radians((location->>'lat')::float)) *
+            cos(radians((location->>'lng')::float) - radians(${lng})) +
+            sin(radians(${lat})) *
+            sin(radians((location->>'lat')::float))
+          )
+        ) <= ${radius}
+        ORDER BY follower_count DESC
+      `;
     }
-
-    const businesses = await query
-      .orderBy('business.follower_count', 'DESC')
-      .getMany();
 
     return {
       total: businesses.length,
@@ -218,7 +237,7 @@ export class BusinessesService {
 
   async getBusinessDeals(businessId: string) {
     // Verify business exists
-    const business = await this.businessRepository.findOne({
+    const business = await this.prisma.businesses.findUnique({
       where: { id: businessId },
     });
 
@@ -228,13 +247,13 @@ export class BusinessesService {
 
     // Get all active deals for this business - SIMPLE & CLEAN with business relation
     const now = new Date();
-    const deals = await this.dealRepository.find({
+    const deals = await this.prisma.deals.findMany({
       where: {
         business_id: businessId,
-        status: DealStatus.ACTIVE,
+        status: DealStatus.ACTIVE as any,
       },
-      relations: ['business'], // ← ALWAYS load business data
-      order: { created_at: 'DESC' },
+      include: { businesses: true }, // ← ALWAYS load business data
+      orderBy: { created_at: 'desc' },
     });
 
     // Filter by date in memory (simpler than complex query)
@@ -249,7 +268,7 @@ export class BusinessesService {
 
   async getBusinessStats(businessId: string) {
     // Verify business exists
-    const business = await this.businessRepository.findOne({
+    const business = await this.prisma.businesses.findUnique({
       where: { id: businessId },
     });
 
@@ -257,21 +276,24 @@ export class BusinessesService {
       throw new NotFoundException('Business not found');
     }
 
+    const now = new Date();
+
     // Get active deal count
-    const activeDealCount = await this.dealRepository
-      .createQueryBuilder('deal')
-      .where('deal.business_id = :businessId', { businessId })
-      .andWhere('deal.status = :status', { status: DealStatus.ACTIVE })
-      .andWhere('deal.starts_at <= :now', { now: new Date() })
-      .andWhere('deal.expires_at > :now', { now: new Date() })
-      .getCount();
+    const activeDealCount = await this.prisma.deals.count({
+      where: {
+        business_id: businessId,
+        status: DealStatus.ACTIVE as any,
+        starts_at: { lte: now },
+        expires_at: { gt: now },
+      },
+    });
 
     // Get total deals sold (count of all redemptions for this business's deals)
-    const totalDealsSold = await this.redemptionRepository
-      .createQueryBuilder('redemption')
-      .innerJoin('redemption.deal', 'deal')
-      .where('deal.business_id = :businessId', { businessId })
-      .getCount();
+    const totalDealsSold = await this.prisma.user_redemptions.count({
+      where: {
+        business_id: businessId,
+      },
+    });
 
     return {
       activeDealCount,
@@ -281,7 +303,7 @@ export class BusinessesService {
   }
 
   async uploadLogo(businessId: string, userId: string, file: Express.Multer.File): Promise<Business> {
-    const business = await this.businessRepository.findOne({
+    const business = await this.prisma.businesses.findUnique({
       where: { id: businessId },
     });
 
@@ -296,13 +318,15 @@ export class BusinessesService {
 
     // Save file to disk and get public URL
     const logoUrl = await this.uploadService.saveFile(file, 'businesses/logos');
-    business.logo_url = logoUrl;
 
-    return await this.businessRepository.save(business);
+    return await this.prisma.businesses.update({
+      where: { id: businessId },
+      data: { logo_url: logoUrl },
+    }) as any;
   }
 
   async uploadCoverImage(businessId: string, userId: string, file: Express.Multer.File): Promise<Business> {
-    const business = await this.businessRepository.findOne({
+    const business = await this.prisma.businesses.findUnique({
       where: { id: businessId },
     });
 
@@ -317,8 +341,10 @@ export class BusinessesService {
 
     // Save file to disk and get public URL
     const coverUrl = await this.uploadService.saveFile(file, 'businesses/covers');
-    business.cover_image_url = coverUrl;
 
-    return await this.businessRepository.save(business);
+    return await this.prisma.businesses.update({
+      where: { id: businessId },
+      data: { cover_image_url: coverUrl },
+    }) as any;
   }
 }
