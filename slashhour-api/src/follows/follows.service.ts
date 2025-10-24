@@ -1,22 +1,17 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { Follow, FollowStatus } from './entities/follow.entity';
-import { Business } from '../businesses/entities/business.entity';
 import { UpdateNotificationPreferencesDto } from './dto/update-notification-preferences.dto';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class FollowsService {
   constructor(
-    @InjectRepository(Follow)
-    private followRepository: Repository<Follow>,
-    @InjectRepository(Business)
-    private businessRepository: Repository<Business>,
+    private prisma: PrismaService,
   ) {}
 
   async followBusiness(userId: string, businessId: string) {
     // Check if business exists
-    const business = await this.businessRepository.findOne({
+    const business = await this.prisma.businesses.findUnique({
       where: { id: businessId },
     });
 
@@ -25,7 +20,7 @@ export class FollowsService {
     }
 
     // Check if already following
-    let follow = await this.followRepository.findOne({
+    let follow = await this.prisma.follows.findFirst({
       where: { user_id: userId, business_id: businessId },
     });
 
@@ -34,18 +29,21 @@ export class FollowsService {
         throw new ConflictException('Already following this business');
       }
       // Reactivate if previously unfollowed
-      follow.status = FollowStatus.ACTIVE;
-      await this.followRepository.save(follow);
+      follow = await this.prisma.follows.update({
+        where: { id: follow.id },
+        data: { status: FollowStatus.ACTIVE as any },
+      });
     } else {
       // Create new follow
-      follow = this.followRepository.create({
-        user_id: userId,
-        business_id: businessId,
-        status: FollowStatus.ACTIVE,
-        notify_new_deals: true,
-        notify_flash_deals: false,
+      follow = await this.prisma.follows.create({
+        data: {
+          user_id: userId,
+          business_id: businessId,
+          status: FollowStatus.ACTIVE as any,
+          notify_new_deals: true,
+          notify_flash_deals: false,
+        },
       });
-      await this.followRepository.save(follow);
     }
 
     return {
@@ -62,7 +60,7 @@ export class FollowsService {
   }
 
   async unfollowBusiness(userId: string, businessId: string) {
-    const follow = await this.followRepository.findOne({
+    const follow = await this.prisma.follows.findFirst({
       where: { user_id: userId, business_id: businessId },
     });
 
@@ -70,8 +68,10 @@ export class FollowsService {
       throw new NotFoundException('Not following this business');
     }
 
-    follow.status = FollowStatus.UNFOLLOWED;
-    await this.followRepository.save(follow);
+    await this.prisma.follows.update({
+      where: { id: follow.id },
+      data: { status: FollowStatus.UNFOLLOWED as any },
+    });
 
     return {
       message: 'Successfully unfollowed business',
@@ -79,7 +79,7 @@ export class FollowsService {
   }
 
   async muteBusiness(userId: string, businessId: string) {
-    const follow = await this.followRepository.findOne({
+    const follow = await this.prisma.follows.findFirst({
       where: { user_id: userId, business_id: businessId },
     });
 
@@ -87,8 +87,10 @@ export class FollowsService {
       throw new NotFoundException('Not following this business');
     }
 
-    follow.status = FollowStatus.MUTED;
-    await this.followRepository.save(follow);
+    await this.prisma.follows.update({
+      where: { id: follow.id },
+      data: { status: FollowStatus.MUTED as any },
+    });
 
     return {
       message: 'Successfully muted business',
@@ -96,7 +98,7 @@ export class FollowsService {
   }
 
   async unmuteBusiness(userId: string, businessId: string) {
-    const follow = await this.followRepository.findOne({
+    const follow = await this.prisma.follows.findFirst({
       where: { user_id: userId, business_id: businessId },
     });
 
@@ -104,8 +106,10 @@ export class FollowsService {
       throw new NotFoundException('Business is not muted');
     }
 
-    follow.status = FollowStatus.ACTIVE;
-    await this.followRepository.save(follow);
+    await this.prisma.follows.update({
+      where: { id: follow.id },
+      data: { status: FollowStatus.ACTIVE as any },
+    });
 
     return {
       message: 'Successfully unmuted business',
@@ -117,7 +121,7 @@ export class FollowsService {
     businessId: string,
     updateDto: UpdateNotificationPreferencesDto,
   ) {
-    const follow = await this.followRepository.findOne({
+    const follow = await this.prisma.follows.findFirst({
       where: { user_id: userId, business_id: businessId },
     });
 
@@ -125,40 +129,48 @@ export class FollowsService {
       throw new NotFoundException('Not following this business');
     }
 
+    const updateData: any = {};
     if (updateDto.notify_new_deals !== undefined) {
-      follow.notify_new_deals = updateDto.notify_new_deals;
+      updateData.notify_new_deals = updateDto.notify_new_deals;
     }
-
     if (updateDto.notify_flash_deals !== undefined) {
-      follow.notify_flash_deals = updateDto.notify_flash_deals;
+      updateData.notify_flash_deals = updateDto.notify_flash_deals;
     }
 
-    await this.followRepository.save(follow);
+    const updatedFollow = await this.prisma.follows.update({
+      where: { id: follow.id },
+      data: updateData,
+    });
 
     return {
       message: 'Notification preferences updated',
       preferences: {
-        notify_new_deals: follow.notify_new_deals,
-        notify_flash_deals: follow.notify_flash_deals,
+        notify_new_deals: updatedFollow.notify_new_deals,
+        notify_flash_deals: updatedFollow.notify_flash_deals,
       },
     };
   }
 
   async getFollowedBusinesses(userId: string) {
-    const follows = await this.followRepository
-      .createQueryBuilder('follow')
-      .innerJoinAndSelect('follow.business', 'business')
-      .where('follow.user_id = :userId', { userId })
-      .andWhere('follow.status IN (:...statuses)', {
-        statuses: [FollowStatus.ACTIVE, FollowStatus.MUTED],
-      })
-      .orderBy('follow.followed_at', 'DESC')
-      .getMany();
+    const follows = await this.prisma.follows.findMany({
+      where: {
+        user_id: userId,
+        status: {
+          in: [FollowStatus.ACTIVE as any, FollowStatus.MUTED as any],
+        },
+      },
+      include: {
+        businesses: true,
+      },
+      orderBy: {
+        followed_at: 'desc',
+      },
+    });
 
     return {
       total: follows.length,
       businesses: follows.map((follow) => ({
-        ...follow.business,
+        ...follow.businesses,
         follow_status: follow.status,
         notify_new_deals: follow.notify_new_deals,
         notify_flash_deals: follow.notify_flash_deals,
@@ -168,7 +180,7 @@ export class FollowsService {
   }
 
   async getFollowStatus(userId: string, businessId: string) {
-    const follow = await this.followRepository.findOne({
+    const follow = await this.prisma.follows.findFirst({
       where: { user_id: userId, business_id: businessId },
     });
 
