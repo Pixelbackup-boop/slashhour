@@ -14,6 +14,17 @@ export class AuthService {
     private configService: ConfigService,
   ) {}
 
+  /**
+   * Transform Prisma user (snake_case) to User entity (camelCase)
+   */
+  private transformPrismaUser(prismaUser: any): User {
+    const { user_type, ...rest } = prismaUser;
+    return {
+      ...rest,
+      userType: user_type,
+    } as User;
+  }
+
   async register(registerDto: RegisterDto) {
     const { email, phone, password, name, userType, username } = registerDto;
 
@@ -23,6 +34,7 @@ export class AuthService {
         OR: [
           { email },
           ...(phone ? [{ phone }] : []),
+          ...(username ? [{ username }] : []),
         ],
       },
     });
@@ -35,22 +47,24 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create user
-    const user = await this.prisma.users.create({
+    const prismaUser = await this.prisma.users.create({
       data: {
         name,
         email,
         phone,
         password: hashedPassword,
         user_type: userType,
-        username,
+        username: username || email?.split('@')[0] || `user_${Date.now()}`,
       },
     });
 
+    const user = this.transformPrismaUser(prismaUser);
+
     // Generate tokens
-    const tokens = await this.generateTokens(user as User);
+    const tokens = await this.generateTokens(user);
 
     return {
-      user: this.sanitizeUser(user as User),
+      user: this.sanitizeUser(user),
       ...tokens,
     };
   }
@@ -59,7 +73,7 @@ export class AuthService {
     const { emailOrPhone, password } = loginDto;
 
     // Find user by email or phone
-    const user = await this.prisma.users.findFirst({
+    const prismaUser = await this.prisma.users.findFirst({
       where: {
         OR: [
           { email: emailOrPhone },
@@ -68,36 +82,38 @@ export class AuthService {
       },
     });
 
-    if (!user) {
+    if (!prismaUser) {
       throw new UnauthorizedException('Your email or password is wrong, please check');
     }
 
     // Verify password
-    if (!user.password) {
+    if (!prismaUser.password) {
       throw new UnauthorizedException('Your email or password is wrong, please check');
     }
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await bcrypt.compare(password, prismaUser.password);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Your email or password is wrong, please check');
     }
 
+    const user = this.transformPrismaUser(prismaUser);
+
     // Generate tokens
-    const tokens = await this.generateTokens(user as User);
+    const tokens = await this.generateTokens(user);
 
     return {
-      user: this.sanitizeUser(user as User),
+      user: this.sanitizeUser(user),
       ...tokens,
     };
   }
 
   async validateUser(userId: string): Promise<User> {
-    const user = await this.prisma.users.findUnique({
+    const prismaUser = await this.prisma.users.findUnique({
       where: { id: userId },
     });
-    if (!user) {
+    if (!prismaUser) {
       throw new UnauthorizedException('User not found');
     }
-    return user as User;
+    return this.transformPrismaUser(prismaUser);
   }
 
   async refreshToken(refreshToken: string) {

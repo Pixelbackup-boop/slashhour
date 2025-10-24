@@ -12,6 +12,17 @@ export class UsersService {
     private prisma: PrismaService,
   ) {}
 
+  /**
+   * Transform Prisma user (snake_case) to User entity (camelCase)
+   */
+  private transformPrismaUser(prismaUser: any): User {
+    const { user_type, ...rest } = prismaUser;
+    return {
+      ...rest,
+      userType: user_type,
+    } as User;
+  }
+
   async create(userData: Partial<User>): Promise<User> {
     // Check if user already exists
     const existingUser = await this.findByIdentifier(
@@ -22,13 +33,14 @@ export class UsersService {
       throw new ConflictException('User with this email, phone, or username already exists');
     }
 
-    return this.prisma.users.create({
+    const prismaUser = await this.prisma.users.create({
       data: userData as any,
-    }) as Promise<User>;
+    });
+    return this.transformPrismaUser(prismaUser);
   }
 
   async findByIdentifier(identifier: string): Promise<User | null> {
-    const user = await this.prisma.users.findFirst({
+    const prismaUser = await this.prisma.users.findFirst({
       where: {
         OR: [
           { email: identifier },
@@ -37,23 +49,23 @@ export class UsersService {
         ],
       },
     });
-    return user as User | null;
+    return prismaUser ? this.transformPrismaUser(prismaUser) : null;
   }
 
   async findById(id: string): Promise<User | null> {
-    const user = await this.prisma.users.findUnique({
+    const prismaUser = await this.prisma.users.findUnique({
       where: { id },
     });
-    return user as User | null;
+    return prismaUser ? this.transformPrismaUser(prismaUser) : null;
   }
 
   async update(id: string, updateData: Partial<User>): Promise<User> {
     try {
-      const updatedUser = await this.prisma.users.update({
+      const prismaUser = await this.prisma.users.update({
         where: { id },
         data: updateData as any,
       });
-      return updatedUser as User;
+      return this.transformPrismaUser(prismaUser);
     } catch (error) {
       throw new NotFoundException('User not found');
     }
@@ -94,11 +106,11 @@ export class UsersService {
     }
 
     // Update user fields
-    const updatedUser = await this.prisma.users.update({
+    const prismaUser = await this.prisma.users.update({
       where: { id: userId },
       data: updateDto as any,
     });
-    return updatedUser as User;
+    return this.transformPrismaUser(prismaUser);
   }
 
   async getUserStats(userId: string): Promise<UserStatsDto> {
@@ -268,10 +280,10 @@ export class UsersService {
     const base64Image = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
 
     // Update avatar URL
-    const updatedUser = await this.prisma.users.update({
+    const prismaUser = await this.prisma.users.update({
       where: { id: userId },
       data: { avatar_url: base64Image },
     });
-    return updatedUser as User;
+    return this.transformPrismaUser(prismaUser);
   }
 }
