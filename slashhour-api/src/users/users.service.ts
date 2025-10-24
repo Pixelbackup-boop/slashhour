@@ -1,20 +1,15 @@
 import { Injectable, ConflictException, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
-import { UserRedemption } from './entities/user-redemption.entity';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UserStatsDto } from './dto/user-stats.dto';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User)
-    private userRepository: Repository<User>,
-    @InjectRepository(UserRedemption)
-    private redemptionRepository: Repository<UserRedemption>,
+    private prisma: PrismaService,
   ) {}
 
   async create(userData: Partial<User>): Promise<User> {
@@ -27,32 +22,41 @@ export class UsersService {
       throw new ConflictException('User with this email, phone, or username already exists');
     }
 
-    const user = this.userRepository.create(userData);
-    return this.userRepository.save(user);
+    return this.prisma.users.create({
+      data: userData as any,
+    }) as Promise<User>;
   }
 
   async findByIdentifier(identifier: string): Promise<User | null> {
-    const user = await this.userRepository.findOne({
-      where: [
-        { email: identifier },
-        { phone: identifier },
-        { username: identifier },
-      ],
+    const user = await this.prisma.users.findFirst({
+      where: {
+        OR: [
+          { email: identifier },
+          { phone: identifier },
+          { username: identifier },
+        ],
+      },
     });
-    return user;
+    return user as User | null;
   }
 
   async findById(id: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { id } });
+    const user = await this.prisma.users.findUnique({
+      where: { id },
+    });
+    return user as User | null;
   }
 
   async update(id: string, updateData: Partial<User>): Promise<User> {
-    await this.userRepository.update(id, updateData);
-    const updatedUser = await this.findById(id);
-    if (!updatedUser) {
-      throw new Error('User not found');
+    try {
+      const updatedUser = await this.prisma.users.update({
+        where: { id },
+        data: updateData as any,
+      });
+      return updatedUser as User;
+    } catch (error) {
+      throw new NotFoundException('User not found');
     }
-    return updatedUser;
   }
 
   async updateProfile(userId: string, updateDto: UpdateProfileDto): Promise<User> {
@@ -63,7 +67,7 @@ export class UsersService {
 
     // Check for unique constraint violations
     if (updateDto.email && updateDto.email !== user.email) {
-      const existingEmail = await this.userRepository.findOne({
+      const existingEmail = await this.prisma.users.findUnique({
         where: { email: updateDto.email },
       });
       if (existingEmail) {
@@ -72,7 +76,7 @@ export class UsersService {
     }
 
     if (updateDto.username && updateDto.username !== user.username) {
-      const existingUsername = await this.userRepository.findOne({
+      const existingUsername = await this.prisma.users.findFirst({
         where: { username: updateDto.username },
       });
       if (existingUsername) {
@@ -81,7 +85,7 @@ export class UsersService {
     }
 
     if (updateDto.phone && updateDto.phone !== user.phone) {
-      const existingPhone = await this.userRepository.findOne({
+      const existingPhone = await this.prisma.users.findFirst({
         where: { phone: updateDto.phone },
       });
       if (existingPhone) {
@@ -90,8 +94,11 @@ export class UsersService {
     }
 
     // Update user fields
-    Object.assign(user, updateDto);
-    return this.userRepository.save(user);
+    const updatedUser = await this.prisma.users.update({
+      where: { id: userId },
+      data: updateDto as any,
+    });
+    return updatedUser as User;
   }
 
   async getUserStats(userId: string): Promise<UserStatsDto> {
@@ -101,12 +108,15 @@ export class UsersService {
     }
 
     // Get all redemptions for the user with business relation
-    const redemptions = await this.redemptionRepository
-      .createQueryBuilder('redemption')
-      .leftJoinAndSelect('redemption.business', 'business')
-      .leftJoinAndSelect('redemption.user', 'user')
-      .where('user.id = :userId', { userId })
-      .getMany();
+    const redemptions = await this.prisma.user_redemptions.findMany({
+      where: {
+        user_id: userId,
+      },
+      include: {
+        businesses: true,
+        users: true,
+      },
+    });
 
     // Calculate total savings
     const totalSavings = redemptions.reduce(
@@ -146,20 +156,20 @@ export class UsersService {
       .map(([category]) => category);
 
     // Get following count
-    const followingCount = await this.userRepository
-      .createQueryBuilder('user')
-      .leftJoin('follows', 'follow', 'follow.user_id = user.id')
-      .where('user.id = :userId', { userId })
-      .andWhere('follow.status = :status', { status: 'active' })
-      .getCount();
+    const followingCount = await this.prisma.follows.count({
+      where: {
+        user_id: userId,
+        status: 'active' as any,
+      },
+    });
 
     // Calculate most saved business
     const businessSavings = new Map<string, { id: string; name: string; total: number }>();
     redemptions.forEach((r) => {
-      const businessId = r.business.id;
+      const businessId = r.businesses.id;
       const existing = businessSavings.get(businessId) || {
         id: businessId,
-        name: r.business.business_name,
+        name: r.businesses.business_name,
         total: 0,
       };
       businessSavings.set(businessId, {
@@ -216,11 +226,13 @@ export class UsersService {
 
   async changePassword(userId: string, changePasswordDto: ChangePasswordDto): Promise<void> {
     // Get user with password
-    const user = await this.userRepository
-      .createQueryBuilder('user')
-      .addSelect('user.password')
-      .where('user.id = :userId', { userId })
-      .getOne();
+    const user = await this.prisma.users.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        password: true,
+      },
+    });
 
     if (!user || !user.password) {
       throw new NotFoundException('User not found');
@@ -240,7 +252,10 @@ export class UsersService {
     const hashedPassword = await bcrypt.hash(changePasswordDto.newPassword, 10);
 
     // Update password
-    await this.userRepository.update(userId, { password: hashedPassword });
+    await this.prisma.users.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
   }
 
   async uploadAvatar(userId: string, file: Express.Multer.File): Promise<User> {
@@ -253,7 +268,10 @@ export class UsersService {
     const base64Image = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
 
     // Update avatar URL
-    user.avatar_url = base64Image;
-    return this.userRepository.save(user);
+    const updatedUser = await this.prisma.users.update({
+      where: { id: userId },
+      data: { avatar_url: base64Image },
+    });
+    return updatedUser as User;
   }
 }
