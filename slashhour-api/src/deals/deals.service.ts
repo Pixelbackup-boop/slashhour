@@ -1,25 +1,20 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Deal, DealStatus } from './entities/deal.entity';
-import { Business } from '../businesses/entities/business.entity';
+import { DealStatus } from './entities/deal.entity';
 import { CreateDealDto } from './dto/create-deal.dto';
 import { UpdateDealDto } from './dto/update-deal.dto';
 import { UploadService } from '../upload/upload.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class DealsService {
   constructor(
-    @InjectRepository(Deal)
-    private dealRepository: Repository<Deal>,
-    @InjectRepository(Business)
-    private businessRepository: Repository<Business>,
+    private prisma: PrismaService,
     private uploadService: UploadService,
   ) {}
 
   async create(userId: string, businessId: string, createDealDto: CreateDealDto) {
     // Verify business exists and user is owner
-    const business = await this.businessRepository.findOne({
+    const business = await this.prisma.businesses.findUnique({
       where: { id: businessId },
     });
 
@@ -41,12 +36,12 @@ export class DealsService {
       throw new BadRequestException('Discounted price must be less than original price');
     }
 
-    const deal = this.dealRepository.create({
-      ...createDealDto,
-      business_id: businessId,
+    const deal = await this.prisma.deals.create({
+      data: {
+        ...createDealDto,
+        business_id: businessId,
+      } as any,
     });
-
-    await this.dealRepository.save(deal);
 
     return {
       message: 'Deal created successfully',
@@ -74,7 +69,7 @@ export class DealsService {
     files: Express.Multer.File[],
   ) {
     // Verify business exists and user is owner
-    const business = await this.businessRepository.findOne({
+    const business = await this.prisma.businesses.findUnique({
       where: { id: businessId },
     });
 
@@ -137,12 +132,12 @@ export class DealsService {
       );
     }
 
-    const deal = this.dealRepository.create({
-      ...createDealDto,
-      business_id: businessId,
+    const deal = await this.prisma.deals.create({
+      data: {
+        ...createDealDto,
+        business_id: businessId,
+      } as any,
     });
-
-    await this.dealRepository.save(deal);
 
     return {
       message: 'Deal created successfully',
@@ -153,13 +148,18 @@ export class DealsService {
   async findAll(page: number = 1, limit: number = 20) {
     const skip = (page - 1) * limit;
 
-    const [deals, total] = await this.dealRepository.findAndCount({
-      where: { status: DealStatus.ACTIVE },
-      skip,
-      take: limit,
-      order: { created_at: 'DESC' },
-      relations: ['business'],
-    });
+    const [deals, total] = await Promise.all([
+      this.prisma.deals.findMany({
+        where: { status: DealStatus.ACTIVE as any },
+        skip,
+        take: limit,
+        orderBy: { created_at: 'desc' },
+        include: { businesses: true },
+      }),
+      this.prisma.deals.count({
+        where: { status: DealStatus.ACTIVE as any },
+      }),
+    ]);
 
     return {
       total,
@@ -170,9 +170,9 @@ export class DealsService {
   }
 
   async findOne(id: string) {
-    const deal = await this.dealRepository.findOne({
+    const deal = await this.prisma.deals.findUnique({
       where: { id },
-      relations: ['business'],
+      include: { businesses: true },
     });
 
     if (!deal) {
@@ -183,9 +183,9 @@ export class DealsService {
   }
 
   async findByBusiness(businessId: string) {
-    const deals = await this.dealRepository.find({
+    const deals = await this.prisma.deals.findMany({
       where: { business_id: businessId },
-      order: { created_at: 'DESC' },
+      orderBy: { created_at: 'desc' },
     });
 
     return {
@@ -195,9 +195,9 @@ export class DealsService {
   }
 
   async update(id: string, userId: string, updateDealDto: UpdateDealDto) {
-    const deal = await this.dealRepository.findOne({
+    const deal = await this.prisma.deals.findUnique({
       where: { id },
-      relations: ['business'],
+      include: { businesses: true },
     });
 
     if (!deal) {
@@ -205,7 +205,7 @@ export class DealsService {
     }
 
     // Check ownership
-    if (deal.business.owner_id !== userId) {
+    if (deal.businesses.owner_id !== userId) {
       throw new ForbiddenException('You do not have permission to update this deal');
     }
 
@@ -223,12 +223,14 @@ export class DealsService {
       }
     }
 
-    Object.assign(deal, updateDealDto);
-    await this.dealRepository.save(deal);
+    const updatedDeal = await this.prisma.deals.update({
+      where: { id },
+      data: updateDealDto as any,
+    });
 
     return {
       message: 'Deal updated successfully',
-      deal,
+      deal: updatedDeal,
     };
   }
 
@@ -242,9 +244,9 @@ export class DealsService {
     body: any,
     files: Express.Multer.File[],
   ) {
-    const deal = await this.dealRepository.findOne({
+    const deal = await this.prisma.deals.findUnique({
       where: { id },
-      relations: ['business'],
+      include: { businesses: true },
     });
 
     if (!deal) {
@@ -252,7 +254,7 @@ export class DealsService {
     }
 
     // Check ownership
-    if (deal.business.owner_id !== userId) {
+    if (deal.businesses.owner_id !== userId) {
       throw new ForbiddenException('You do not have permission to update this deal');
     }
 
@@ -304,23 +306,25 @@ export class DealsService {
     // Validate pricing if updating
     const finalOriginalPrice = updateDealDto.original_price || deal.original_price;
     const finalDiscountedPrice = updateDealDto.discounted_price || deal.discounted_price;
-    if (finalDiscountedPrice >= finalOriginalPrice) {
+    if (Number(finalDiscountedPrice) >= Number(finalOriginalPrice)) {
       throw new BadRequestException('Discounted price must be less than original price');
     }
 
-    Object.assign(deal, updateDealDto);
-    await this.dealRepository.save(deal);
+    const updatedDeal = await this.prisma.deals.update({
+      where: { id },
+      data: updateDealDto as any,
+    });
 
     return {
       message: 'Deal updated successfully',
-      deal,
+      deal: updatedDeal,
     };
   }
 
   async delete(id: string, userId: string) {
-    const deal = await this.dealRepository.findOne({
+    const deal = await this.prisma.deals.findUnique({
       where: { id },
-      relations: ['business'],
+      include: { businesses: true },
     });
 
     if (!deal) {
@@ -328,11 +332,13 @@ export class DealsService {
     }
 
     // Check ownership
-    if (deal.business.owner_id !== userId) {
+    if (deal.businesses.owner_id !== userId) {
       throw new ForbiddenException('You do not have permission to delete this deal');
     }
 
-    await this.dealRepository.remove(deal);
+    await this.prisma.deals.delete({
+      where: { id },
+    });
 
     return {
       message: 'Deal deleted successfully',
@@ -340,7 +346,7 @@ export class DealsService {
   }
 
   async redeemDeal(dealId: string, userId: string) {
-    const deal = await this.dealRepository.findOne({
+    const deal = await this.prisma.deals.findUnique({
       where: { id: dealId },
     });
 
@@ -354,8 +360,10 @@ export class DealsService {
 
     // Check if deal has expired
     if (new Date() > deal.expires_at) {
-      deal.status = DealStatus.EXPIRED;
-      await this.dealRepository.save(deal);
+      await this.prisma.deals.update({
+        where: { id: dealId },
+        data: { status: DealStatus.EXPIRED as any },
+      });
       throw new BadRequestException('Deal has expired');
     }
 
@@ -367,34 +375,40 @@ export class DealsService {
     // Check inventory
     if (deal.quantity_available !== null && deal.quantity_available !== undefined) {
       if (deal.quantity_redeemed >= deal.quantity_available) {
-        deal.status = DealStatus.SOLD_OUT;
-        await this.dealRepository.save(deal);
+        await this.prisma.deals.update({
+          where: { id: dealId },
+          data: { status: DealStatus.SOLD_OUT as any },
+        });
         throw new BadRequestException('Deal is sold out');
       }
     }
 
     // Increment redemption count
-    deal.quantity_redeemed += 1;
-    await this.dealRepository.save(deal);
+    await this.prisma.deals.update({
+      where: { id: dealId },
+      data: { quantity_redeemed: deal.quantity_redeemed + 1 },
+    });
 
     return {
       message: 'Deal redeemed successfully',
       redemption: {
-        deal_id: deal.id,
+        deal_id: dealId,
         redeemed_at: new Date(),
       },
     };
   }
 
   async getActiveDeals() {
-    const deals = await this.dealRepository
-      .createQueryBuilder('deal')
-      .leftJoinAndSelect('deal.business', 'business')
-      .where('deal.status = :status', { status: DealStatus.ACTIVE })
-      .andWhere('deal.starts_at <= :now', { now: new Date() })
-      .andWhere('deal.expires_at > :now', { now: new Date() })
-      .orderBy('deal.created_at', 'DESC')
-      .getMany();
+    const now = new Date();
+    const deals = await this.prisma.deals.findMany({
+      where: {
+        status: DealStatus.ACTIVE as any,
+        starts_at: { lte: now },
+        expires_at: { gt: now },
+      },
+      include: { businesses: true },
+      orderBy: { created_at: 'desc' },
+    });
 
     return {
       total: deals.length,
@@ -403,15 +417,17 @@ export class DealsService {
   }
 
   async getFlashDeals() {
-    const deals = await this.dealRepository
-      .createQueryBuilder('deal')
-      .leftJoinAndSelect('deal.business', 'business')
-      .where('deal.status = :status', { status: DealStatus.ACTIVE })
-      .andWhere('deal.is_flash_deal = :isFlash', { isFlash: true })
-      .andWhere('deal.starts_at <= :now', { now: new Date() })
-      .andWhere('deal.expires_at > :now', { now: new Date() })
-      .orderBy('deal.created_at', 'DESC')
-      .getMany();
+    const now = new Date();
+    const deals = await this.prisma.deals.findMany({
+      where: {
+        status: DealStatus.ACTIVE as any,
+        is_flash_deal: true,
+        starts_at: { lte: now },
+        expires_at: { gt: now },
+      },
+      include: { businesses: true },
+      orderBy: { created_at: 'desc' },
+    });
 
     return {
       total: deals.length,
