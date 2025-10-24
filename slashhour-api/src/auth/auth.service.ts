@@ -1,17 +1,15 @@
 import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { User } from '../users/entities/user.entity';
 import { RegisterDto, LoginDto } from './dto';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectRepository(User)
-    private usersRepository: Repository<User>,
+    private prisma: PrismaService,
     private jwtService: JwtService,
     private configService: ConfigService,
   ) {}
@@ -20,8 +18,13 @@ export class AuthService {
     const { email, phone, password, name, userType, username } = registerDto;
 
     // Check if user already exists
-    const existingUser = await this.usersRepository.findOne({
-      where: [{ email }, ...(phone ? [{ phone }] : [])],
+    const existingUser = await this.prisma.users.findFirst({
+      where: {
+        OR: [
+          { email },
+          ...(phone ? [{ phone }] : []),
+        ],
+      },
     });
 
     if (existingUser) {
@@ -32,22 +35,22 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create user
-    const user = this.usersRepository.create({
-      name,
-      email,
-      phone,
-      password: hashedPassword,
-      userType,
-      username,
+    const user = await this.prisma.users.create({
+      data: {
+        name,
+        email,
+        phone,
+        password: hashedPassword,
+        user_type: userType,
+        username,
+      },
     });
 
-    await this.usersRepository.save(user);
-
     // Generate tokens
-    const tokens = await this.generateTokens(user);
+    const tokens = await this.generateTokens(user as User);
 
     return {
-      user: this.sanitizeUser(user),
+      user: this.sanitizeUser(user as User),
       ...tokens,
     };
   }
@@ -56,12 +59,14 @@ export class AuthService {
     const { emailOrPhone, password } = loginDto;
 
     // Find user by email or phone
-    const user = await this.usersRepository
-      .createQueryBuilder('user')
-      .where('user.email = :emailOrPhone', { emailOrPhone })
-      .orWhere('user.phone = :emailOrPhone', { emailOrPhone })
-      .addSelect('user.password')
-      .getOne();
+    const user = await this.prisma.users.findFirst({
+      where: {
+        OR: [
+          { email: emailOrPhone },
+          { phone: emailOrPhone },
+        ],
+      },
+    });
 
     if (!user) {
       throw new UnauthorizedException('Your email or password is wrong, please check');
@@ -77,20 +82,22 @@ export class AuthService {
     }
 
     // Generate tokens
-    const tokens = await this.generateTokens(user);
+    const tokens = await this.generateTokens(user as User);
 
     return {
-      user: this.sanitizeUser(user),
+      user: this.sanitizeUser(user as User),
       ...tokens,
     };
   }
 
   async validateUser(userId: string): Promise<User> {
-    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    const user = await this.prisma.users.findUnique({
+      where: { id: userId },
+    });
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
-    return user;
+    return user as User;
   }
 
   async refreshToken(refreshToken: string) {
