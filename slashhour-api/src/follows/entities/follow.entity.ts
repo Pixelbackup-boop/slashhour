@@ -1,56 +1,23 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
-import { User } from '../../users/entities/user.entity';
-import { Business } from '../../businesses/entities/business.entity';
-
+/**
+ * Follow status enum matching Prisma schema
+ */
 export enum FollowStatus {
   ACTIVE = 'active',
   MUTED = 'muted',
   UNFOLLOWED = 'unfollowed',
 }
 
-@Entity('follows')
-export class Follow {
-  @PrimaryGeneratedColumn('uuid')
+/**
+ * Follow entity interface
+ * Now using Prisma for database operations - this is kept as a TypeScript type
+ */
+export interface Follow {
   id: string;
-
-  @Column({ type: 'uuid' })
   user_id: string;
-
-  @ManyToOne(() => User)
-  @JoinColumn({ name: 'user_id' })
-  user: User;
-
-  @Column({ type: 'uuid' })
   business_id: string;
-
-  @ManyToOne(() => Business)
-  @JoinColumn({ name: 'business_id' })
-  business: Business;
-
-  @Column({
-    type: 'enum',
-    enum: FollowStatus,
-    default: FollowStatus.ACTIVE,
-  })
-  status: FollowStatus;
-
-  @Column({ type: 'boolean', default: true })
+  status: string;
   notify_new_deals: boolean;
-
-  @Column({ type: 'boolean', default: false })
   notify_flash_deals: boolean;
-
-  @CreateDateColumn()
   followed_at: Date;
-
-  @UpdateDateColumn()
   updated_at: Date;
 }

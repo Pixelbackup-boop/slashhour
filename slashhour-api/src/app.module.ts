@@ -1,9 +1,7 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import databaseConfig from './config/database.config';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { FeedModule } from './feed/feed.module';
@@ -22,25 +20,11 @@ import { PrismaModule } from './prisma/prisma.module';
     // Config Module
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig],
       envFilePath: '.env',
     }),
 
     // Prisma Module (Global)
     PrismaModule,
-
-    // TypeORM Module
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
-        const dbConfig = configService.get('database');
-        if (!dbConfig) {
-          throw new Error('Database configuration not found');
-        }
-        return dbConfig;
-      },
-    }),
 
     // Feature Modules
     UsersModule,
