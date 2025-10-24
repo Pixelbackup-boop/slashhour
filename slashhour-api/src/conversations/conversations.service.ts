@@ -1,18 +1,12 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Conversation } from './entities/conversation.entity';
-import { Message } from './entities/message.entity';
 import { ConversationResponseDto } from './dto/conversation-response.dto';
 import { MessageResponseDto } from './dto/message-response.dto';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class ConversationsService {
   constructor(
-    @InjectRepository(Conversation)
-    private conversationRepository: Repository<Conversation>,
-    @InjectRepository(Message)
-    private messageRepository: Repository<Message>,
+    private prisma: PrismaService,
   ) {}
 
   /**
@@ -23,28 +17,29 @@ export class ConversationsService {
     businessId: string,
   ): Promise<ConversationResponseDto> {
     // Try to find existing conversation
-    let conversation = await this.conversationRepository.findOne({
+    let conversation = await this.prisma.conversations.findFirst({
       where: {
-        customerId,
-        businessId,
+        customer_id: customerId,
+        business_id: businessId,
       },
-      relations: ['business', 'customer'],
+      include: {
+        businesses: true,
+        users: true,
+      },
     });
 
     // Create if doesn't exist
     if (!conversation) {
-      conversation = this.conversationRepository.create({
-        customerId,
-        businessId,
-        unreadCount: 0,
-      });
-
-      conversation = await this.conversationRepository.save(conversation);
-
-      // Reload with relations
-      conversation = await this.conversationRepository.findOne({
-        where: { id: conversation.id },
-        relations: ['business', 'customer'],
+      conversation = await this.prisma.conversations.create({
+        data: {
+          customer_id: customerId,
+          business_id: businessId,
+          unread_count: 0,
+        },
+        include: {
+          businesses: true,
+          users: true,
+        },
       });
     }
 
@@ -52,23 +47,31 @@ export class ConversationsService {
       throw new NotFoundException('Conversation not found');
     }
 
-    return this.transformConversation(conversation);
+    return this.transformConversation(conversation as any);
   }
 
   /**
    * Get all conversations for a user
    */
   async getUserConversations(userId: string): Promise<ConversationResponseDto[]> {
-    const conversations = await this.conversationRepository.find({
-      where: [
-        { customerId: userId },
-        { business: { owner_id: userId } },
+    const conversations = await this.prisma.conversations.findMany({
+      where: {
+        OR: [
+          { customer_id: userId },
+          { businesses: { owner_id: userId } },
+        ],
+      },
+      include: {
+        businesses: true,
+        users: true,
+      },
+      orderBy: [
+        { last_message_at: 'desc' },
+        { created_at: 'desc' },
       ],
-      relations: ['business', 'customer'],
-      order: { lastMessageAt: 'DESC', createdAt: 'DESC' },
     });
 
-    return conversations.map((conv) => this.transformConversation(conv));
+    return conversations.map((conv) => this.transformConversation(conv as any));
   }
 
   /**
@@ -78,9 +81,16 @@ export class ConversationsService {
     conversationId: string,
     userId: string,
   ): Promise<ConversationResponseDto> {
-    const conversation = await this.conversationRepository.findOne({
+    const conversation = await this.prisma.conversations.findUnique({
       where: { id: conversationId },
-      relations: ['business', 'customer', 'business.owner'],
+      include: {
+        businesses: {
+          include: {
+            users: true,
+          },
+        },
+        users: true,
+      },
     });
 
     if (!conversation) {
@@ -88,14 +98,14 @@ export class ConversationsService {
     }
 
     // Verify user is part of this conversation
-    const isCustomer = conversation.customerId === userId;
-    const isBusinessOwner = conversation.business?.owner_id === userId;
+    const isCustomer = conversation.customer_id === userId;
+    const isBusinessOwner = conversation.businesses?.owner_id === userId;
 
     if (!isCustomer && !isBusinessOwner) {
       throw new ForbiddenException('You do not have access to this conversation');
     }
 
-    return this.transformConversation(conversation);
+    return this.transformConversation(conversation as any);
   }
 
   /**
@@ -112,16 +122,21 @@ export class ConversationsService {
 
     const skip = (page - 1) * limit;
 
-    const [messages, total] = await this.messageRepository.findAndCount({
-      where: { conversationId },
-      relations: ['sender'],
-      order: { createdAt: 'DESC' },
-      skip,
-      take: limit,
-    });
+    const [messages, total] = await Promise.all([
+      this.prisma.messages.findMany({
+        where: { conversation_id: conversationId },
+        include: { users: true },
+        orderBy: { created_at: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.messages.count({
+        where: { conversation_id: conversationId },
+      }),
+    ]);
 
     return {
-      messages: messages.map((msg) => this.transformMessage(msg)),
+      messages: messages.map((msg) => this.transformMessage(msg as any)),
       total,
     };
   }
@@ -138,52 +153,49 @@ export class ConversationsService {
     // Verify access to conversation
     await this.getConversation(conversationId, senderId);
 
-    // Create message
-    const message = this.messageRepository.create({
-      conversationId,
-      senderId,
-      messageText,
-      messageType,
-      isRead: false,
+    // Create message with sender relation
+    const savedMessage = await this.prisma.messages.create({
+      data: {
+        conversation_id: conversationId,
+        sender_id: senderId,
+        message_text: messageText,
+        message_type: messageType,
+        is_read: false,
+      },
+      include: { users: true },
     });
 
-    const savedMessage = await this.messageRepository.save(message);
-
     // Update conversation last message
-    await this.conversationRepository.update(conversationId, {
-      lastMessageAt: new Date(),
-      lastMessageText: messageText,
+    await this.prisma.conversations.update({
+      where: { id: conversationId },
+      data: {
+        last_message_at: new Date(),
+        last_message_text: messageText,
+      },
     });
 
     // Increment unread count for the other user
-    const conversation = await this.conversationRepository.findOne({
+    const conversation = await this.prisma.conversations.findUnique({
       where: { id: conversationId },
-      relations: ['business'],
+      include: { businesses: true },
     });
 
     if (conversation) {
-      const isCustomerSender = conversation.customerId === senderId;
+      const isCustomerSender = conversation.customer_id === senderId;
       if (isCustomerSender) {
         // Customer sent, increment for business owner
-        await this.conversationRepository.increment(
-          { id: conversationId },
-          'unreadCount',
-          1,
-        );
+        await this.prisma.conversations.update({
+          where: { id: conversationId },
+          data: {
+            unread_count: {
+              increment: 1,
+            },
+          },
+        });
       }
     }
 
-    // Reload with sender relation
-    const messageWithSender = await this.messageRepository.findOne({
-      where: { id: savedMessage.id },
-      relations: ['sender'],
-    });
-
-    if (!messageWithSender) {
-      throw new NotFoundException('Message not found');
-    }
-
-    return this.transformMessage(messageWithSender);
+    return this.transformMessage(savedMessage as any);
   }
 
   /**
@@ -194,45 +206,51 @@ export class ConversationsService {
     await this.getConversation(conversationId, userId);
 
     // Mark all unread messages as read (where user is NOT the sender)
-    await this.messageRepository
-      .createQueryBuilder()
-      .update(Message)
-      .set({ isRead: true, readAt: () => 'CURRENT_TIMESTAMP' })
-      .where('conversation_id = :conversationId', { conversationId })
-      .andWhere('sender_id != :userId', { userId })
-      .andWhere('is_read = :isRead', { isRead: false })
-      .execute();
+    await this.prisma.messages.updateMany({
+      where: {
+        conversation_id: conversationId,
+        sender_id: { not: userId },
+        is_read: false,
+      },
+      data: {
+        is_read: true,
+        read_at: new Date(),
+      },
+    });
 
     // Reset unread count for this user
-    await this.conversationRepository.update(conversationId, {
-      unreadCount: 0,
+    await this.prisma.conversations.update({
+      where: { id: conversationId },
+      data: {
+        unread_count: 0,
+      },
     });
   }
 
   /**
    * Transform conversation entity to DTO (camelCase)
    */
-  private transformConversation(conversation: Conversation): ConversationResponseDto {
+  private transformConversation(conversation: any): ConversationResponseDto {
     return {
       id: conversation.id,
-      businessId: conversation.businessId,
-      customerId: conversation.customerId,
-      lastMessageAt: conversation.lastMessageAt,
-      lastMessageText: conversation.lastMessageText,
-      unreadCount: conversation.unreadCount,
-      createdAt: conversation.createdAt,
-      updatedAt: conversation.updatedAt,
+      businessId: conversation.business_id,
+      customerId: conversation.customer_id,
+      lastMessageAt: conversation.last_message_at,
+      lastMessageText: conversation.last_message_text,
+      unreadCount: conversation.unread_count,
+      createdAt: conversation.created_at,
+      updatedAt: conversation.updated_at,
       business: {
-        id: conversation.business.id,
-        businessName: conversation.business.business_name,
-        logoUrl: conversation.business.logo_url,
-        category: conversation.business.category,
+        id: conversation.businesses.id,
+        businessName: conversation.businesses.business_name,
+        logoUrl: conversation.businesses.logo_url,
+        category: conversation.businesses.category,
       },
       customer: {
-        id: conversation.customer.id,
-        username: conversation.customer.username,
-        name: conversation.customer.name,
-        avatarUrl: conversation.customer.avatar_url,
+        id: conversation.users.id,
+        username: conversation.users.username,
+        name: conversation.users.name,
+        avatarUrl: conversation.users.avatar_url,
       },
     };
   }
@@ -240,21 +258,21 @@ export class ConversationsService {
   /**
    * Transform message entity to DTO (camelCase)
    */
-  private transformMessage(message: Message): MessageResponseDto {
+  private transformMessage(message: any): MessageResponseDto {
     return {
       id: message.id,
-      conversationId: message.conversationId,
-      senderId: message.senderId,
-      messageText: message.messageText,
-      messageType: message.messageType,
-      isRead: message.isRead,
-      readAt: message.readAt,
-      createdAt: message.createdAt,
+      conversationId: message.conversation_id,
+      senderId: message.sender_id,
+      messageText: message.message_text,
+      messageType: message.message_type,
+      isRead: message.is_read,
+      readAt: message.read_at,
+      createdAt: message.created_at,
       sender: {
-        id: message.sender.id,
-        username: message.sender.username,
-        name: message.sender.name,
-        avatarUrl: message.sender.avatar_url,
+        id: message.users.id,
+        username: message.users.username,
+        name: message.users.name,
+        avatarUrl: message.users.avatar_url,
       },
     };
   }
