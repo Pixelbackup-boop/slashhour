@@ -33,14 +33,44 @@ interface DealDetailScreenProps {
 export default function DealDetailScreen({ route, navigation }: DealDetailScreenProps) {
   const { deal: dealParam, dealId } = route.params;
 
+  if (__DEV__) {
+    console.log('🎯 [DealDetailScreen] Route params:', {
+      dealId,
+      hasDealParam: !!dealParam,
+      dealParamTitle: dealParam?.title,
+    });
+  }
+
   // If dealId is provided, fetch the full deal from API
   const { data: fetchedDeal, isLoading: isFetchingDeal, error: fetchError } = useDeal(dealId || '');
+
+  if (__DEV__ && fetchError) {
+    console.error('❌ [DealDetailScreen] React Query error:', {
+      dealId,
+      error: fetchError,
+      message: (fetchError as any)?.message,
+      response: (fetchError as any)?.response,
+    });
+  }
 
   // Use either the passed deal or the fetched deal
   const deal = dealParam || fetchedDeal;
 
-  // 🔍 DEBUG: Log the actual deal data
-  console.log('🔍 DealDetailScreen - Full deal object:', JSON.stringify(deal, null, 2));
+  // Normalize business data: backend returns 'businesses' but some places use 'business'
+  if (deal && deal.businesses && !deal.business) {
+    deal.business = deal.businesses;
+  }
+
+  // IMPORTANT: Call all hooks unconditionally before any early returns (Rules of Hooks)
+  const {
+    timeRemaining,
+    isRedeeming,
+    showRedemptionModal,
+    redemptionCode,
+    savings,
+    handleRedeem,
+    closeRedemptionModal,
+  } = useDealDetail(deal);
 
   // Show loading state while fetching deal
   if (dealId && isFetchingDeal) {
@@ -82,16 +112,6 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
   if (!deal) {
     return null;
   }
-
-  const {
-    timeRemaining,
-    isRedeeming,
-    showRedemptionModal,
-    redemptionCode,
-    savings,
-    handleRedeem,
-    closeRedemptionModal,
-  } = useDealDetail(deal);
 
   const getDiscountText = () => {
     if (savings.percentage > 0) {

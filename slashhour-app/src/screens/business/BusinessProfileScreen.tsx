@@ -400,6 +400,7 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
           onLogoPress={handleLogoPress}
           onMessagePress={handleMessagePress}
           onEditPress={handleEditPress}
+          onFollowersPress={() => navigation.navigate('FollowersList', { businessId: business!.id })}
         />
 
         <BusinessTabs business={business!} isOwner={isOwner} />

@@ -4,12 +4,14 @@ import { CreateDealDto } from './dto/create-deal.dto';
 import { UpdateDealDto } from './dto/update-deal.dto';
 import { UploadService } from '../upload/upload.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class DealsService {
   constructor(
     private prisma: PrismaService,
     private uploadService: UploadService,
+    private notificationsService: NotificationsService,
   ) {}
 
   async create(userId: string, businessId: string, createDealDto: CreateDealDto) {
@@ -42,6 +44,13 @@ export class DealsService {
         business_id: businessId,
       } as any,
     });
+
+    // Send notification to followers asynchronously (don't wait for it)
+    this.notificationsService
+      .sendNewDealNotification(deal.id, businessId)
+      .catch(() => {
+        // Silently fail - notification is non-critical
+      });
 
     return {
       message: 'Deal created successfully',
@@ -138,6 +147,13 @@ export class DealsService {
         business_id: businessId,
       } as any,
     });
+
+    // Send notification to followers asynchronously (don't wait for it)
+    this.notificationsService
+      .sendNewDealNotification(deal.id, businessId)
+      .catch(() => {
+        // Silently fail - notification is non-critical
+      });
 
     return {
       message: 'Deal created successfully',

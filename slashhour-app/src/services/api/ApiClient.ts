@@ -18,11 +18,15 @@ class ApiClient {
   }
 
   private setupInterceptors() {
-    // Request interceptor
+    // Request interceptor - dynamically get token from Zustand on each request
     this.client.interceptors.request.use(
       (config) => {
-        if (this.token) {
-          config.headers.Authorization = `Bearer ${this.token}`;
+        // Import inside function to avoid circular dependency
+        const { useAuthStore } = require('../../stores/useAuthStore');
+        const token = useAuthStore.getState().token;
+
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
       },

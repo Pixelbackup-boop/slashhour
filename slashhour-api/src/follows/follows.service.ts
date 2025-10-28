@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { Follow, FollowStatus } from './entities/follow.entity';
 import { UpdateNotificationPreferencesDto } from './dto/update-notification-preferences.dto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -19,6 +19,11 @@ export class FollowsService {
       throw new NotFoundException('Business not found');
     }
 
+    // Prevent business owners from following their own business
+    if (business.owner_id === userId) {
+      throw new BadRequestException('You cannot follow your own business');
+    }
+
     // Check if already following
     let follow = await this.prisma.follows.findFirst({
       where: { user_id: userId, business_id: businessId },
@@ -33,6 +38,12 @@ export class FollowsService {
         where: { id: follow.id },
         data: { status: FollowStatus.ACTIVE as any },
       });
+
+      // Increment follower count when reactivating
+      await this.prisma.businesses.update({
+        where: { id: businessId },
+        data: { follower_count: { increment: 1 } },
+      });
     } else {
       // Create new follow
       follow = await this.prisma.follows.create({
@@ -43,6 +54,12 @@ export class FollowsService {
           notify_new_deals: true,
           notify_flash_deals: false,
         },
+      });
+
+      // Increment follower count for new follow
+      await this.prisma.businesses.update({
+        where: { id: businessId },
+        data: { follower_count: { increment: 1 } },
       });
     }
 
@@ -71,6 +88,12 @@ export class FollowsService {
     await this.prisma.follows.update({
       where: { id: follow.id },
       data: { status: FollowStatus.UNFOLLOWED as any },
+    });
+
+    // Decrement follower count when unfollowing
+    await this.prisma.businesses.update({
+      where: { id: businessId },
+      data: { follower_count: { decrement: 1 } },
     });
 
     return {
@@ -196,6 +219,49 @@ export class FollowsService {
       notify_new_deals: follow.notify_new_deals,
       notify_flash_deals: follow.notify_flash_deals,
       followed_at: follow.followed_at,
+    };
+  }
+
+  async getBusinessFollowers(businessId: string) {
+    // Check if business exists
+    const business = await this.prisma.businesses.findUnique({
+      where: { id: businessId },
+    });
+
+    if (!business) {
+      throw new NotFoundException('Business not found');
+    }
+
+    // Get all active followers with user details
+    const followers = await this.prisma.follows.findMany({
+      where: {
+        business_id: businessId,
+        status: FollowStatus.ACTIVE as any,
+      },
+      include: {
+        users: {
+          select: {
+            id: true,
+            username: true,
+            name: true,
+            avatar_url: true,
+          },
+        },
+      },
+      orderBy: {
+        followed_at: 'desc',
+      },
+    });
+
+    return {
+      total: followers.length,
+      followers: followers.map((follow) => ({
+        user_id: follow.users.id,
+        username: follow.users.username,
+        name: follow.users.name,
+        avatar_url: follow.users.avatar_url,
+        followed_at: follow.followed_at,
+      })),
     };
   }
 }

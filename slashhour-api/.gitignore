@@ -31,4 +31,8 @@ coverage/
 # TypeScript
 *.tsbuildinfo
 
+# Prisma generated files
 /generated/prisma
+
+# Uploads
+uploads/

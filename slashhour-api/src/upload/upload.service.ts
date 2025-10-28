@@ -107,8 +107,7 @@ export class UploadService {
         fs.unlinkSync(filePath);
       }
     } catch (error) {
-      console.error('Error deleting file:', error);
-      // Don't throw error - file might already be deleted
+      // Silently fail - file might already be deleted
     }
   }
 }

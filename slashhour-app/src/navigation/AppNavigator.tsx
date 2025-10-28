@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUser, useIsAuthenticated } from '../stores/useAuthStore';
 import { useTheme } from '../context/ThemeContext';
 import { SHADOWS, SPACING } from '../theme';
+import { navigationRef } from './navigationRef';
 import LoginScreen from '../screens/auth/LoginScreen';
 import SignUpScreen from '../screens/auth/SignUpScreen';
 import HomeScreen from '../screens/home/HomeScreen';
@@ -17,12 +18,14 @@ import ProfileScreen from '../screens/profile/ProfileScreen';
 import DealDetailScreen from '../screens/deal/DealDetailScreen';
 import RedemptionHistoryScreen from '../screens/redemption/RedemptionHistoryScreen';
 import FollowingListScreen from '../screens/following/FollowingListScreen';
+import FollowersListScreen from '../screens/followers/FollowersListScreen';
 import BusinessProfileScreen from '../screens/business/BusinessProfileScreen';
 import EditBusinessProfileScreen from '../screens/business/EditBusinessProfileScreen';
 import RegisterBusinessScreen from '../screens/business/RegisterBusinessScreen';
 import CreateDealScreen from '../screens/post/CreateDealScreen';
 import EditDealScreen from '../screens/post/EditDealScreen';
 import SimpleTestScreen from '../screens/test/SimpleTestScreen';
+import NotificationsScreen from '../screens/notifications/NotificationsScreen';
 import { Deal, Business } from '../types/models';
 
 type RootStackParamList = {
@@ -30,8 +33,10 @@ type RootStackParamList = {
   SignUp: undefined;
   MainTabs: undefined;
   DealDetail: { deal: Deal };
+  DealDetails: { dealId: string };
   RedemptionHistory: undefined;
   FollowingList: undefined;
+  FollowersList: { businessId: string };
   BusinessProfile: { businessId: string; businessName?: string };
   EditBusinessProfile: { business: Business };
   RegisterBusiness: undefined;
@@ -49,6 +54,7 @@ type RootStackParamList = {
 type TabParamList = {
   Home: undefined;
   Search: undefined;
+  Notifications: undefined;
   Inbox: undefined;
   Profile: undefined;
 };
@@ -64,6 +70,27 @@ function MainTabNavigator() {
 
   // Import useConversations for unread count
   const { totalUnreadCount } = require('../hooks/useConversations').useConversations(user?.id);
+
+  // Track unread notification count
+  const [unreadNotificationCount, setUnreadNotificationCount] = React.useState(0);
+
+  // Poll for unread notifications count every 30 seconds
+  React.useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const notificationService = require('../services/api/notificationService').default;
+        const count = await notificationService.getUnreadCount();
+        setUnreadNotificationCount(count);
+      } catch (error) {
+        // Silently fail - likely not authenticated yet
+      }
+    };
+
+    fetchUnreadCount(); // Initial fetch
+    const interval = setInterval(fetchUnreadCount, 30000); // Poll every 30s
+
+    return () => clearInterval(interval);
+  }, [user?.id]);
 
   // Calculate dynamic tab bar height
   // Base height (60) + safe area bottom inset + extra padding for gesture area
@@ -119,6 +146,29 @@ function MainTabNavigator() {
         }}
       />
       <Tab.Screen
+        name="Notifications"
+        component={NotificationsScreen}
+        options={{
+          tabBarLabel: 'Alerts',
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon icon="🔔" focused={focused} />
+          ),
+          // Show unread notification count badge
+          tabBarBadge: unreadNotificationCount > 0 ? (unreadNotificationCount > 99 ? '99+' : unreadNotificationCount) : undefined,
+          tabBarBadgeStyle: {
+            backgroundColor: colors.error,
+            color: colors.white,
+            fontSize: 10,
+            fontWeight: 'bold',
+            minWidth: 18,
+            height: 18,
+            borderRadius: 9,
+            alignItems: 'center',
+            justifyContent: 'center',
+          },
+        }}
+      />
+      <Tab.Screen
         name="Inbox"
         component={ConversationsListScreen}
         options={{
@@ -149,8 +199,6 @@ function MainTabNavigator() {
           tabBarIcon: ({ color, focused }) => (
             <TabIcon icon="👤" focused={focused} />
           ),
-          // TODO: Add badge for notifications
-          // tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
         }}
       />
     </Tab.Navigator>
@@ -197,7 +245,7 @@ export default function AppNavigator() {
   };
 
   return (
-    <NavigationContainer theme={navigationTheme}>
+    <NavigationContainer ref={navigationRef} theme={navigationTheme}>
       <Stack.Navigator
         screenOptions={{
           headerShown: false,
@@ -217,12 +265,20 @@ export default function AppNavigator() {
               component={DealDetailScreen}
             />
             <Stack.Screen
+              name="DealDetails"
+              component={DealDetailScreen}
+            />
+            <Stack.Screen
               name="RedemptionHistory"
               component={RedemptionHistoryScreen}
             />
             <Stack.Screen
               name="FollowingList"
               component={FollowingListScreen}
+            />
+            <Stack.Screen
+              name="FollowersList"
+              component={FollowersListScreen}
             />
             <Stack.Screen
               name="BusinessProfile"

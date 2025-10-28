@@ -21,6 +21,7 @@ interface BusinessHeaderProps {
   onLogoPress: () => void;
   onMessagePress: () => void;
   onEditPress: () => void;
+  onFollowersPress?: () => void;
 }
 
 function BusinessHeader({
@@ -34,6 +35,7 @@ function BusinessHeader({
   onLogoPress,
   onMessagePress,
   onEditPress,
+  onFollowersPress,
 }: BusinessHeaderProps) {
   return (
     <>
@@ -82,10 +84,15 @@ function BusinessHeader({
               <Text style={styles.statValue}>{stats?.activeDealCount || 0}</Text>
               <Text style={styles.statLabel}>Active</Text>
             </View>
-            <View style={styles.statItem}>
+            <TouchableOpacity
+              style={styles.statItem}
+              onPress={onFollowersPress}
+              activeOpacity={onFollowersPress ? 0.7 : 1}
+              disabled={!onFollowersPress}
+            >
               <Text style={styles.statValue}>{stats?.followerCount || 0}</Text>
               <Text style={styles.statLabel}>Followers</Text>
-            </View>
+            </TouchableOpacity>
             <View style={styles.statItem}>
               <Text style={styles.statValue}>{stats?.totalDealsSold || 0}</Text>
               <Text style={styles.statLabel}>Deals Sold</Text>
@@ -112,16 +119,18 @@ function BusinessHeader({
               <Text style={styles.iconButtonText}>✉️</Text>
             </TouchableOpacity>
 
-            {/* Follow Button */}
-            <View style={styles.followButtonInRow}>
-              <FollowButton
-                businessId={businessId}
-                businessName={businessName}
-                businessCategory={businessCategory}
-                size="medium"
-                variant="primary"
-              />
-            </View>
+            {/* Follow Button - Only show for non-owners */}
+            {!isOwner && (
+              <View style={styles.followButtonInRow}>
+                <FollowButton
+                  businessId={businessId}
+                  businessName={businessName}
+                  businessCategory={businessCategory}
+                  size="medium"
+                  variant="primary"
+                />
+              </View>
+            )}
           </View>
         </View>
       </View>

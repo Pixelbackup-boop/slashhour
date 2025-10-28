@@ -46,6 +46,11 @@ export class FollowsController {
     return this.followsService.getFollowedBusinesses(req.user.id);
   }
 
+  @Get(':businessId/followers')
+  async getBusinessFollowers(@Param('businessId') businessId: string) {
+    return this.followsService.getBusinessFollowers(businessId);
+  }
+
   @Get(':businessId')
   async getFollowStatus(@Request() req, @Param('businessId') businessId: string) {
     return this.followsService.getFollowStatus(req.user.id, businessId);

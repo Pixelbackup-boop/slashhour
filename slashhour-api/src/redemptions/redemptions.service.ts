@@ -57,12 +57,6 @@ export class RedemptionsService {
     }
 
     // Create redemption record
-    console.log('🔍 Creating redemption for:', {
-      userId: user.id,
-      dealId: deal.id,
-      businessId: deal.businesses.id,
-    });
-
     const savingsAmount = Number(deal.original_price) - Number(deal.discounted_price);
 
     const savedRedemption = await this.prisma.user_redemptions.create({
@@ -76,8 +70,6 @@ export class RedemptionsService {
         deal_category: deal.category,
       },
     });
-
-    console.log('✅ Redemption saved successfully! ID:', savedRedemption.id);
 
     // Increment quantity redeemed
     await this.prisma.deals.update({
