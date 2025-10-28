@@ -13,6 +13,7 @@ import { RedemptionsModule } from './redemptions/redemptions.module';
 import { ConversationsModule } from './conversations/conversations.module';
 import { UploadModule } from './upload/upload.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { ReviewsModule } from './reviews/reviews.module';
 import { LoggerService } from './common/services/logger.service';
 import { PrismaModule } from './prisma/prisma.module';
 
@@ -39,6 +40,7 @@ import { PrismaModule } from './prisma/prisma.module';
     ConversationsModule,
     UploadModule,
     NotificationsModule,
+    ReviewsModule,
   ],
   controllers: [AppController],
   providers: [

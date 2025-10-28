@@ -47,6 +47,7 @@ model businesses {
   deals                    deals[]
   follows                  follows[]
   user_redemptions         user_redemptions[]
+  business_reviews         business_reviews[]
 }
 
 model conversations {
@@ -184,6 +185,7 @@ model users {
   user_redemptions         user_redemptions[]
   device_tokens            device_tokens[]
   notifications            notifications[]
+  business_reviews         business_reviews[]
 }
 
 enum businesses_category_enum {
@@ -244,21 +246,39 @@ model device_tokens {
 }
 
 model notifications {
-  id              String                  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  user_id         String                  @db.Uuid
-  type            notification_type_enum
-  title           String                  @db.VarChar(200)
-  body            String
-  data            Json?
-  is_read         Boolean                 @default(false)
-  read_at         DateTime?               @db.Timestamp(6)
-  sent_at         DateTime                @default(now()) @db.Timestamp(6)
-  image_url       String?
-  action_url      String?
-  created_at      DateTime                @default(now()) @db.Timestamp(6)
-  users           users                   @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id         String                 @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id    String                 @db.Uuid
+  type       notification_type_enum
+  title      String                 @db.VarChar(200)
+  body       String
+  data       Json?
+  is_read    Boolean                @default(false)
+  read_at    DateTime?              @db.Timestamp(6)
+  sent_at    DateTime               @default(now()) @db.Timestamp(6)
+  image_url  String?
+  action_url String?
+  created_at DateTime               @default(now()) @db.Timestamp(6)
+  users      users                  @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([user_id], map: "idx_notifications_user")
   @@index([is_read], map: "idx_notifications_read")
   @@index([sent_at(sort: Desc)], map: "idx_notifications_sent_at")
+}
+
+model business_reviews {
+  id                String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  business_id       String     @db.Uuid
+  user_id           String     @db.Uuid
+  rating            Int        // 1-5 stars
+  review_text       String?    // Optional text review
+  is_verified_buyer Boolean    @default(true)
+  status            String     @default("active") @db.VarChar(20) // active, reported, hidden
+  created_at        DateTime   @default(now()) @db.Timestamp(6)
+  updated_at        DateTime   @default(now()) @db.Timestamp(6)
+  businesses        businesses @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users             users      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([business_id, user_id])
+  @@index([business_id, status, created_at])
+  @@index([user_id, created_at])
 }

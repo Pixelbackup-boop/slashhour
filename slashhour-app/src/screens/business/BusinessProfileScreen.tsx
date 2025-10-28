@@ -27,6 +27,7 @@ import {
   BusinessTabs,
   FloatingPostButton,
 } from '../../components/business';
+import { ReviewList, ReviewForm } from '../../components/reviews';
 import { TYPOGRAPHY, SPACING, RADIUS, LAYOUT } from '../../theme';
 import { Deal } from '../../types/models';
 
@@ -62,6 +63,10 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
 
   // Tab state for lower tabs (Deals, Reviews)
   const [activeBottomTab, setActiveBottomTab] = useState<'deals' | 'reviews'>('deals');
+
+  // Review form state
+  const [isReviewFormVisible, setIsReviewFormVisible] = useState(false);
+  const [reviewListKey, setReviewListKey] = useState(0);
 
   useEffect(() => {
     trackScreenView('BusinessProfileScreen', { businessId });
@@ -172,6 +177,19 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
       ]
     );
   }, [refresh]);
+
+  // Review handlers
+  const handleWriteReview = useCallback(() => {
+    setIsReviewFormVisible(true);
+  }, []);
+
+  const handleReviewSubmitSuccess = useCallback(() => {
+    setReviewListKey(prev => prev + 1);
+  }, []);
+
+  const handleCloseReviewForm = useCallback(() => {
+    setIsReviewFormVisible(false);
+  }, []);
 
   // Memoize card style calculation
   const getCardStyle = useCallback((index: number) => {
@@ -317,26 +335,6 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
     bottomTabContent: {
       padding: SPACING.md,
     },
-    comingSoonContainer: {
-      alignItems: 'center',
-      paddingVertical: SPACING.xxl,
-    },
-    comingSoonIcon: {
-      fontSize: 64,
-      marginBottom: SPACING.md,
-    },
-    comingSoonText: {
-      fontSize: TYPOGRAPHY.fontSize.lg,
-      fontWeight: TYPOGRAPHY.fontWeight.bold,
-      color: colors.textPrimary,
-      marginBottom: SPACING.sm,
-    },
-    comingSoonSubtext: {
-      fontSize: TYPOGRAPHY.fontSize.sm,
-      color: colors.textSecondary,
-      textAlign: 'center',
-      paddingHorizontal: SPACING.lg,
-    },
     emptyState: {
       backgroundColor: colors.white,
       borderRadius: RADIUS.lg,
@@ -447,19 +445,16 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
     </View>
   ), []);
 
-  // Render reviews tab (coming soon)
+  // Render reviews tab
   const renderReviewsTab = useCallback(() => (
-    <View style={styles.bottomTabContent}>
-      <View style={styles.comingSoonContainer}>
-        <Text style={styles.comingSoonIcon}>⭐</Text>
-        <Text style={styles.comingSoonText}>Reviews Coming Soon!</Text>
-        <Text style={styles.comingSoonSubtext}>
-          Soon you'll be able to read and write reviews for this business.
-        </Text>
-      </View>
-      <View style={{ height: LAYOUT.tabBarHeight + SPACING.lg }} />
-    </View>
-  ), []);
+    <ReviewList
+      key={reviewListKey}
+      businessId={businessId}
+      onWriteReview={handleWriteReview}
+      showWriteButton={true}
+      headerComponent={renderListHeader()}
+    />
+  ), [reviewListKey, businessId, handleWriteReview, renderListHeader]);
 
   if (isLoading) {
     return (
@@ -553,21 +548,7 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
           />
         )
       ) : (
-        <ScrollView
-          style={styles.scrollView}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={refresh}
-              colors={[colors.primary]}
-              tintColor={colors.primary}
-            />
-          }
-        >
-          {renderListHeader()}
-          {renderReviewsTab()}
-        </ScrollView>
+        renderReviewsTab()
       )}
 
       {/* Floating Post Deal Button */}
@@ -579,6 +560,17 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
               businessName: business.business_name,
             })
           }
+        />
+      )}
+
+      {/* Review Form Modal */}
+      {business && (
+        <ReviewForm
+          businessId={businessId}
+          businessName={business.business_name}
+          visible={isReviewFormVisible}
+          onClose={handleCloseReviewForm}
+          onSuccess={handleReviewSubmitSuccess}
         />
       )}
     </SafeAreaView>
