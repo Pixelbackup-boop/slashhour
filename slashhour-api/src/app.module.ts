@@ -12,6 +12,7 @@ import { SearchModule } from './search/search.module';
 import { RedemptionsModule } from './redemptions/redemptions.module';
 import { ConversationsModule } from './conversations/conversations.module';
 import { UploadModule } from './upload/upload.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { LoggerService } from './common/services/logger.service';
 import { PrismaModule } from './prisma/prisma.module';
 
@@ -37,6 +38,7 @@ import { PrismaModule } from './prisma/prisma.module';
     RedemptionsModule,
     ConversationsModule,
     UploadModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [

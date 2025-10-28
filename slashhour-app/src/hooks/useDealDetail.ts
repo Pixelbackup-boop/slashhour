@@ -20,7 +20,7 @@ interface UseDealDetailReturn {
   closeRedemptionModal: () => void;
 }
 
-export const useDealDetail = (deal: Deal): UseDealDetailReturn => {
+export const useDealDetail = (deal: Deal | undefined): UseDealDetailReturn => {
   const [timeRemaining, setTimeRemaining] = useState('');
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [showRedemptionModal, setShowRedemptionModal] = useState(false);
@@ -28,6 +28,9 @@ export const useDealDetail = (deal: Deal): UseDealDetailReturn => {
 
   // Calculate savings and discount percentage
   const calculateSavings = useCallback((): DealSavings => {
+    if (!deal) {
+      return { savings: '0', percentage: 0 };
+    }
     const original = Number(deal.original_price) || 0;
     const discounted = Number(deal.discounted_price) || 0;
     const savingsAmount = original - discounted;
@@ -36,12 +39,15 @@ export const useDealDetail = (deal: Deal): UseDealDetailReturn => {
       savings: savingsAmount.toFixed(2),
       percentage: Math.round(percentage),
     };
-  }, [deal.original_price, deal.discounted_price]);
+  }, [deal?.original_price, deal?.discounted_price]);
 
   const savings = calculateSavings();
 
   // Calculate time remaining until deal expires
   const calculateTimeRemaining = useCallback(() => {
+    if (!deal) {
+      return '';
+    }
     const now = new Date();
     const expires = new Date(deal.expires_at);
     const diffMs = expires.getTime() - now.getTime();
@@ -59,10 +65,13 @@ export const useDealDetail = (deal: Deal): UseDealDetailReturn => {
     } else {
       return `${hours}h`;
     }
-  }, [deal.expires_at]);
+  }, [deal?.expires_at]);
 
   // Handle deal redemption
   const handleRedeem = useCallback(async () => {
+    if (!deal) {
+      return;
+    }
     try {
       setIsRedeeming(true);
       const response = await redemptionService.redeemDeal(deal.id);
@@ -88,7 +97,7 @@ export const useDealDetail = (deal: Deal): UseDealDetailReturn => {
     } finally {
       setIsRedeeming(false);
     }
-  }, [deal.id, deal.business?.id, deal.category, savings.savings]);
+  }, [deal?.id, deal?.business?.id, deal?.category, savings.savings]);
 
   const closeRedemptionModal = useCallback(() => {
     setShowRedemptionModal(false);
@@ -96,8 +105,11 @@ export const useDealDetail = (deal: Deal): UseDealDetailReturn => {
 
   // Track deal viewed on mount
   useEffect(() => {
+    if (!deal) {
+      return;
+    }
     trackDealViewed(deal.id, deal.business?.id || '', deal.category);
-  }, [deal.id, deal.business?.id, deal.category]);
+  }, [deal?.id, deal?.business?.id, deal?.category]);
 
   // Update countdown timer
   useEffect(() => {

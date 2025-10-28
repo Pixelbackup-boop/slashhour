@@ -65,8 +65,35 @@ export const dealService = {
    * Get deal by ID
    */
   getDealById: async (dealId: string): Promise<Deal> => {
-    const response = await apiClient.get<{ deal: Deal }>(`/deals/${dealId}`);
-    return response.deal;
+    if (__DEV__) {
+      console.log('📍 [dealService] getDealById called with dealId:', dealId);
+    }
+
+    try {
+      // Backend returns flat deal object, not wrapped in { deal: ... }
+      const response = await apiClient.get<Deal>(`/deals/${dealId}`);
+
+      if (__DEV__) {
+        console.log('✅ [dealService] Successfully fetched deal:', response.title || 'Unknown');
+      }
+
+      if (!response || !response.id) {
+        if (__DEV__) {
+          console.error('❌ [dealService] No deal in response');
+        }
+        throw new Error('Deal not found');
+      }
+
+      return response;
+    } catch (error: any) {
+      console.error('❌ [dealService] Error fetching deal:', {
+        dealId,
+        error: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+      throw error;
+    }
   },
 
   /**

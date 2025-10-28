@@ -84,7 +84,8 @@ export interface BusinessHours {
 export interface Deal {
   id: string;
   business_id: string;
-  business?: Business;
+  business?: Business; // For backward compatibility
+  businesses?: Business; // Backend returns 'businesses' (Prisma relation name)
   title: string;
   description?: string;
   original_price: number;

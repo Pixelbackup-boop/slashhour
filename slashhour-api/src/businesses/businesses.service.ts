@@ -261,8 +261,17 @@ export class BusinessesService {
       deal => deal.starts_at <= now && deal.expires_at > now
     );
 
+    // Transform deals to match frontend interface (rename 'businesses' to 'business')
+    const transformedDeals = activeDeals.map((deal: any) => {
+      const { businesses, ...dealData } = deal;
+      return {
+        ...dealData,
+        business: businesses, // Rename from 'businesses' (Prisma relation) to 'business' (frontend interface)
+      };
+    });
+
     return {
-      deals: activeDeals,
+      deals: transformedDeals,
     };
   }
 

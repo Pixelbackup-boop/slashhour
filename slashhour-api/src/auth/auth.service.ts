@@ -28,11 +28,14 @@ export class AuthService {
   async register(registerDto: RegisterDto) {
     const { email, phone, password, name, userType, username } = registerDto;
 
-    // Check if user already exists
+    // Normalize email to lowercase for case-insensitive handling
+    const normalizedEmail = email?.toLowerCase();
+
+    // Check if user already exists (case-insensitive email check)
     const existingUser = await this.prisma.users.findFirst({
       where: {
         OR: [
-          { email },
+          { email: normalizedEmail },
           ...(phone ? [{ phone }] : []),
           ...(username ? [{ username }] : []),
         ],
@@ -46,15 +49,15 @@ export class AuthService {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
+    // Create user with normalized (lowercase) email
     const prismaUser = await this.prisma.users.create({
       data: {
         name,
-        email,
+        email: normalizedEmail,
         phone,
         password: hashedPassword,
         user_type: userType,
-        username: username || email?.split('@')[0] || `user_${Date.now()}`,
+        username: username || normalizedEmail?.split('@')[0] || `user_${Date.now()}`,
       },
     });
 
@@ -72,12 +75,18 @@ export class AuthService {
   async login(loginDto: LoginDto) {
     const { emailOrPhone, password } = loginDto;
 
-    // Find user by email or phone
+    // Normalize email to lowercase for case-insensitive lookup
+    // Phone numbers remain unchanged
+    const normalizedEmailOrPhone = emailOrPhone?.includes('@')
+      ? emailOrPhone.toLowerCase()
+      : emailOrPhone;
+
+    // Find user by email or phone (case-insensitive for email)
     const prismaUser = await this.prisma.users.findFirst({
       where: {
         OR: [
-          { email: emailOrPhone },
-          { phone: emailOrPhone },
+          { email: normalizedEmailOrPhone },
+          { phone: emailOrPhone }, // Use original for phone
         ],
       },
     });

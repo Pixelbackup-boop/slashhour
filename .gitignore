@@ -36,3 +36,42 @@ coverage/
 
 # Misc
 .cache/
+
+# Firebase credentials (NEVER COMMIT THESE)
+**/google-services.json
+**/GoogleService-Info.plist
+**/*firebase-adminsdk*.json
+**/credentials.json
+
+# Build artifacts
+**/*.apk
+**/*.aab
+**/*.ipa
+
+# EAS Build
+.eas/
+eas.json
+
+# Expo
+.expo/
+
+# Firebase credentials (NEVER COMMIT)
+google-services.json
+*firebase-adminsdk*.json
+credentials.json
+firebase-config.json
+
+# Firebase & Google Services (NEVER COMMIT)
+google-services.json
+GoogleService-Info.plist
+credentials.json
+
+# Build outputs
+*.apk
+*.aab
+*.ipa
+build-*.apk
+
+# EAS Build
+.eas/
+eas.json

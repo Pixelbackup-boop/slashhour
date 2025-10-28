@@ -25,7 +25,9 @@ class ReverseGeocodeService {
     longitude: number
   ): Promise<Address> {
     try {
-      console.log('🔍 Reverse geocoding coordinates:', { latitude, longitude });
+      if (__DEV__) {
+        console.log('🔍 Reverse geocoding coordinates:', { latitude, longitude });
+      }
 
       // Use Expo's reverse geocoding (uses native platform APIs)
       const results = await Location.reverseGeocodeAsync({
@@ -40,7 +42,9 @@ class ReverseGeocodeService {
       // Get the first (most accurate) result
       const result = results[0];
 
-      console.log('📍 Reverse geocoding result:', result);
+      if (__DEV__) {
+        console.log('📍 Reverse geocoding result:', result);
+      }
 
       // Extract address components
       const address: Address = {
@@ -52,11 +56,15 @@ class ReverseGeocodeService {
         formattedAddress: this.formatFullAddress(result),
       };
 
-      console.log('✅ Formatted address:', address);
+      if (__DEV__) {
+        console.log('✅ Formatted address:', address);
+      }
 
       return address;
     } catch (error: any) {
-      console.error('❌ Reverse geocoding error:', error);
+      if (__DEV__) {
+        console.error('❌ Reverse geocoding error:', error);
+      }
 
       if (error.message?.includes('Network')) {
         throw new Error('Network error. Please check your internet connection.');

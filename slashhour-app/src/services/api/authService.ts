@@ -16,13 +16,15 @@ export const authService = {
   login: async (data: LoginData): Promise<LoginResponse> => {
     const response = await apiClient.post<LoginResponse>('/auth/login', data);
 
-    // Set the token in the API client for future requests
-    apiClient.setToken(response.accessToken);
+    // Token will be set by useAuthStore.loginSuccess()
+    // No need to set it here to avoid duplication
 
     return response;
   },
 
   logout: () => {
+    // Token will be cleared by useAuthStore.logout()
+    // This is kept for backwards compatibility
     apiClient.clearToken();
   },
 };

@@ -74,14 +74,23 @@ export class FeedService {
       }),
     ]);
 
+    // Transform deals to match frontend interface (rename 'businesses' to 'business')
+    const transformedDeals = deals.map((deal: any) => {
+      const { businesses, ...dealData } = deal;
+      return {
+        ...dealData,
+        business: businesses, // Rename from 'businesses' (Prisma relation) to 'business' (frontend interface)
+      };
+    });
+
     // If location is provided, calculate distance for each deal
     if (locationParams?.lat != null && locationParams?.lng != null) {
       const userLat = locationParams.lat;
       const userLng = locationParams.lng;
 
-      const dealsWithDistance = deals.map((deal) => {
-        const businessLat = (deal.businesses.location as any)?.lat;
-        const businessLng = (deal.businesses.location as any)?.lng;
+      const dealsWithDistance = transformedDeals.map((deal: any) => {
+        const businessLat = deal.business?.location?.lat;
+        const businessLng = deal.business?.location?.lng;
 
         let distance = 0;
         if (businessLat != null && businessLng != null) {
@@ -112,7 +121,7 @@ export class FeedService {
     }
 
     return {
-      deals,
+      deals: transformedDeals,
       pagination: {
         page,
         limit,
@@ -277,7 +286,7 @@ export class FeedService {
           delete deal[key];
         }
       });
-      deal.businesses = business;
+      deal.business = business; // Use 'business' (singular) to match frontend interface
 
       return {
         ...deal,

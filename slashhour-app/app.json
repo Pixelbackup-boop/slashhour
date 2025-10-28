@@ -12,6 +12,34 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "scheme": "slashhour",
+    "notification": {
+      "color": "#E63946",
+      "androidMode": "default"
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "color": "#E63946",
+          "defaultChannel": "default"
+        }
+      ]
+    ],
+    "intentFilters": [
+      {
+        "action": "VIEW",
+        "data": [
+          {
+            "scheme": "slashhour"
+          }
+        ],
+        "category": [
+          "BROWSABLE",
+          "DEFAULT"
+        ]
+      }
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.slashhourapp"
@@ -23,10 +51,17 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.slashhourapp"
+      "package": "com.anonymous.slashhourapp",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "7afef91d-4867-4fd0-9aea-151b1f16bc42"
+      }
+    },
+    "owner": "slashhour"
   }
 }

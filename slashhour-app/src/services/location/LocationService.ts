@@ -31,7 +31,9 @@ class LocationService {
         canAskAgain,
       };
     } catch (error) {
-      console.error('Error requesting location permissions:', error);
+      if (__DEV__) {
+        console.error('Error requesting location permissions:', error);
+      }
       throw new Error('Failed to request location permissions');
     }
   }
@@ -49,7 +51,9 @@ class LocationService {
         canAskAgain,
       };
     } catch (error) {
-      console.error('Error checking location permissions:', error);
+      if (__DEV__) {
+        console.error('Error checking location permissions:', error);
+      }
       throw new Error('Failed to check location permissions');
     }
   }
@@ -62,7 +66,9 @@ class LocationService {
     try {
       return await Location.hasServicesEnabledAsync();
     } catch (error) {
-      console.error('Error checking location services:', error);
+      if (__DEV__) {
+        console.error('Error checking location services:', error);
+      }
       return false;
     }
   }
@@ -77,9 +83,13 @@ class LocationService {
     try {
       // On Android, show native dialog to enable location services
       if (Platform.OS === 'android') {
-        console.log('📍 Prompting user to enable location services (Android)...');
+        if (__DEV__) {
+          console.log('📍 Prompting user to enable location services (Android)...');
+        }
         await Location.enableNetworkProviderAsync();
-        console.log('✅ Location services enabled');
+        if (__DEV__) {
+          console.log('✅ Location services enabled');
+        }
         return true;
       }
 
@@ -87,7 +97,9 @@ class LocationService {
       return await this.isLocationServicesEnabled();
     } catch (error: any) {
       // User declined - this is expected behavior, not an error
-      console.log('ℹ️ User declined to enable location services');
+      if (__DEV__) {
+        console.log('ℹ️ User declined to enable location services');
+      }
       return false;
     }
   }
@@ -104,7 +116,9 @@ class LocationService {
 
       if (!servicesEnabled) {
         // Show native dialog to enable location services
-        console.log('📍 Location services disabled, prompting user...');
+        if (__DEV__) {
+          console.log('📍 Location services disabled, prompting user...');
+        }
         const enabled = await this.promptToEnableLocationServices();
 
         if (!enabled) {
@@ -117,7 +131,9 @@ class LocationService {
 
       if (!permissions.granted) {
         // Show native permission dialog
-        console.log('📍 Requesting location permissions...');
+        if (__DEV__) {
+          console.log('📍 Requesting location permissions...');
+        }
         permissions = await this.requestPermissions();
 
         if (!permissions.granted) {
@@ -125,7 +141,9 @@ class LocationService {
         }
       }
 
-      console.log('📍 Getting current location with high accuracy...');
+      if (__DEV__) {
+        console.log('📍 Getting current location with high accuracy...');
+      }
 
       // Step 3: Get location with high accuracy
       const location = await Location.getCurrentPositionAsync({
@@ -134,11 +152,13 @@ class LocationService {
         distanceInterval: 0,
       });
 
-      console.log('✅ Location obtained:', {
-        lat: location.coords.latitude,
-        lng: location.coords.longitude,
-        accuracy: location.coords.accuracy,
-      });
+      if (__DEV__) {
+        console.log('✅ Location obtained:', {
+          lat: location.coords.latitude,
+          lng: location.coords.longitude,
+          accuracy: location.coords.accuracy,
+        });
+      }
 
       return {
         latitude: location.coords.latitude,
@@ -152,8 +172,8 @@ class LocationService {
         error.message === LocationErrorCode.PERMISSION_DENIED ||
         error.message?.toLowerCase().includes('timeout');
 
-      if (!isExpectedUserAction) {
-        // Only log unexpected errors
+      if (!isExpectedUserAction && __DEV__) {
+        // Only log unexpected errors in development
         console.error('❌ Error getting current location:', error);
       }
 
@@ -203,7 +223,9 @@ class LocationService {
         accuracy: location.coords.accuracy || undefined,
       };
     } catch (error) {
-      console.error('Error getting last known location:', error);
+      if (__DEV__) {
+        console.error('Error getting last known location:', error);
+      }
       return null;
     }
   }
