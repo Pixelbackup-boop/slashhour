@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
   imageContainer: {
     position: 'relative',
     width: '100%',
-    aspectRatio: 1, // Square image container
+    aspectRatio: 1, // Square image container for consistent card height
     backgroundColor: '#f8f9fa',
     overflow: 'hidden',
   },

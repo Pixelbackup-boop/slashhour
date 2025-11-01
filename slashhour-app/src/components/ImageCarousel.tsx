@@ -18,6 +18,7 @@ interface ImageCarouselProps {
   borderRadius?: number;
   showPagination?: boolean;
   fallbackImage?: any;
+  contentFit?: 'cover' | 'contain' | 'fill' | 'scale-down' | 'none'; // How image should fit container
 }
 
 export default function ImageCarousel({
@@ -27,6 +28,7 @@ export default function ImageCarousel({
   borderRadius = 0,
   showPagination = true,
   fallbackImage,
+  contentFit = 'cover', // Default to cover for backward compatibility
 }: ImageCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [containerWidth, setContainerWidth] = useState(width || 0);
@@ -76,7 +78,7 @@ export default function ImageCarousel({
         <Image
           source={imageSource}
           style={[styles.image, { width: '100%', height: '100%', borderRadius }]}
-          contentFit="cover"
+          contentFit={contentFit}
           cachePolicy="memory-disk"
           transition={200}
         />
@@ -104,7 +106,7 @@ export default function ImageCarousel({
             key={`${image.url}-${index}`}
             source={{ uri: image.url }}
             style={[styles.image, { width: actualWidth, height: actualHeight, borderRadius }]}
-            contentFit="cover"
+            contentFit={contentFit}
             cachePolicy="memory-disk"
             transition={200}
           />

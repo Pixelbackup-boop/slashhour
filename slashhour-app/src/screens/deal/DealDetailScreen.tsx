@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,8 @@ import FollowButton from '../../components/FollowButton';
 import ImageCarousel from '../../components/ImageCarousel';
 import { useDealDetail } from '../../hooks/useDealDetail';
 import { useDeal } from '../../hooks/queries/useDealsQuery';
+import { useBookmark } from '../../hooks/useBookmarks';
+import { haptics } from '../../utils/haptics';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../../theme';
 
 interface DealDetailScreenProps {
@@ -72,6 +74,26 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
     closeRedemptionModal,
   } = useDealDetail(deal);
 
+  // Bookmark state management
+  const { isBookmarked, toggleBookmark, isProcessing, setIsBookmarked } = useBookmark(deal?.id || '', false);
+
+  // Sync bookmark state from deal object when it loads
+  useEffect(() => {
+    if (deal && (deal.isBookmarked !== undefined || deal.isWishlisted !== undefined)) {
+      const bookmarkStatus = deal.isBookmarked || deal.isWishlisted || false;
+      setIsBookmarked(bookmarkStatus);
+
+      if (__DEV__) {
+        console.log('📌 [DealDetailScreen] Syncing bookmark state from deal:', {
+          dealId: deal.id,
+          isBookmarked: bookmarkStatus,
+          dealHasIsBookmarked: deal.isBookmarked,
+          dealHasIsWishlisted: deal.isWishlisted,
+        });
+      }
+    }
+  }, [deal?.id, deal?.isBookmarked, deal?.isWishlisted]);
+
   // Show loading state while fetching deal
   if (dealId && isFetchingDeal) {
     return (
@@ -121,6 +143,34 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
       return `Save $${savings.savings}`;
     }
     return 'SPECIAL DEAL';
+  };
+
+  // Helper to get deal status info
+  const getStatusInfo = () => {
+    const status = deal.status?.toLowerCase();
+
+    if (status === 'deleted') {
+      return { badge: '🚫 Deleted', isInactive: true, color: '#757575' };
+    }
+    if (status === 'expired') {
+      return { badge: '⏰ Expired', isInactive: true, color: '#FF9800' };
+    }
+    if (status === 'sold_out') {
+      return { badge: '📦 Sold Out', isInactive: true, color: '#9C27B0' };
+    }
+
+    return { badge: null, isInactive: false, color: null };
+  };
+
+  const statusInfo = getStatusInfo();
+
+  const handleBookmarkPress = async () => {
+    haptics.medium();
+    try {
+      await toggleBookmark();
+    } catch (error) {
+      console.error('Failed to toggle bookmark:', error);
+    }
   };
 
   const styles = StyleSheet.create({
@@ -249,6 +299,26 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
       fontWeight: TYPOGRAPHY.fontWeight.bold,
       color: '#6BCB77',
     },
+    // Status Badge Section
+    statusBadgeSection: {
+      alignItems: 'center',
+      marginBottom: SPACING.xl,
+    },
+    statusBadge: {
+      paddingHorizontal: SPACING.lg,
+      paddingVertical: SPACING.md,
+      borderRadius: RADIUS.round,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.2,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    statusBadgeText: {
+      color: COLORS.white,
+      fontSize: TYPOGRAPHY.fontSize.lg,
+      fontWeight: TYPOGRAPHY.fontWeight.bold,
+    },
     // Description Section
     section: {
       marginBottom: SPACING.lg,
@@ -313,12 +383,33 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
       fontWeight: TYPOGRAPHY.fontWeight.bold,
       color: COLORS.white,
     },
+    // Bookmark Button
+    bookmarkButton: {
+      position: 'absolute',
+      top: 16,
+      right: 16,
+      width: 34,
+      height: 34,
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderRadius: 17,
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 3,
+      zIndex: 10,
+    },
+    bookmarkIcon: {
+      fontSize: 18,
+    },
   });
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Image Carousel with Back Button Overlay */}
+        {/* Image Carousel with Back Button and Bookmark Button Overlay */}
         <View style={styles.imageContainer}>
           <ImageCarousel
             images={deal.images || []}
@@ -327,9 +418,20 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
             borderRadius={0}
             showPagination={true}
             fallbackImage={getCategoryImage(deal.category)}
+            contentFit="contain"
           />
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButtonOverlay}>
             <Text style={styles.backButtonText}>←</Text>
+          </TouchableOpacity>
+
+          {/* Bookmark Button */}
+          <TouchableOpacity
+            style={styles.bookmarkButton}
+            onPress={handleBookmarkPress}
+            activeOpacity={0.8}
+            disabled={isProcessing}
+          >
+            <Text style={styles.bookmarkIcon}>{isBookmarked ? '❤️' : '🤍'}</Text>
           </TouchableOpacity>
         </View>
 
@@ -399,6 +501,15 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
             </View>
           )}
 
+          {/* Status Badge - For Inactive Deals */}
+          {statusInfo.isInactive && (
+            <View style={styles.statusBadgeSection}>
+              <View style={[styles.statusBadge, { backgroundColor: statusInfo.color }]}>
+                <Text style={styles.statusBadgeText}>{statusInfo.badge}</Text>
+              </View>
+            </View>
+          )}
+
           {/* Description */}
           {deal.description && (
             <View style={styles.section}>
@@ -452,14 +563,19 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
 
           {/* Redeem Button */}
           <TouchableOpacity
-            style={[styles.redeemButton, isRedeeming && styles.redeemButtonDisabled]}
+            style={[
+              styles.redeemButton,
+              (isRedeeming || statusInfo.isInactive) && styles.redeemButtonDisabled
+            ]}
             onPress={handleRedeem}
-            disabled={isRedeeming}
+            disabled={isRedeeming || statusInfo.isInactive}
           >
             {isRedeeming ? (
               <ActivityIndicator color={COLORS.white} />
             ) : (
-              <Text style={styles.redeemButtonText}>Redeem This Deal</Text>
+              <Text style={styles.redeemButtonText}>
+                {statusInfo.isInactive ? 'DEAL NO LONGER AVAILABLE' : 'Redeem This Deal'}
+              </Text>
             )}
           </TouchableOpacity>
         </View>

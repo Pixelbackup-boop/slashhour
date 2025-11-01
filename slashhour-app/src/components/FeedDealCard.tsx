@@ -12,6 +12,7 @@ import { COLORS, TYPOGRAPHY, SPACING } from '../theme';
 import { STATIC_RADIUS } from '../theme/constants';
 import ImageCarousel from './ImageCarousel';
 import { haptics } from '../utils/haptics';
+import { useBookmark } from '../hooks/useBookmarks';
 
 interface FeedDealCardProps {
   deal: Deal;
@@ -31,6 +32,15 @@ export default React.memo(function FeedDealCard({
   showDistance = true,
 }: FeedDealCardProps) {
   const [timeRemaining, setTimeRemaining] = useState('');
+
+  // Bookmark state management
+  const { isBookmarked, toggleBookmark, isProcessing, setIsBookmarked } = useBookmark(deal.id, isWishlisted);
+
+  // Sync bookmark state from props when they change
+  useEffect(() => {
+    const bookmarkStatus = deal.isBookmarked || deal.isWishlisted || isWishlisted || false;
+    setIsBookmarked(bookmarkStatus);
+  }, [deal.id, deal.isBookmarked, deal.isWishlisted, isWishlisted]);
 
   // Animation values
   const scale = useSharedValue(1);
@@ -58,9 +68,24 @@ export default React.memo(function FeedDealCard({
     scale.value = 1;
   };
 
-  const handleWishlistPress = () => {
+  const handleWishlistPress = async () => {
     haptics.medium();
-    onWishlistPress?.();
+
+    if (onWishlistPress) {
+      // Use custom handler if provided (for backward compatibility)
+      onWishlistPress();
+    } else {
+      // Use built-in bookmark functionality
+      try {
+        await toggleBookmark();
+      } catch (error: any) {
+        // Only log non-409 errors (409s are handled gracefully by useBookmark)
+        const statusCode = error.response?.status;
+        if (statusCode !== 409) {
+          console.error('Failed to toggle bookmark:', error);
+        }
+      }
+    }
   };
 
   const handleBusinessPress = () => {
@@ -117,6 +142,25 @@ export default React.memo(function FeedDealCard({
     return 'DEAL';
   };
 
+  // Helper to get deal status info
+  const getStatusInfo = () => {
+    const status = deal.status?.toLowerCase();
+
+    if (status === 'deleted') {
+      return { badge: '🚫 Deleted', isInactive: true, color: '#757575' };
+    }
+    if (status === 'expired') {
+      return { badge: '⏰ Expired', isInactive: true, color: '#FF9800' };
+    }
+    if (status === 'sold_out') {
+      return { badge: '📦 Sold Out', isInactive: true, color: '#9C27B0' };
+    }
+
+    return { badge: null, isInactive: false, color: null };
+  };
+
+  const statusInfo = getStatusInfo();
+
   return (
     <Animated.View
       entering={FadeInDown.duration(400).springify()}
@@ -142,8 +186,9 @@ export default React.memo(function FeedDealCard({
             style={styles.wishlistBtn}
             onPress={handleWishlistPress}
             activeOpacity={0.8}
+            disabled={isProcessing}
           >
-            <Text style={styles.wishlistIcon}>{isWishlisted ? '❤️' : '🤍'}</Text>
+            <Text style={styles.wishlistIcon}>{isBookmarked ? '❤️' : '🤍'}</Text>
           </TouchableOpacity>
 
           {/* Distance Badge - Only show if distance exists and showDistance is true */}
@@ -186,16 +231,23 @@ export default React.memo(function FeedDealCard({
             )}
           </View>
 
-          {/* Discount Badge and Timer */}
+          {/* Discount Badge and Timer / Status Badge */}
           <View style={styles.discountRow}>
-            <View style={styles.discountBadge}>
-              <Text style={styles.discountText}>{getDiscountText()}</Text>
-            </View>
-            <View style={styles.timer}>
-              <Text style={styles.timerIcon}>⏰</Text>
-              <Text style={styles.timerText}>{timeRemaining}</Text>
-            </View>
-          </View>
+            {statusInfo.isInactive ? (
+              <View style={[styles.statusBadge, { backgroundColor: statusInfo.color }]}>
+                <Text style={styles.statusText}>{statusInfo.badge}</Text>
+              </View>
+            ) : (
+              <>
+                <View style={styles.discountBadge}>
+                  <Text style={styles.discountText}>{getDiscountText()}</Text>
+                </View>
+                <View style={styles.timer}>
+                  <Text style={styles.timerIcon}>⏰</Text>
+                  <Text style={styles.timerText}>{timeRemaining}</Text>
+                </View>
+              </>
+            )}</View>
         </View>
       </TouchableOpacity>
     </Animated.View>
@@ -217,7 +269,7 @@ const styles = StyleSheet.create({
   imageContainer: {
     position: 'relative',
     width: '100%',
-    aspectRatio: 1, // Square image container
+    aspectRatio: 1, // Square image container for consistent card height
     backgroundColor: '#f8f9fa',
     overflow: 'hidden',
   },
@@ -326,5 +378,16 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: TYPOGRAPHY.fontSize.xs,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
+  },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+  },
+  statusText: {
+    color: COLORS.white,
+    fontSize: 13,
+    fontWeight: '600',
   },
 });
