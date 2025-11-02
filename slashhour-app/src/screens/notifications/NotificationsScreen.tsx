@@ -6,10 +6,14 @@ import {
   TouchableOpacity,
   RefreshControl,
   StyleSheet,
-  Image,
   ActivityIndicator,
+  Animated,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { Swipeable } from 'react-native-gesture-handler';
+import LogoHeader from '../../components/LogoHeader';
 import notificationService, {
   Notification,
   NotificationsResponse,
@@ -113,11 +117,11 @@ const NotificationsScreen: React.FC = () => {
         if (path.startsWith('/deals/')) {
           const dealId = path.replace('/deals/', '');
           logger.info('Navigating to deal:', dealId);
-          navigation.navigate('DealDetails' as never, { dealId } as never);
+          (navigation.navigate as any)('DealDetails', { dealId });
         } else if (path.startsWith('/businesses/')) {
           const businessId = path.replace('/businesses/', '');
           logger.info('Navigating to business:', businessId);
-          navigation.navigate('BusinessProfile' as never, { businessId } as never);
+          (navigation.navigate as any)('BusinessProfile', { businessId });
         }
       }
     } catch (error) {
@@ -161,54 +165,79 @@ const NotificationsScreen: React.FC = () => {
     return date.toLocaleDateString();
   };
 
-  const renderNotification = ({ item }: { item: Notification }) => (
-    <TouchableOpacity
-      style={[
-        styles.notificationCard,
-        !item.is_read && styles.unreadCard,
-      ]}
-      onPress={() => handleNotificationPress(item)}
-      activeOpacity={0.7}
-    >
-      <View style={styles.notificationContent}>
-        {item.image_url && (
-          <Image
-            source={{ uri: item.image_url }}
-            style={styles.notificationImage}
-            resizeMode="cover"
-          />
-        )}
+  const renderRightActions = (
+    progress: Animated.AnimatedInterpolation<number>,
+    dragX: Animated.AnimatedInterpolation<number>,
+    notificationId: string
+  ) => {
+    const scale = dragX.interpolate({
+      inputRange: [-100, 0],
+      outputRange: [1, 0],
+      extrapolate: 'clamp',
+    });
 
-        <View style={styles.notificationText}>
-          <View style={styles.titleRow}>
-            <Text
-              style={[
-                styles.title,
-                !item.is_read && styles.unreadText,
-              ]}
-              numberOfLines={1}
-            >
-              {item.title}
-            </Text>
-            {!item.is_read && <View style={styles.unreadDot} />}
-          </View>
-
-          <Text style={styles.body} numberOfLines={2}>
-            {item.body}
-          </Text>
-
-          <Text style={styles.time}>{formatTime(item.sent_at)}</Text>
-        </View>
-      </View>
-
+    return (
       <TouchableOpacity
-        style={styles.deleteButton}
-        onPress={() => handleDelete(item.id)}
-        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        style={styles.deleteAction}
+        onPress={() => handleDelete(notificationId)}
       >
-        <Text style={styles.deleteText}>×</Text>
+        <Animated.View style={[styles.deleteActionContent, { transform: [{ scale }] }]}>
+          <Text style={styles.deleteActionText}>🗑️</Text>
+          <Text style={styles.deleteActionLabel}>Delete</Text>
+        </Animated.View>
       </TouchableOpacity>
-    </TouchableOpacity>
+    );
+  };
+
+  const renderNotification = ({ item }: { item: Notification }) => (
+    <Swipeable
+      renderRightActions={(progress, dragX) =>
+        renderRightActions(progress, dragX, item.id)
+      }
+      overshootRight={false}
+      friction={2}
+      rightThreshold={40}
+    >
+      <TouchableOpacity
+        style={[
+          styles.notificationCard,
+          !item.is_read && styles.unreadCard,
+        ]}
+        onPress={() => handleNotificationPress(item)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.notificationContent}>
+          {item.image_url && (
+            <Image
+              source={{ uri: item.image_url }}
+              style={styles.notificationImage}
+              resizeMode="cover"
+            />
+          )}
+
+          <View style={styles.notificationText}>
+            <View style={styles.titleRow}>
+              <Text
+                style={[
+                  styles.title,
+                  !item.is_read && styles.unreadText,
+                ]}
+                numberOfLines={1}
+              >
+                {item.title}
+              </Text>
+              {!item.is_read && <View style={styles.unreadDot} />}
+            </View>
+
+            <Text style={styles.body} numberOfLines={2}>
+              {item.body}
+            </Text>
+
+            <Text style={styles.time}>{formatTime(item.sent_at)}</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    </Swipeable>
   );
 
   const renderEmpty = () => (
@@ -232,14 +261,18 @@ const NotificationsScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#E63946" />
-      </View>
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+        <LogoHeader />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#E63946" />
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <LogoHeader />
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Notifications</Text>
         {notifications.some((n) => !n.is_read) && (
@@ -269,7 +302,7 @@ const NotificationsScreen: React.FC = () => {
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -373,17 +406,27 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#999999',
   },
-  deleteButton: {
-    width: 24,
-    height: 24,
+  deleteAction: {
+    backgroundColor: '#E63946',
     justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 8,
+    alignItems: 'flex-end',
+    marginVertical: 6,
+    marginRight: 16,
+    borderRadius: 12,
+    paddingHorizontal: 20,
   },
-  deleteText: {
+  deleteActionContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteActionText: {
     fontSize: 28,
-    color: '#CCCCCC',
-    fontWeight: '300',
+    marginBottom: 4,
+  },
+  deleteActionLabel: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
   },
   emptyContainer: {
     flex: 1,

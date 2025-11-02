@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,9 +8,9 @@ import {
   ActivityIndicator,
   Alert,
   TextInput,
-  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
 import { useAuthStore } from '../../stores/useAuthStore';
 import { authService } from '../../services/api/authService';
 import { trackScreenView } from '../../services/analytics';
@@ -20,6 +20,7 @@ import { useProfileEdit } from '../../hooks/useProfileEdit';
 import { useTheme } from '../../context/ThemeContext';
 import StatCard from '../../components/StatCard';
 import InfoRow from '../../components/InfoRow';
+import LogoHeader from '../../components/LogoHeader';
 import { TYPOGRAPHY, SPACING, RADIUS, SHADOWS, SIZES, LAYOUT, COLORS } from '../../theme';
 
 export default function ProfileScreen({ navigation }: any) {
@@ -108,8 +109,8 @@ export default function ProfileScreen({ navigation }: any) {
     navigation.navigate('BusinessProfile', { businessId, businessName });
   };
 
-  // Dynamic styles based on theme
-  const dynamicStyles = {
+  // Dynamic styles based on theme (memoized to prevent layout thrashing)
+  const dynamicStyles = useMemo(() => ({
     container: {
       backgroundColor: colors.backgroundSecondary,
     },
@@ -180,10 +181,11 @@ export default function ProfileScreen({ navigation }: any) {
     testButtonSubtitle: {
       color: colors.textSecondary,
     },
-  };
+  }), [colors]);
 
   return (
-    <SafeAreaView style={[styles.container, dynamicStyles.container]}>
+    <SafeAreaView style={[styles.container, dynamicStyles.container]} edges={['top', 'left', 'right']}>
+      <LogoHeader />
       {/* Header */}
       <View style={[styles.header, dynamicStyles.header]}>
         <Text style={[styles.headerTitle, dynamicStyles.headerTitle]}>Profile</Text>
@@ -381,6 +383,19 @@ export default function ProfileScreen({ navigation }: any) {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>📋 Quick Actions</Text>
           <View style={[styles.infoCard, dynamicStyles.infoCard]}>
+            <TouchableOpacity
+              style={styles.actionRow}
+              onPress={() => navigation.navigate('Bookmarks')}
+            >
+              <View style={styles.actionLeft}>
+                <Text style={styles.actionIcon}>🤍</Text>
+                <Text style={[styles.actionLabel, dynamicStyles.actionText]}>Saved Deals</Text>
+              </View>
+              <Text style={[styles.actionArrow, dynamicStyles.actionArrow]}>›</Text>
+            </TouchableOpacity>
+
+            <View style={styles.divider} />
+
             <TouchableOpacity
               style={styles.actionRow}
               onPress={() => navigation.navigate('FollowingList')}

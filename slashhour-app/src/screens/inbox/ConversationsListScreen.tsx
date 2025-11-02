@@ -5,15 +5,16 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  Image,
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
 import { useUser } from '../../stores/useAuthStore';
 import { useSocket } from '../../hooks/useSocket';
 import { useConversations } from '../../hooks/useConversations';
 import { trackScreenView } from '../../services/analytics';
+import LogoHeader from '../../components/LogoHeader';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, SIZES, LAYOUT } from '../../theme';
 import { Conversation } from '../../types/models';
 
@@ -154,7 +155,8 @@ export default function ConversationsListScreen({ navigation }: any) {
 
   if (isLoading && conversations.length === 0) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+        <LogoHeader />
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Messages</Text>
           <View style={styles.connectionIndicator}>
@@ -170,7 +172,8 @@ export default function ConversationsListScreen({ navigation }: any) {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <LogoHeader />
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Messages</Text>

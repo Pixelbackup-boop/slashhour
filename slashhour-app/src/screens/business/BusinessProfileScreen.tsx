@@ -232,23 +232,6 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
       flex: 1,
       backgroundColor: colors.backgroundSecondary,
     },
-    header: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: SPACING.md,
-      backgroundColor: colors.white,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.borderLight,
-    },
-    backButton: {
-      padding: SPACING.sm,
-    },
-    backButtonText: {
-      fontSize: TYPOGRAPHY.fontSize.md,
-      color: colors.primary,
-      fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    },
     editButton: {
       backgroundColor: colors.primary,
       paddingHorizontal: SPACING.md,
@@ -458,12 +441,7 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Text style={styles.backButtonText}>← Back</Text>
-          </TouchableOpacity>
-        </View>
+      <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           <BusinessProfileSkeleton />
           <View style={styles.dealsGridSkeleton}>
@@ -483,12 +461,7 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
 
   if (error || !business) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Text style={styles.backButtonText}>← Back</Text>
-          </TouchableOpacity>
-        </View>
+      <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
         <View style={styles.centerContainer}>
           <Text style={styles.errorIcon}>⚠️</Text>
           <Text style={styles.errorMessage}>{error || 'Business not found'}</Text>
@@ -501,14 +474,7 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>← Back</Text>
-        </TouchableOpacity>
-      </View>
-
+    <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
       {/* Main Content */}
       {activeBottomTab === 'deals' ? (
         deals.length === 0 ? (

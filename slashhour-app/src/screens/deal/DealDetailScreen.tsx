@@ -97,7 +97,7 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
   // Show loading state while fetching deal
   if (dealId && isFetchingDeal) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }} edges={['left', 'right', 'bottom']}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <ActivityIndicator size="large" color={COLORS.primary} />
           <Text style={{ marginTop: SPACING.md, color: COLORS.textSecondary }}>
@@ -111,7 +111,7 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
   // Show error state if fetching failed
   if (dealId && fetchError) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }} edges={['left', 'right', 'bottom']}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: SPACING.xl }}>
           <Text style={{ fontSize: 48, marginBottom: SPACING.md }}>😕</Text>
           <Text style={{ fontSize: TYPOGRAPHY.fontSize.lg, color: COLORS.error, textAlign: 'center' }}>
@@ -183,23 +183,6 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
     },
     imageContainer: {
       position: 'relative',
-    },
-    backButtonOverlay: {
-      position: 'absolute',
-      top: 16,
-      left: 16,
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 10,
-    },
-    backButtonText: {
-      fontSize: 24,
-      color: COLORS.white,
-      fontWeight: TYPOGRAPHY.fontWeight.bold,
     },
     content: {
       padding: SPACING.lg,
@@ -407,9 +390,9 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
   });
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Image Carousel with Back Button and Bookmark Button Overlay */}
+        {/* Image Carousel with Bookmark Button Overlay */}
         <View style={styles.imageContainer}>
           <ImageCarousel
             images={deal.images || []}
@@ -420,9 +403,6 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
             fallbackImage={getCategoryImage(deal.category)}
             contentFit="contain"
           />
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButtonOverlay}>
-            <Text style={styles.backButtonText}>←</Text>
-          </TouchableOpacity>
 
           {/* Bookmark Button */}
           <TouchableOpacity

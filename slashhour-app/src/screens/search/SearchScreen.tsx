@@ -9,14 +9,18 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSearch } from '../../hooks/useSearch';
+import { useDealNavigation } from '../../hooks/useDealNavigation';
 import { trackScreenView } from '../../services/analytics';
 import SearchBar from '../../components/SearchBar';
 import SearchFilters from '../../components/SearchFilters';
 import FeedDealCard from '../../components/FeedDealCard';
 import BusinessCard from '../../components/BusinessCard';
-import { COLORS, TYPOGRAPHY, SPACING, RADIUS, LAYOUT } from '../../theme';
+import LogoHeader from '../../components/LogoHeader';
+import { useTheme } from '../../context/ThemeContext';
+import { TYPOGRAPHY, SPACING, RADIUS, LAYOUT } from '../../theme';
 
 export default function SearchScreen({ navigation }: any) {
+  const { colors } = useTheme();
   const {
     query,
     setQuery,
@@ -31,19 +35,11 @@ export default function SearchScreen({ navigation }: any) {
     clearSearch,
     hasSearched,
   } = useSearch();
+  const { navigateToDeal, navigateToBusinessFromDeal, navigateToBusinessFromObject } = useDealNavigation();
 
   useEffect(() => {
     trackScreenView('SearchScreen');
   }, []);
-
-  const handleDealPress = (deal: any) => {
-    navigation.navigate('DealDetail', { deal });
-  };
-
-  const handleBusinessPress = (business: any) => {
-    // Navigate to business profile screen
-    navigation.navigate('BusinessProfile', { businessId: business.id });
-  };
 
   const renderEmptyState = () => {
     if (!hasSearched) {
@@ -114,11 +110,144 @@ export default function SearchScreen({ navigation }: any) {
     return null;
   };
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.backgroundSecondary,
+    },
+    resultsContainer: {
+      flex: 1,
+    },
+    resultsSection: {
+      paddingTop: SPACING.md,
+    },
+    dealsGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      paddingHorizontal: SPACING.xs,
+    },
+    cardWrapper: {
+      marginBottom: SPACING.md,
+      width: '50%',
+    },
+    leftCard: {
+      paddingRight: SPACING.xs,
+    },
+    rightCard: {
+      paddingLeft: SPACING.xs,
+    },
+    resultsSectionHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: SPACING.md,
+      paddingBottom: SPACING.md,
+    },
+    resultsSectionTitle: {
+      ...TYPOGRAPHY.styles.h3,
+      color: colors.textPrimary,
+    },
+    seeAllText: {
+      fontSize: TYPOGRAPHY.fontSize.sm,
+      fontWeight: TYPOGRAPHY.fontWeight.semibold,
+      color: colors.primary,
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: SPACING.xxl,
+    },
+    loadingText: {
+      marginTop: SPACING.md,
+      fontSize: TYPOGRAPHY.fontSize.sm,
+      color: colors.textSecondary,
+    },
+    emptyState: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: SPACING.xxl,
+    },
+    emptyStateIcon: {
+      fontSize: 64,
+      marginBottom: SPACING.md,
+    },
+    emptyStateTitle: {
+      ...TYPOGRAPHY.styles.h2,
+      color: colors.textPrimary,
+      marginBottom: SPACING.sm,
+    },
+    emptyStateText: {
+      fontSize: TYPOGRAPHY.fontSize.sm,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      lineHeight: 20,
+      marginBottom: SPACING.lg,
+    },
+    suggestionsContainer: {
+      width: '100%',
+      alignItems: 'center',
+    },
+    suggestionsTitle: {
+      fontSize: TYPOGRAPHY.fontSize.sm,
+      fontWeight: TYPOGRAPHY.fontWeight.semibold,
+      color: colors.textSecondary,
+      marginBottom: SPACING.md,
+    },
+    suggestionChips: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+      gap: SPACING.sm,
+    },
+    suggestionChip: {
+      backgroundColor: colors.primaryBackground,
+      paddingHorizontal: SPACING.md,
+      paddingVertical: SPACING.sm,
+      borderRadius: RADIUS.round,
+      borderWidth: 1,
+      borderColor: colors.primary,
+    },
+    suggestionText: {
+      fontSize: TYPOGRAPHY.fontSize.sm,
+      fontWeight: TYPOGRAPHY.fontWeight.semibold,
+      color: colors.primary,
+    },
+    retryButton: {
+      backgroundColor: colors.primary,
+      paddingVertical: SPACING.md,
+      paddingHorizontal: SPACING.xl,
+      borderRadius: RADIUS.md,
+    },
+    retryButtonText: {
+      color: colors.white,
+      fontSize: TYPOGRAPHY.fontSize.md,
+      fontWeight: TYPOGRAPHY.fontWeight.semibold,
+    },
+    clearButton: {
+      backgroundColor: colors.backgroundSecondary,
+      paddingVertical: SPACING.md,
+      paddingHorizontal: SPACING.xl,
+      borderRadius: RADIUS.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    clearButtonText: {
+      color: colors.textSecondary,
+      fontSize: TYPOGRAPHY.fontSize.md,
+      fontWeight: TYPOGRAPHY.fontWeight.semibold,
+    },
+    bottomPadding: {
+      height: LAYOUT.tabBarHeight + SPACING.xl,
+    },
+  });
+
   const renderResults = () => {
     if (isSearching) {
       return (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
+          <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Searching...</Text>
         </View>
       );
@@ -154,7 +283,8 @@ export default function SearchScreen({ navigation }: any) {
                 ]}>
                   <FeedDealCard
                     deal={deal}
-                    onPress={() => handleDealPress(deal)}
+                    onPress={() => navigateToDeal(deal)}
+                    onBusinessPress={() => navigateToBusinessFromDeal(deal)}
                   />
                 </View>
               ))}
@@ -179,7 +309,7 @@ export default function SearchScreen({ navigation }: any) {
               <BusinessCard
                 key={business.id}
                 business={business}
-                onPress={() => handleBusinessPress(business)}
+                onPress={() => navigateToBusinessFromObject(business)}
               />
             ))}
           </View>
@@ -191,7 +321,8 @@ export default function SearchScreen({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <LogoHeader />
       {/* Search Bar */}
       <SearchBar
         value={query}
@@ -214,137 +345,3 @@ export default function SearchScreen({ navigation }: any) {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.backgroundSecondary,
-  },
-  resultsContainer: {
-    flex: 1,
-  },
-  resultsSection: {
-    paddingTop: SPACING.md,
-  },
-  dealsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: SPACING.xs,
-  },
-  cardWrapper: {
-    marginBottom: SPACING.md,
-  },
-  leftCard: {
-    marginRight: SPACING.xs,
-    marginLeft: -SPACING.xs,
-  },
-  rightCard: {
-    marginLeft: SPACING.xs,
-    marginRight: -SPACING.xs,
-  },
-  resultsSectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.md,
-    paddingBottom: SPACING.md,
-  },
-  resultsSectionTitle: {
-    ...TYPOGRAPHY.styles.h3,
-    color: COLORS.textPrimary,
-  },
-  seeAllText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    color: COLORS.primary,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: SPACING.xxl,
-  },
-  loadingText: {
-    marginTop: SPACING.md,
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    color: COLORS.textSecondary,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: SPACING.xxl,
-  },
-  emptyStateIcon: {
-    fontSize: 64,
-    marginBottom: SPACING.md,
-  },
-  emptyStateTitle: {
-    ...TYPOGRAPHY.styles.h2,
-    color: COLORS.textPrimary,
-    marginBottom: SPACING.sm,
-  },
-  emptyStateText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: SPACING.lg,
-  },
-  suggestionsContainer: {
-    width: '100%',
-    alignItems: 'center',
-  },
-  suggestionsTitle: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    color: COLORS.textSecondary,
-    marginBottom: SPACING.md,
-  },
-  suggestionChips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-  },
-  suggestionChip: {
-    backgroundColor: COLORS.primaryBackground,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.round,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-  },
-  suggestionText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    color: COLORS.primary,
-  },
-  retryButton: {
-    backgroundColor: COLORS.primary,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.xl,
-    borderRadius: RADIUS.md,
-  },
-  retryButtonText: {
-    color: COLORS.white,
-    fontSize: TYPOGRAPHY.fontSize.md,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
-  clearButton: {
-    backgroundColor: COLORS.backgroundSecondary,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.xl,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  clearButtonText: {
-    color: COLORS.textSecondary,
-    fontSize: TYPOGRAPHY.fontSize.md,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
-  bottomPadding: {
-    height: LAYOUT.tabBarHeight + SPACING.xl,
-  },
-});

@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useUser } from '../../stores/useAuthStore';
 import FeedScreen from './FeedScreen';
 import NearYouScreen from './NearYouScreen';
-import AppHeader from '../../components/AppHeader';
 import TabBar, { Tab } from '../../components/TabBar';
+import LogoHeader from '../../components/LogoHeader';
 import { COLORS } from '../../theme';
 
 const tabs: Tab[] = [
@@ -14,14 +13,11 @@ const tabs: Tab[] = [
 ];
 
 export default function HomeScreen({ navigation }: any) {
-  const user = useUser();
   const [activeTab, setActiveTab] = useState<'following' | 'nearby'>('following');
 
   return (
-    <SafeAreaView style={styles.container}>
-      <AppHeader
-        userName={user?.name || user?.username}
-      />
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <LogoHeader />
 
       <TabBar
         tabs={tabs}

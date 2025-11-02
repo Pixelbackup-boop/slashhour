@@ -8,6 +8,7 @@ import { useUser, useIsAuthenticated } from '../stores/useAuthStore';
 import { useTheme } from '../context/ThemeContext';
 import { SHADOWS, SPACING } from '../theme';
 import { navigationRef } from './navigationRef';
+import AppHeader from '../components/AppHeader';
 import LoginScreen from '../screens/auth/LoginScreen';
 import SignUpScreen from '../screens/auth/SignUpScreen';
 import HomeScreen from '../screens/home/HomeScreen';
@@ -19,6 +20,7 @@ import DealDetailScreen from '../screens/deal/DealDetailScreen';
 import RedemptionHistoryScreen from '../screens/redemption/RedemptionHistoryScreen';
 import FollowingListScreen from '../screens/following/FollowingListScreen';
 import FollowersListScreen from '../screens/followers/FollowersListScreen';
+import BookmarksScreen from '../screens/bookmarks/BookmarksScreen';
 import BusinessProfileScreen from '../screens/business/BusinessProfileScreen';
 import EditBusinessProfileScreen from '../screens/business/EditBusinessProfileScreen';
 import RegisterBusinessScreen from '../screens/business/RegisterBusinessScreen';
@@ -37,6 +39,7 @@ type RootStackParamList = {
   RedemptionHistory: undefined;
   FollowingList: undefined;
   FollowersList: { businessId: string };
+  Bookmarks: undefined;
   BusinessProfile: { businessId: string; businessName?: string };
   EditBusinessProfile: { business: Business };
   RegisterBusiness: undefined;
@@ -61,6 +64,198 @@ type TabParamList = {
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
+
+/**
+ * Helper function to create common stack screens with AppHeader
+ * This reduces code duplication across nested navigators
+ */
+function createCommonStackScreens(StackNavigator: any) {
+  return (
+    <>
+      <StackNavigator.Screen
+        name="DealDetail"
+        component={DealDetailScreen}
+        options={{
+          headerShown: true,
+          header: () => <AppHeader showBackButton={true} />,
+        }}
+      />
+      <StackNavigator.Screen
+        name="DealDetails"
+        component={DealDetailScreen}
+        options={{
+          headerShown: true,
+          header: () => <AppHeader showBackButton={true} />,
+        }}
+      />
+      <StackNavigator.Screen
+        name="BusinessProfile"
+        component={BusinessProfileScreen}
+        options={{
+          headerShown: true,
+          header: () => <AppHeader showBackButton={true} />,
+        }}
+      />
+    </>
+  );
+}
+
+// Stack Navigator for Home Tab
+const HomeStack = createNativeStackNavigator();
+function HomeStackNavigator() {
+  return (
+    <HomeStack.Navigator
+      screenOptions={{
+        headerShown: false,
+        gestureEnabled: true,
+      }}
+    >
+      <HomeStack.Screen name="HomeScreen" component={HomeScreen} />
+      {createCommonStackScreens(HomeStack)}
+    </HomeStack.Navigator>
+  );
+}
+
+// Stack Navigator for Search Tab
+const SearchStack = createNativeStackNavigator();
+function SearchStackNavigator() {
+  return (
+    <SearchStack.Navigator
+      screenOptions={{
+        headerShown: false,
+        gestureEnabled: true,
+      }}
+    >
+      <SearchStack.Screen name="SearchScreen" component={SearchScreen} />
+      {createCommonStackScreens(SearchStack)}
+    </SearchStack.Navigator>
+  );
+}
+
+// Stack Navigator for Notifications Tab
+const NotificationsStack = createNativeStackNavigator();
+function NotificationsStackNavigator() {
+  return (
+    <NotificationsStack.Navigator
+      screenOptions={{
+        headerShown: false,
+        gestureEnabled: true,
+      }}
+    >
+      <NotificationsStack.Screen name="NotificationsScreen" component={NotificationsScreen} />
+      {createCommonStackScreens(NotificationsStack)}
+    </NotificationsStack.Navigator>
+  );
+}
+
+// Stack Navigator for Inbox Tab
+const InboxStack = createNativeStackNavigator();
+function InboxStackNavigator() {
+  return (
+    <InboxStack.Navigator
+      screenOptions={{
+        headerShown: false,
+        gestureEnabled: true,
+      }}
+    >
+      <InboxStack.Screen name="InboxScreen" component={ConversationsListScreen} />
+      <InboxStack.Screen
+        name="Chat"
+        component={ChatScreen}
+        options={{
+          headerShown: true,
+          header: () => <AppHeader showBackButton={true} />,
+        }}
+      />
+    </InboxStack.Navigator>
+  );
+}
+
+// Stack Navigator for Profile Tab
+const ProfileStack = createNativeStackNavigator();
+function ProfileStackNavigator() {
+  return (
+    <ProfileStack.Navigator
+      screenOptions={{
+        headerShown: false,
+        gestureEnabled: true,
+      }}
+    >
+      <ProfileStack.Screen name="ProfileScreen" component={ProfileScreen} />
+      {createCommonStackScreens(ProfileStack)}
+
+      {/* Profile-specific screens */}
+      <ProfileStack.Screen
+        name="RedemptionHistory"
+        component={RedemptionHistoryScreen}
+        options={{
+          headerShown: true,
+          header: () => <AppHeader showBackButton={true} />,
+        }}
+      />
+      <ProfileStack.Screen
+        name="FollowingList"
+        component={FollowingListScreen}
+        options={{
+          headerShown: true,
+          header: () => <AppHeader showBackButton={true} />,
+        }}
+      />
+      <ProfileStack.Screen
+        name="FollowersList"
+        component={FollowersListScreen}
+        options={{
+          headerShown: true,
+          header: () => <AppHeader showBackButton={true} />,
+        }}
+      />
+      <ProfileStack.Screen
+        name="Bookmarks"
+        component={BookmarksScreen}
+        options={{
+          headerShown: true,
+          header: () => <AppHeader showBackButton={true} />,
+        }}
+      />
+      <ProfileStack.Screen
+        name="EditBusinessProfile"
+        component={EditBusinessProfileScreen}
+        options={{
+          headerShown: true,
+          header: () => <AppHeader showBackButton={true} />,
+        }}
+      />
+      <ProfileStack.Screen
+        name="RegisterBusiness"
+        component={RegisterBusinessScreen}
+        options={{
+          headerShown: true,
+          header: () => <AppHeader showBackButton={true} />,
+        }}
+      />
+      <ProfileStack.Screen
+        name="CreateDeal"
+        component={CreateDealScreen}
+        options={{
+          animation: 'fade',
+          animationDuration: 200,
+          headerShown: true,
+          header: () => <AppHeader showBackButton={true} />,
+        }}
+      />
+      <ProfileStack.Screen
+        name="EditDeal"
+        component={EditDealScreen}
+        options={{
+          animation: 'fade',
+          animationDuration: 200,
+          headerShown: true,
+          header: () => <AppHeader showBackButton={true} />,
+        }}
+      />
+    </ProfileStack.Navigator>
+  );
+}
 
 // Bottom Tab Navigator
 function MainTabNavigator() {
@@ -127,7 +322,7 @@ function MainTabNavigator() {
     >
       <Tab.Screen
         name="Home"
-        component={HomeScreen}
+        component={HomeStackNavigator}
         options={{
           tabBarLabel: 'Home',
           tabBarIcon: ({ color, focused }) => (
@@ -137,7 +332,7 @@ function MainTabNavigator() {
       />
       <Tab.Screen
         name="Search"
-        component={SearchScreen}
+        component={SearchStackNavigator}
         options={{
           tabBarLabel: 'Search',
           tabBarIcon: ({ color, focused }) => (
@@ -147,7 +342,7 @@ function MainTabNavigator() {
       />
       <Tab.Screen
         name="Notifications"
-        component={NotificationsScreen}
+        component={NotificationsStackNavigator}
         options={{
           tabBarLabel: 'Alerts',
           tabBarIcon: ({ color, focused }) => (
@@ -170,7 +365,7 @@ function MainTabNavigator() {
       />
       <Tab.Screen
         name="Inbox"
-        component={ConversationsListScreen}
+        component={InboxStackNavigator}
         options={{
           tabBarLabel: 'Inbox',
           tabBarIcon: ({ color, focused }) => (
@@ -193,7 +388,7 @@ function MainTabNavigator() {
       />
       <Tab.Screen
         name="Profile"
-        component={ProfileScreen}
+        component={ProfileStackNavigator}
         options={{
           tabBarLabel: 'Profile',
           tabBarIcon: ({ color, focused }) => (
@@ -259,63 +454,18 @@ export default function AppNavigator() {
           </>
         ) : (
           <>
+            {/* Main tab navigator with nested stacks */}
             <Stack.Screen name="MainTabs" component={MainTabNavigator} />
-            <Stack.Screen
-              name="DealDetail"
-              component={DealDetailScreen}
-            />
-            <Stack.Screen
-              name="DealDetails"
-              component={DealDetailScreen}
-            />
-            <Stack.Screen
-              name="RedemptionHistory"
-              component={RedemptionHistoryScreen}
-            />
-            <Stack.Screen
-              name="FollowingList"
-              component={FollowingListScreen}
-            />
-            <Stack.Screen
-              name="FollowersList"
-              component={FollowersListScreen}
-            />
-            <Stack.Screen
-              name="BusinessProfile"
-              component={BusinessProfileScreen}
-            />
-            <Stack.Screen
-              name="EditBusinessProfile"
-              component={EditBusinessProfileScreen}
-            />
-            <Stack.Screen
-              name="RegisterBusiness"
-              component={RegisterBusinessScreen}
-            />
-            <Stack.Screen
-              name="CreateDeal"
-              component={CreateDealScreen}
-              options={{
-                animation: 'fade',
-                animationDuration: 200,
-              }}
-            />
-            <Stack.Screen
-              name="EditDeal"
-              component={EditDealScreen}
-              options={{
-                animation: 'fade',
-                animationDuration: 200,
-              }}
-            />
-            <Stack.Screen
-              name="Chat"
-              component={ChatScreen}
-            />
+
+            {/* Test screen - kept at root level for development/debugging */}
             <Stack.Screen
               name="UXTest"
               component={SimpleTestScreen}
-              options={{ title: '🧪 Test Screen' }}
+              options={{
+                title: '🧪 Test Screen',
+                headerShown: true,
+                header: () => <AppHeader showBackButton={true} />,
+              }}
             />
           </>
         )}
