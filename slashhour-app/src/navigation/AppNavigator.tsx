@@ -28,6 +28,7 @@ import CreateDealScreen from '../screens/post/CreateDealScreen';
 import EditDealScreen from '../screens/post/EditDealScreen';
 import SimpleTestScreen from '../screens/test/SimpleTestScreen';
 import NotificationsScreen from '../screens/notifications/NotificationsScreen';
+import SettingsScreen from '../screens/settings/SettingsScreen';
 import { Deal, Business } from '../types/models';
 
 type RootStackParamList = {
@@ -196,6 +197,11 @@ function ProfileStackNavigator() {
       }}
     >
       <ProfileStack.Screen name="ProfileScreen" component={ProfileScreen} />
+      <ProfileStack.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={HEADER_WITH_BACK_BUTTON}
+      />
       {createCommonStackScreens(ProfileStack)}
 
       {/* Profile-specific screens */}

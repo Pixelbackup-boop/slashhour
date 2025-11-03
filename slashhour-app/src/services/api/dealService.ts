@@ -33,12 +33,19 @@ export const dealService = {
     // Build FormData using utility
     const formData = buildDealFormData(data);
 
+    const url = `${API_BASE_URL}/deals/business/${businessId}/multipart`;
+
     if (__DEV__) {
-      console.log('🚀 Sending multipart request with', data.imageUris?.length || 0, 'images');
+      console.log('🚀 Sending multipart request:');
+      console.log(`   - URL: ${url}`);
+      console.log(`   - Method: POST`);
+      console.log(`   - Images: ${data.imageUris?.length || 0}`);
+      console.log(`   - Has token: ${!!token}`);
+      console.log(`   - FormData object:`, formData);
     }
 
     // Use expo/fetch for proper FormData + File support
-    const response = await expoFetch(`${API_BASE_URL}/deals/business/${businessId}/multipart`, {
+    const response = await expoFetch(url, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -46,6 +53,10 @@ export const dealService = {
       },
       body: formData,
     });
+
+    if (__DEV__) {
+      console.log(`📡 Response received: ${response.status} ${response.statusText}`);
+    }
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ message: 'Failed to create deal' }));

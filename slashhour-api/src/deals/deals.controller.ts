@@ -78,8 +78,9 @@ export class DealsController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.dealsService.findOne(id);
+  @UseGuards(JwtAuthGuard)
+  async findOne(@Request() req, @Param('id') id: string) {
+    return this.dealsService.findOne(id, req.user.id);
   }
 
   @Put(':id')

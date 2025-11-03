@@ -79,10 +79,28 @@ class ApiClient {
   }
 
   private async refreshToken(): Promise<string> {
-    // Implement token refresh logic
-    // This should call your refresh token endpoint
-    const response = await this.client.post('/auth/refresh');
-    return response.data.token;
+    // Get refresh token from Zustand store
+    const { useAuthStore } = require('../../stores/useAuthStore');
+    const refreshToken = useAuthStore.getState().refreshToken;
+
+    if (!refreshToken) {
+      throw new Error('No refresh token available');
+    }
+
+    // Call refresh endpoint with refresh token
+    const response = await this.client.post('/auth/refresh', {
+      refreshToken: refreshToken,
+    });
+
+    // Update both tokens in the store
+    const { loginSuccess } = useAuthStore.getState();
+    const user = useAuthStore.getState().user;
+
+    if (user && response.data.accessToken && response.data.refreshToken) {
+      loginSuccess(user, response.data.accessToken, response.data.refreshToken);
+    }
+
+    return response.data.accessToken;
   }
 
   // Generic methods

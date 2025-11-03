@@ -62,6 +62,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -83,7 +85,7 @@ async function setupNotificationChannels() {
         name: channel.name,
         description: channel.description,
         importance: channel.importance,
-        vibrationPattern: channel.vibrationPattern,
+        vibrationPattern: [...channel.vibrationPattern],
         lightColor: channel.lightColor,
         sound: channel.sound === 'default' ? 'default' : channel.sound,
         enableVibrate: true,
@@ -150,8 +152,8 @@ async function setupNotificationCategories() {
 export const usePushNotifications = () => {
   const [deviceToken, setDeviceToken] = useState<string | null>(null);
   const [notification, setNotification] = useState<Notifications.Notification | null>(null);
-  const notificationListener = useRef<Notifications.Subscription>();
-  const responseListener = useRef<Notifications.Subscription>();
+  const notificationListener = useRef<Notifications.Subscription | undefined>(undefined);
+  const responseListener = useRef<Notifications.Subscription | undefined>(undefined);
   const setAuthDeviceToken = useAuthStore((state) => state.setDeviceToken);
 
   useEffect(() => {
@@ -200,12 +202,8 @@ export const usePushNotifications = () => {
     });
 
     return () => {
-      if (notificationListener.current) {
-        Notifications.removeNotificationSubscription(notificationListener.current);
-      }
-      if (responseListener.current) {
-        Notifications.removeNotificationSubscription(responseListener.current);
-      }
+      notificationListener.current?.remove();
+      responseListener.current?.remove();
     };
   }, []);
 

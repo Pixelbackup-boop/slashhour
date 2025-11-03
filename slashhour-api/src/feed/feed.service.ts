@@ -51,7 +51,7 @@ export class FeedService {
     const now = new Date();
 
     // Get deals from followed businesses with proper relation loading
-    const [deals, total] = await Promise.all([
+    const [deals, total, userBookmarks] = await Promise.all([
       this.prisma.deals.findMany({
         where: {
           business_id: { in: businessIds },
@@ -72,7 +72,15 @@ export class FeedService {
           expires_at: { gt: now },
         },
       }),
+      // Fetch user's bookmarks to include bookmark status in response
+      this.prisma.bookmarks.findMany({
+        where: { user_id: userId },
+        select: { deal_id: true },
+      }),
     ]);
+
+    // Create a Set of bookmarked deal IDs for O(1) lookup
+    const bookmarkedDealIds = new Set(userBookmarks.map(b => b.deal_id));
 
     // Transform deals to match frontend interface (rename 'businesses' to 'business')
     const transformedDeals = deals.map((deal: any) => {
@@ -80,6 +88,7 @@ export class FeedService {
       return {
         ...dealData,
         business: businesses, // Rename from 'businesses' (Prisma relation) to 'business' (frontend interface)
+        isBookmarked: bookmarkedDealIds.has(deal.id), // Include bookmark status for this user
       };
     });
 
@@ -154,9 +163,16 @@ export class FeedService {
       throw new Error('Location is required. Please provide lat/lng or set default location.');
     }
 
+    // Fetch user's bookmarks in parallel for bookmark status
+    const userBookmarksPromise = this.prisma.bookmarks.findMany({
+      where: { user_id: userId },
+      select: { deal_id: true },
+    });
+
     // Calculate distance using Haversine formula and filter by radius
     // Using raw query for complex geospatial calculation
-    const deals = await this.prisma.$queryRaw<any[]>`
+    const [deals, userBookmarks] = await Promise.all([
+      this.prisma.$queryRaw<any[]>`
       SELECT
         d.*,
         b.id as "business_id",
@@ -209,7 +225,12 @@ export class FeedService {
       ORDER BY d.created_at DESC
       LIMIT ${limit}
       OFFSET ${skip}
-    `;
+    `,
+      userBookmarksPromise,
+    ]);
+
+    // Create a Set of bookmarked deal IDs for O(1) lookup
+    const bookmarkedDealIds = new Set(userBookmarks.map(b => b.deal_id));
 
     // Get total count for pagination
     const countResult = await this.prisma.$queryRaw<[{ count: bigint }]>`
@@ -291,6 +312,7 @@ export class FeedService {
       return {
         ...deal,
         distance: Math.round(distance * 100) / 100, // Round to 2 decimal places
+        isBookmarked: bookmarkedDealIds.has(deal.id), // Include bookmark status for this user
       };
     });
 

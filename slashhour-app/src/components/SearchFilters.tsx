@@ -200,19 +200,22 @@ const styles = StyleSheet.create({
   },
   tabsContainer: {
     flexDirection: 'row',
-    backgroundColor: '#f5f5f5',
-    borderRadius: 12,
-    padding: 4,
-    gap: 4,
+    gap: 8,
+    justifyContent: 'space-between',
   },
   tab: {
     flex: 1,
     paddingVertical: 10,
-    alignItems: 'center',
+    paddingHorizontal: 16,
     borderRadius: 8,
+    backgroundColor: '#f5f5f5',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    alignItems: 'center',
   },
   tabActive: {
-    backgroundColor: '#FF6B6B',
+    backgroundColor: '#FFE8E8',
+    borderColor: '#FF6B6B',
   },
   tabText: {
     fontSize: 14,
@@ -220,7 +223,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   tabTextActive: {
-    color: '#fff',
+    color: '#FF6B6B',
   },
   chipRow: {
     flexDirection: 'row',

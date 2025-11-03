@@ -8,13 +8,14 @@ interface SlashhourLogoProps {
 
 /**
  * Reusable Slashhour logo component
+ * Optimized with React.memo to prevent unnecessary re-renders
  *
  * Sizes:
  * - small: 120x21 (for compact spaces)
  * - medium: 180x32 (default, used in headers)
  * - large: 240x43 (for splash/auth screens)
  */
-export default function SlashhourLogo({ size = 'medium' }: SlashhourLogoProps) {
+const SlashhourLogo = React.memo(({ size = 'medium' }: SlashhourLogoProps) => {
   return (
     <Image
       source={require('../../assets/logo.png')}
@@ -22,7 +23,11 @@ export default function SlashhourLogo({ size = 'medium' }: SlashhourLogoProps) {
       contentFit="contain"
     />
   );
-}
+});
+
+SlashhourLogo.displayName = 'SlashhourLogo';
+
+export default SlashhourLogo;
 
 const styles = StyleSheet.create({
   small: {

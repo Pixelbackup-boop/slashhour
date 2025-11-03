@@ -35,17 +35,15 @@ const notificationService = {
   /**
    * Register device token for push notifications
    */
-  registerDeviceToken: async (data: RegisterDeviceTokenData) => {
-    const response = await apiClient.post('/notifications/device-token', data);
-    return response.data;
+  registerDeviceToken: async (data: RegisterDeviceTokenData): Promise<{ success: boolean }> => {
+    return await apiClient.post<{ success: boolean }>('/notifications/device-token', data);
   },
 
   /**
    * Deactivate device token
    */
-  deactivateDeviceToken: async (token: string) => {
-    const response = await apiClient.delete(`/notifications/device-token/${encodeURIComponent(token)}`);
-    return response.data;
+  deactivateDeviceToken: async (token: string): Promise<{ success: boolean }> => {
+    return await apiClient.delete<{ success: boolean }>(`/notifications/device-token/${encodeURIComponent(token)}`);
   },
 
   /**
@@ -62,34 +60,31 @@ const notificationService = {
    * Get unread notification count
    */
   getUnreadCount: async (): Promise<number> => {
-    const response = await apiClient.get('/notifications/unread-count');
-    return response?.count || 0;
+    const response = await apiClient.get<{ count: number }>('/notifications/unread-count');
+    return response.count || 0;
   },
 
   /**
    * Mark specific notifications as read
    */
-  markAsRead: async (notificationIds: string[]) => {
-    const response = await apiClient.post('/notifications/mark-as-read', {
+  markAsRead: async (notificationIds: string[]): Promise<{ success: boolean }> => {
+    return await apiClient.post<{ success: boolean }>('/notifications/mark-as-read', {
       notification_ids: notificationIds,
     });
-    return response.data;
   },
 
   /**
    * Mark all notifications as read
    */
-  markAllAsRead: async () => {
-    const response = await apiClient.post('/notifications/mark-all-as-read');
-    return response.data;
+  markAllAsRead: async (): Promise<{ success: boolean }> => {
+    return await apiClient.post<{ success: boolean }>('/notifications/mark-all-as-read');
   },
 
   /**
    * Delete a notification
    */
-  deleteNotification: async (notificationId: string) => {
-    const response = await apiClient.delete(`/notifications/${notificationId}`);
-    return response.data;
+  deleteNotification: async (notificationId: string): Promise<{ success: boolean }> => {
+    return await apiClient.delete<{ success: boolean }>(`/notifications/${notificationId}`);
   },
 };
 

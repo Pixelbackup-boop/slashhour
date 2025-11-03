@@ -56,13 +56,34 @@ export function buildDealFormData(data: CreateDealFormData): FormData {
   // Append images using File class (native-like)
   if (data.imageUris && data.imageUris.length > 0) {
     if (__DEV__) {
-      console.log('📸 Adding images to FormData:', data.imageUris.length);
+      console.log('📸 Adding images to FormData:');
+      console.log(`   - Number of images: ${data.imageUris.length}`);
+      console.log(`   - Image URIs:`, data.imageUris);
     }
 
-    data.imageUris.forEach((uri) => {
+    data.imageUris.forEach((uri, index) => {
+      if (__DEV__) {
+        console.log(`   - Creating File object #${index + 1} from URI: ${uri}`);
+      }
       const file = new File(uri);
+      if (__DEV__) {
+        console.log(`   - File object created:`, file);
+        console.log(`   - File size: ${file.size}, type: ${file.type}, name: ${file.name}`);
+      }
       formData.append('images', file);
+      if (__DEV__) {
+        console.log(`   - Appended to FormData`);
+      }
     });
+
+    // Verify FormData contents
+    if (__DEV__) {
+      console.log('📋 FormData entries:');
+      // @ts-ignore - FormData has entries() method
+      for (const [key, value] of formData.entries()) {
+        console.log(`   - ${key}:`, value);
+      }
+    }
   }
 
   return formData;

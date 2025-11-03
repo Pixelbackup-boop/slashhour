@@ -34,6 +34,15 @@ export const useConversations = (userId?: string): UseConversationsReturn => {
   const listenersSetupRef = useRef(false);
 
   const fetchConversations = useCallback(async () => {
+    // Don't fetch if no userId (user not authenticated)
+    if (!userId) {
+      if (__DEV__) {
+        console.log('⏸️ [useConversations] Skipping fetch - user not authenticated');
+      }
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -52,6 +61,10 @@ export const useConversations = (userId?: string): UseConversationsReturn => {
 
         // Calculate total unread count using utility function
         setTotalUnreadCount(calculateTotalUnread(sorted));
+
+        if (__DEV__) {
+          console.log(`✅ [useConversations] Fetched ${sorted.length} conversations`);
+        }
       } else {
         setConversations([]);
         setTotalUnreadCount(0);
@@ -65,7 +78,7 @@ export const useConversations = (userId?: string): UseConversationsReturn => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [userId]);
 
   const refresh = useCallback(async () => {
     // Clear error before retrying
@@ -101,8 +114,16 @@ export const useConversations = (userId?: string): UseConversationsReturn => {
     }
   }, [conversations]);
 
-  // Handle real-time message updates
+  // Handle real-time message updates and initial fetch
   useEffect(() => {
+    // Don't set up anything if no userId (user not authenticated)
+    if (!userId) {
+      if (__DEV__) {
+        console.log('⏸️ [useConversations] Skipping setup - user not authenticated');
+      }
+      return;
+    }
+
     const handleNewMessage = (message: Message) => {
       if (__DEV__) {
         console.log('📨 useConversations: New message received', message);
@@ -159,28 +180,35 @@ export const useConversations = (userId?: string): UseConversationsReturn => {
       }
     };
 
-    // Only set up listeners once
+    // Only set up listeners once per userId
     if (!listenersSetupRef.current) {
       listenersSetupRef.current = true;
+
+      if (__DEV__) {
+        console.log('🔌 [useConversations] Setting up socket listeners for user:', userId);
+      }
 
       // Subscribe to socket events
       socketService.on('new_message', handleNewMessage);
       socketService.on('messages_read', handleMessagesRead);
 
-      // Initial fetch
+      // Initial fetch - now with proper auth guard
       fetchConversations();
     }
 
     // Cleanup
     return () => {
       if (listenersSetupRef.current) {
+        if (__DEV__) {
+          console.log('🔌 [useConversations] Cleaning up socket listeners');
+        }
         socketService.off('new_message', handleNewMessage);
         socketService.off('messages_read', handleMessagesRead);
         listenersSetupRef.current = false;
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [userId, fetchConversations]);
 
   return {
     conversations,

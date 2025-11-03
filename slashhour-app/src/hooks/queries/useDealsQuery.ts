@@ -7,8 +7,10 @@
 
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { dealService } from '../../services/api/dealService';
+import { feedService } from '../../services/api/feedService';
 import { queryKeys, queryOptions } from '../../config/queryClient';
 import { Deal } from '../../types/models';
+import { useAuthStore } from '../../stores/useAuthStore';
 
 /**
  * Fetch deals list with filters
@@ -168,6 +170,9 @@ export function useDeleteDeal() {
  *
  * Feed of deals from businesses the user follows
  *
+ * IMPORTANT: This endpoint requires authentication.
+ * The query will only run after auth state is loaded from AsyncStorage.
+ *
  * Example:
  * const { data, isLoading, refetch } = useYouFollowFeed();
  * const { data, isLoading } = useYouFollowFeed(1, 20, { lat: 40.7, lng: -74.0 });
@@ -177,12 +182,15 @@ export function useYouFollowFeed(
   limit: number = 20,
   location?: { lat: number; lng: number }
 ) {
-  const { feedService } = require('../../services/api/feedService');
+  // Check for token existence (more reliable than isAuthenticated flag)
+  // The ApiClient uses token to set Authorization header, so this is what matters
+  const hasToken = useAuthStore((state) => !!state.token);
 
   return useQuery({
     queryKey: ['feed', 'you-follow', { page, limit, location }],
     queryFn: () => feedService.getYouFollowFeed(page, limit, location),
     ...queryOptions.dynamic,
+    enabled: hasToken, // Only fetch when we have an auth token
   });
 }
 
@@ -190,6 +198,9 @@ export function useYouFollowFeed(
  * Fetch "Near You" feed
  *
  * Feed of deals from businesses near user's location
+ *
+ * IMPORTANT: This endpoint requires authentication.
+ * The query will only run after auth state is loaded AND location is available.
  *
  * Example:
  * const { data, isLoading } = useNearYouFeed(37.7749, -122.4194, 5);
@@ -201,7 +212,9 @@ export function useNearYouFeed(
   page: number = 1,
   limit: number = 20
 ) {
-  const { feedService } = require('../../services/api/feedService');
+  // Check for token existence (more reliable than isAuthenticated flag)
+  // The ApiClient uses token to set Authorization header, so this is what matters
+  const hasToken = useAuthStore((state) => !!state.token);
 
   return useQuery({
     queryKey: ['feed', 'near-you', { lat, lng, radius, page, limit }],
@@ -210,6 +223,6 @@ export function useNearYouFeed(
       return feedService.getNearYouFeed(lat, lng, radius, page, limit);
     },
     ...queryOptions.dynamic,
-    enabled: !!lat && !!lng, // Only fetch if location is available
+    enabled: hasToken && !!lat && !!lng, // Only fetch when we have token AND location is available
   });
 }

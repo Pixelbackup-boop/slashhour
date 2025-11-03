@@ -85,13 +85,13 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
         // Navigate based on notification data
         if (navigationRef.isReady()) {
           if (data?.deal_id) {
-            navigationRef.navigate('DealDetails' as never, {
+            (navigationRef.navigate as any)('DealDetails', {
               dealId: data.deal_id
-            } as never);
+            });
           } else if (data?.business_id) {
-            navigationRef.navigate('BusinessProfile' as never, {
+            (navigationRef.navigate as any)('BusinessProfile', {
               businessId: data.business_id
-            } as never);
+            });
           }
         }
       };

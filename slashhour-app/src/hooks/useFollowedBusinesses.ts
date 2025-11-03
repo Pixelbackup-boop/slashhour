@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import apiClient from '../services/api/ApiClient';
 import { logError } from '../config/sentry';
 import { FollowedBusinessesResponse } from '../types/models';
+import { useAuthStore } from '../stores/useAuthStore';
 
 interface UseFollowedBusinessesReturn {
   businesses: FollowedBusinessesResponse['businesses'];
@@ -10,12 +11,31 @@ interface UseFollowedBusinessesReturn {
   refresh: () => void;
 }
 
+/**
+ * Hook for fetching user's followed businesses
+ *
+ * IMPORTANT: This endpoint requires authentication.
+ * The hook will only fetch after auth token is loaded from AsyncStorage.
+ */
 export const useFollowedBusinesses = (): UseFollowedBusinessesReturn => {
   const [businesses, setBusinesses] = useState<FollowedBusinessesResponse['businesses']>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Check for token existence (more reliable than isAuthenticated flag)
+  // The ApiClient uses token to set Authorization header, so this is what matters
+  const token = useAuthStore((state) => state.token);
+
   const fetchFollowedBusinesses = useCallback(async () => {
+    // Don't fetch if no token (user not authenticated)
+    if (!token) {
+      if (__DEV__) {
+        console.log('⏸️ [useFollowedBusinesses] Skipping fetch - no auth token');
+      }
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -47,7 +67,7 @@ export const useFollowedBusinesses = (): UseFollowedBusinessesReturn => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [token]);
 
   const refresh = useCallback(() => {
     fetchFollowedBusinesses();

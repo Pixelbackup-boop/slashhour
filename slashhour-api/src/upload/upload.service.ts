@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import sharp from 'sharp';
 
 @Injectable()
 export class UploadService {
@@ -50,14 +51,31 @@ export class UploadService {
   }
 
   /**
+   * Check if file is an image based on mimetype
+   */
+  private isImage(mimetype: string): boolean {
+    return mimetype.startsWith('image/');
+  }
+
+  /**
    * Save file to disk and return public URL
+   * Images are automatically converted to AVIF format
    * @param file Uploaded file from multer
    * @param folder Optional subfolder (e.g., 'deals', 'businesses')
    * @returns Public URL to access the file
    */
   async saveFile(file: Express.Multer.File, folder?: string): Promise<string> {
-    // Generate unique filename
-    const fileExtension = path.extname(file.originalname);
+    // Generate unique filename - use .avif for images
+    const isImage = this.isImage(file.mimetype);
+
+    // DEBUG: Log file info to diagnose AVIF conversion issue
+    console.log(`📤 Uploading file:`);
+    console.log(`   - Original name: ${file.originalname}`);
+    console.log(`   - MIME type: ${file.mimetype}`);
+    console.log(`   - Is image? ${isImage}`);
+    console.log(`   - Buffer size: ${file.buffer.length} bytes`);
+
+    const fileExtension = isImage ? '.avif' : path.extname(file.originalname);
     const filename = `${uuidv4()}${fileExtension}`;
 
     // Determine save path
@@ -69,9 +87,27 @@ export class UploadService {
       }
     }
 
-    // Save file to disk
     const filePath = path.join(savePath, filename);
-    fs.writeFileSync(filePath, file.buffer);
+
+    // Convert images to AVIF format
+    if (isImage) {
+      try {
+        await sharp(file.buffer)
+          .avif({
+            quality: 80,         // Good balance between quality and file size
+            effort: 4,           // Compression effort (0-9, 4 is default)
+          })
+          .toFile(filePath);
+
+        console.log(`✅ Converted image to AVIF: ${filename}`);
+      } catch (error) {
+        console.error(`❌ Failed to convert image to AVIF:`, error);
+        throw error;
+      }
+    } else {
+      // Non-image files: save as-is
+      fs.writeFileSync(filePath, file.buffer);
+    }
 
     // Return public URL
     const url = folder

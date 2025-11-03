@@ -98,6 +98,7 @@ model deals {
   updated_at           DateTime           @default(now()) @db.Timestamp(6)
   businesses           businesses         @relation(fields: [business_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_c90e9d39a174936dcf03351e146")
   user_redemptions     user_redemptions[]
+  bookmarks            bookmarks[]
 }
 
 model follows {
@@ -165,6 +166,7 @@ model users {
   avatar_url               String?
   default_location         Json?
   default_radius_km        Int                @default(5)
+  notify_nearby_deals      Boolean            @default(false)
   preferred_categories     String[]           @default([])
   language                 String             @default("en") @db.VarChar(10)
   currency                 String             @default("USD") @db.VarChar(3)
@@ -186,6 +188,7 @@ model users {
   device_tokens            device_tokens[]
   notifications            notifications[]
   business_reviews         business_reviews[]
+  bookmarks                bookmarks[]
 }
 
 enum businesses_category_enum {
@@ -211,6 +214,7 @@ enum deals_status_enum {
   paused
   expired
   sold_out
+  deleted
 }
 
 enum follows_status_enum {
@@ -281,4 +285,18 @@ model business_reviews {
   @@unique([business_id, user_id])
   @@index([business_id, status, created_at])
   @@index([user_id, created_at])
+}
+
+model bookmarks {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id    String   @db.Uuid
+  deal_id    String   @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  deals      deals    @relation(fields: [deal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([user_id, deal_id])
+  @@index([user_id])
+  @@index([deal_id])
+  @@index([created_at(sort: Desc)])
 }

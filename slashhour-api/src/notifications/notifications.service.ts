@@ -264,7 +264,36 @@ export class NotificationsService {
   }
 
   /**
+   * Calculate Haversine distance between two points (in kilometers)
+   * Formula: 2 * R * asin(sqrt(sin²(Δlat/2) + cos(lat1) * cos(lat2) * sin²(Δlon/2)))
+   * where R = Earth's radius (6371 km)
+   */
+  private calculateDistance(
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number,
+  ): number {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) *
+        Math.cos(lat2 * (Math.PI / 180)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c;
+
+    return distance;
+  }
+
+  /**
    * Send notification to followers when a business posts a new deal
+   * 2025 Enhancement: Also notifies nearby users who have opted in
    */
   async sendNewDealNotification(dealId: string, businessId: string) {
     try {
@@ -278,6 +307,11 @@ export class NotificationsService {
         throw new NotFoundException('Deal not found');
       }
 
+      // Extract business location
+      const businessLocation = deal.businesses.location as any;
+      const businessLat = businessLocation?.lat;
+      const businessLng = businessLocation?.lng;
+
       // Get followers who want new deal notifications
       const followers = await this.prisma.follows.findMany({
         where: {
@@ -289,26 +323,84 @@ export class NotificationsService {
       });
 
       this.logger.log(`🔍 [NOTIFICATION DEBUG] Deal: ${dealId}, Business: ${deal.businesses.business_name}`);
+      this.logger.log(`🔍 [NOTIFICATION DEBUG] Business Location: lat=${businessLat}, lng=${businessLng}`);
       this.logger.log(`🔍 [NOTIFICATION DEBUG] Business Owner ID: ${deal.businesses.owner_id}`);
       this.logger.log(`🔍 [NOTIFICATION DEBUG] Total followers: ${followers.length}`);
-      this.logger.log(`🔍 [NOTIFICATION DEBUG] Follower IDs: ${followers.map(f => f.user_id).join(', ')}`);
 
-      if (followers.length === 0) {
-        this.logger.log('No followers to notify for new deal');
-        return;
+      // Get nearby users who have opted in for proximity notifications
+      let nearbyUsers: { user_id: string }[] = [];
+      if (businessLat && businessLng && deal.visibility_radius_km) {
+        // Query users who:
+        // 1. Have notify_nearby_deals enabled (hard opt-in)
+        // 2. Have a default_location set
+        // 3. Are not business owners (user_type = 'consumer')
+        const potentialNearbyUsers = await this.prisma.users.findMany({
+          where: {
+            notify_nearby_deals: true,
+            user_type: 'consumer',
+          },
+          select: {
+            id: true,
+            default_location: true,
+            default_radius_km: true,
+          },
+        });
+
+        this.logger.log(`🔍 [NOTIFICATION DEBUG] Found ${potentialNearbyUsers.length} users with proximity notifications enabled`);
+
+        // Filter by distance using Haversine formula
+        nearbyUsers = potentialNearbyUsers
+          .filter((user) => {
+            const userLocation = user.default_location as any;
+            if (!userLocation?.lat || !userLocation?.lng) {
+              return false;
+            }
+
+            const distance = this.calculateDistance(
+              businessLat,
+              businessLng,
+              userLocation.lat,
+              userLocation.lng,
+            );
+
+            // Check if user is within BOTH:
+            // 1. The deal's visibility radius
+            // 2. The user's preferred notification radius
+            const userRadius = user.default_radius_km || 5;
+            const maxRadius = Math.min(deal.visibility_radius_km, userRadius);
+
+            const isWithinRange = distance <= maxRadius;
+
+            if (isWithinRange) {
+              this.logger.log(`🔍 [NOTIFICATION DEBUG] User ${user.id} is ${distance.toFixed(2)}km away (within ${maxRadius}km radius)`);
+            }
+
+            return isWithinRange;
+          })
+          .map((user) => ({ user_id: user.id }));
+
+        this.logger.log(`🔍 [NOTIFICATION DEBUG] ${nearbyUsers.length} nearby users within radius`);
       }
 
-      // Exclude business owner from notifications (they shouldn't receive notifications for their own deals)
-      const userIds = followers
-        .map((f) => f.user_id)
+      // Combine followers and nearby users, then deduplicate
+      const allUsersMap = new Map<string, boolean>();
+
+      // Add followers
+      followers.forEach((f) => allUsersMap.set(f.user_id, true));
+
+      // Add nearby users
+      nearbyUsers.forEach((u) => allUsersMap.set(u.user_id, true));
+
+      // Convert to array and exclude business owner
+      const userIds = Array.from(allUsersMap.keys())
         .filter((userId) => userId !== deal.businesses.owner_id);
 
-      this.logger.log(`🔍 [NOTIFICATION DEBUG] After filtering out owner: ${userIds.length} users`);
-      this.logger.log(`🔍 [NOTIFICATION DEBUG] Filtered User IDs: ${userIds.join(', ')}`);
+      this.logger.log(`🔍 [NOTIFICATION DEBUG] Total unique users to notify: ${userIds.length} (${followers.length} followers + ${nearbyUsers.length} nearby)`);
+      this.logger.log(`🔍 [NOTIFICATION DEBUG] User IDs: ${userIds.join(', ')}`);
 
-      // If no users left after filtering, skip notification
+      // If no users to notify, skip
       if (userIds.length === 0) {
-        this.logger.log('No users to notify after filtering out business owner');
+        this.logger.log('No users to notify for new deal');
         return;
       }
 
@@ -340,7 +432,7 @@ export class NotificationsService {
         action_url: `/deals/${dealId}`,
       });
 
-      this.logger.log(`New deal notification sent to ${userIds.length} followers`);
+      this.logger.log(`✅ New deal notification sent to ${userIds.length} users (${followers.length} followers + ${nearbyUsers.length} nearby)`);
     } catch (error) {
       this.logger.error('Error sending new deal notification:', error);
       throw error;

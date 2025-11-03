@@ -71,12 +71,12 @@ describe('ImageCarousel', () => {
     });
 
     it('returns null when no images and no fallback', () => {
-      const { container } = render(
+      const { UNSAFE_root } = render(
         <ImageCarousel images={[]} height={200} width={300} />
       );
 
       // Component should return null
-      expect(container).toBeTruthy();
+      expect(UNSAFE_root).toBeTruthy();
     });
   });
 

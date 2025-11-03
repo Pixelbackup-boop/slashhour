@@ -21,6 +21,7 @@ import { useTheme } from '../../context/ThemeContext';
 import StatCard from '../../components/StatCard';
 import InfoRow from '../../components/InfoRow';
 import LogoHeader from '../../components/LogoHeader';
+import RightDrawer from '../../components/RightDrawer';
 import { TYPOGRAPHY, SPACING, RADIUS, SHADOWS, SIZES, LAYOUT, COLORS } from '../../theme';
 
 export default function ProfileScreen({ navigation }: any) {
@@ -35,6 +36,9 @@ export default function ProfileScreen({ navigation }: any) {
   const [editableName, setEditableName] = useState(user?.name || user?.username || '');
   const [avatarUrl, setAvatarUrl] = useState(user?.avatar_url || '');
   const [isEditingName, setIsEditingName] = useState(false);
+
+  // Drawer state
+  const [drawerVisible, setDrawerVisible] = useState(false);
 
   useEffect(() => {
     trackScreenView('ProfileScreen');
@@ -110,17 +114,56 @@ export default function ProfileScreen({ navigation }: any) {
     navigation.navigate('BusinessProfile', { businessId, businessName });
   };
 
+  // Drawer menu items
+  const menuItems = [
+    {
+      icon: '⚙️',
+      label: 'Settings',
+      onPress: () => navigation.navigate('Settings'),
+    },
+    {
+      icon: '🔒',
+      label: 'Privacy',
+      onPress: () => {
+        // TODO: Navigate to Privacy screen
+        Alert.alert('Coming Soon', 'Privacy settings will be available soon');
+      },
+    },
+    {
+      icon: '❓',
+      label: 'Help',
+      onPress: () => {
+        // TODO: Navigate to Help screen
+        Alert.alert('Coming Soon', 'Help center will be available soon');
+      },
+    },
+    {
+      icon: '💬',
+      label: 'Support',
+      onPress: () => {
+        // TODO: Navigate to Support screen
+        Alert.alert('Coming Soon', 'Support chat will be available soon');
+      },
+    },
+    {
+      icon: 'ℹ️',
+      label: 'About',
+      onPress: () => {
+        // TODO: Navigate to About screen
+        Alert.alert('About Slashhour', 'Version 1.0.0 - MVP\n\nSaving you money, one deal at a time.');
+      },
+    },
+    {
+      icon: '🚪',
+      label: 'Logout',
+      onPress: handleLogout,
+    },
+  ];
+
   // Dynamic styles based on theme (memoized to prevent layout thrashing)
   const dynamicStyles = useMemo(() => ({
     container: {
       backgroundColor: colors.backgroundSecondary,
-    },
-    header: {
-      backgroundColor: colors.white,
-      borderBottomColor: colors.borderLight,
-    },
-    headerTitle: {
-      color: colors.textPrimary,
     },
     userCard: {
       backgroundColor: colors.white,
@@ -169,9 +212,6 @@ export default function ProfileScreen({ navigation }: any) {
     actionText: {
       color: colors.textPrimary,
     },
-    logoutButton: {
-      backgroundColor: colors.error,
-    },
     testButton: {
       backgroundColor: colors.backgroundSecondary,
       borderColor: colors.primary,
@@ -197,11 +237,17 @@ export default function ProfileScreen({ navigation }: any) {
 
   return (
     <View style={containerStyle}>
-      <LogoHeader />
-      {/* Header */}
-      <View style={[styles.header, dynamicStyles.header]}>
-        <Text style={[styles.headerTitle, dynamicStyles.headerTitle]}>Profile</Text>
-      </View>
+      <LogoHeader
+        rightButton={
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={() => setDrawerVisible(true)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.menuIcon}>☰</Text>
+          </TouchableOpacity>
+        }
+      />
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* User Info Card */}
@@ -449,20 +495,19 @@ export default function ProfileScreen({ navigation }: any) {
           </View>
         </View>
 
-        {/* Logout Button */}
-        <TouchableOpacity
-          style={[styles.logoutButton, dynamicStyles.logoutButton]}
-          onPress={handleLogout}
-        >
-          <Text style={styles.logoutButtonText}>Logout</Text>
-        </TouchableOpacity>
-
         {/* App Version */}
         <Text style={styles.version}>Version 1.0.0 - MVP</Text>
 
         {/* Bottom padding for tab bar */}
         <View style={{ height: LAYOUT.tabBarHeight + SPACING.lg }} />
       </ScrollView>
+
+      {/* Right Drawer */}
+      <RightDrawer
+        visible={drawerVisible}
+        onClose={() => setDrawerVisible(false)}
+        menuItems={menuItems}
+      />
     </View>
   );
 }
@@ -472,15 +517,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.backgroundSecondary,
   },
-  header: {
-    padding: SPACING.md,
-    backgroundColor: COLORS.white,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderLight,
+  menuButton: {
+    padding: SPACING.sm,
+    borderRadius: RADIUS.md,
   },
-  headerTitle: {
-    ...TYPOGRAPHY.styles.displayMedium,
+  menuIcon: {
+    fontSize: 28,
     color: COLORS.textPrimary,
+    fontWeight: '300',
   },
   scrollView: {
     flex: 1,
@@ -638,20 +682,6 @@ const styles = StyleSheet.create({
   emptyStateSubtext: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     color: COLORS.textDisabled,
-  },
-  logoutButton: {
-    backgroundColor: COLORS.error,
-    padding: SPACING.md,
-    borderRadius: RADIUS.lg,
-    margin: SPACING.md,
-    marginTop: SPACING.sm,
-    alignItems: 'center',
-    ...SHADOWS.md,
-  },
-  logoutButtonText: {
-    color: COLORS.white,
-    fontSize: TYPOGRAPHY.fontSize.md,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
   },
   version: {
     fontSize: TYPOGRAPHY.fontSize.xs,

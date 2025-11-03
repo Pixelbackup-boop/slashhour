@@ -14,6 +14,7 @@ import { ConversationsModule } from './conversations/conversations.module';
 import { UploadModule } from './upload/upload.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { BookmarksModule } from './bookmarks/bookmarks.module';
 import { LoggerService } from './common/services/logger.service';
 import { PrismaModule } from './prisma/prisma.module';
 
@@ -41,6 +42,7 @@ import { PrismaModule } from './prisma/prisma.module';
     UploadModule,
     NotificationsModule,
     ReviewsModule,
+    BookmarksModule,
   ],
   controllers: [AppController],
   providers: [

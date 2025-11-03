@@ -11,13 +11,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Keyboard,
   Animated,
 } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import { TYPOGRAPHY, SPACING, RADIUS } from '../../theme';
 import { Review } from '../../types/models';
 import { reviewService } from '../../services/api/reviewService';
+import { useKeyboardAnimation } from '../../hooks/useKeyboardAnimation';
 
 interface ReviewFormProps {
   businessId: string;
@@ -40,7 +40,7 @@ export default function ReviewForm({
   const [rating, setRating] = useState(5);
   const [reviewText, setReviewText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [keyboardOffset] = useState(new Animated.Value(0));
+  const keyboardOffset = useKeyboardAnimation();
 
   useEffect(() => {
     if (existingReview) {
@@ -51,35 +51,6 @@ export default function ReviewForm({
       setReviewText('');
     }
   }, [existingReview, visible]);
-
-  useEffect(() => {
-    const keyboardWillShow = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-      (e) => {
-        Animated.timing(keyboardOffset, {
-          toValue: e.endCoordinates.height,
-          duration: Platform.OS === 'ios' ? e.duration : 250,
-          useNativeDriver: false,
-        }).start();
-      }
-    );
-
-    const keyboardWillHide = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
-      (e) => {
-        Animated.timing(keyboardOffset, {
-          toValue: 0,
-          duration: Platform.OS === 'ios' ? e.duration : 250,
-          useNativeDriver: false,
-        }).start();
-      }
-    );
-
-    return () => {
-      keyboardWillShow.remove();
-      keyboardWillHide.remove();
-    };
-  }, [keyboardOffset]);
 
   const handleSubmit = async () => {
     if (rating < 1 || rating > 5) {

@@ -77,6 +77,16 @@ export class DealsService {
     body: any,
     files: Express.Multer.File[],
   ) {
+    // DEBUG: Log method entry
+    console.log('🎯 createWithMultipart called');
+    console.log(`   - userId: ${userId}`);
+    console.log(`   - businessId: ${businessId}`);
+    console.log(`   - files length: ${files?.length || 0}`);
+    if (files && files.length > 0) {
+      console.log(`   - files[0] mimetype: ${files[0].mimetype}`);
+      console.log(`   - files[0] size: ${files[0].size || files[0].buffer?.length || 'unknown'}`);
+    }
+
     // Verify business exists and user is owner
     const business = await this.prisma.businesses.findUnique({
       where: { id: businessId },
@@ -185,7 +195,7 @@ export class DealsService {
     };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, userId?: string) {
     const deal = await this.prisma.deals.findUnique({
       where: { id },
       include: { businesses: true },
@@ -195,7 +205,27 @@ export class DealsService {
       throw new NotFoundException('Deal not found');
     }
 
-    return deal;
+    // Transform deal to match frontend interface
+    const { businesses, ...dealData } = deal as any;
+    const transformedDeal: any = {
+      ...dealData,
+      business: businesses, // Rename from 'businesses' to 'business'
+    };
+
+    // Include bookmark status if userId is provided
+    if (userId) {
+      const bookmark = await this.prisma.bookmarks.findUnique({
+        where: {
+          user_id_deal_id: {
+            user_id: userId,
+            deal_id: id,
+          },
+        },
+      });
+      transformedDeal.isBookmarked = !!bookmark;
+    }
+
+    return transformedDeal;
   }
 
   async findByBusiness(businessId: string) {
@@ -352,8 +382,10 @@ export class DealsService {
       throw new ForbiddenException('You do not have permission to delete this deal');
     }
 
-    await this.prisma.deals.delete({
+    // Soft delete: Mark as deleted instead of removing from database
+    await this.prisma.deals.update({
       where: { id },
+      data: { status: 'deleted' as any },
     });
 
     return {
@@ -388,9 +420,10 @@ export class DealsService {
       throw new BadRequestException('Deal has not started yet');
     }
 
-    // Check inventory
+    // Check inventory BEFORE redemption
     if (deal.quantity_available !== null && deal.quantity_available !== undefined) {
       if (deal.quantity_redeemed >= deal.quantity_available) {
+        // Already sold out
         await this.prisma.deals.update({
           where: { id: dealId },
           data: { status: DealStatus.SOLD_OUT as any },
@@ -400,10 +433,21 @@ export class DealsService {
     }
 
     // Increment redemption count
+    const newQuantityRedeemed = deal.quantity_redeemed + 1;
     await this.prisma.deals.update({
       where: { id: dealId },
-      data: { quantity_redeemed: deal.quantity_redeemed + 1 },
+      data: { quantity_redeemed: newQuantityRedeemed },
     });
+
+    // Check if this redemption made it sold out
+    if (deal.quantity_available !== null && deal.quantity_available !== undefined) {
+      if (newQuantityRedeemed >= deal.quantity_available) {
+        await this.prisma.deals.update({
+          where: { id: dealId },
+          data: { status: DealStatus.SOLD_OUT as any },
+        });
+      }
+    }
 
     return {
       message: 'Deal redeemed successfully',

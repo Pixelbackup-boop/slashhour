@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -11,6 +11,7 @@ interface AppHeaderProps {
 
 /**
  * AppHeader - Header component with logo and optional back button
+ * Optimized with React.memo, useMemo, and useCallback to prevent unnecessary re-renders
  *
  * Use this for:
  * - Stack screens with navigation (DealDetail, BusinessProfile, etc.)
@@ -18,23 +19,41 @@ interface AppHeaderProps {
  *
  * For simple logo-only headers on bottom tab screens, use LogoHeader instead.
  */
-export default function AppHeader({ showBackButton = false }: AppHeaderProps) {
+const AppHeader = React.memo(({ showBackButton = false }: AppHeaderProps) => {
   const navigation = useNavigation();
   const { colors } = useTheme();
 
+  const safeAreaStyle = useMemo(() => ({
+    backgroundColor: colors.white
+  }), [colors.white]);
+
+  const headerStyle = useMemo(() => [
+    styles.header,
+    {
+      backgroundColor: colors.white,
+      borderBottomColor: colors.borderLight,
+    }
+  ], [colors.white, colors.borderLight]);
+
+  const backIconStyle = useMemo(() => [
+    styles.backIcon,
+    { color: colors.textPrimary }
+  ], [colors.textPrimary]);
+
+  const handleGoBack = useCallback(() => {
+    navigation.goBack();
+  }, [navigation]);
+
   return (
-    <SafeAreaView style={{ backgroundColor: colors.white }} edges={['top']}>
-      <View style={[styles.header, {
-        backgroundColor: colors.white,
-        borderBottomColor: colors.borderLight,
-      }]}>
+    <SafeAreaView style={safeAreaStyle} edges={['top']}>
+      <View style={headerStyle}>
         {showBackButton ? (
           <View style={styles.headerWithBack}>
             <TouchableOpacity
               style={styles.backButton}
-              onPress={() => navigation.goBack()}
+              onPress={handleGoBack}
             >
-              <Text style={[styles.backIcon, { color: colors.textPrimary }]}>←</Text>
+              <Text style={backIconStyle}>←</Text>
             </TouchableOpacity>
             <View style={styles.logoContainer}>
               <SlashhourLogo />
@@ -49,7 +68,11 @@ export default function AppHeader({ showBackButton = false }: AppHeaderProps) {
       </View>
     </SafeAreaView>
   );
-}
+});
+
+AppHeader.displayName = 'AppHeader';
+
+export default AppHeader;
 
 const styles = StyleSheet.create({
   header: {

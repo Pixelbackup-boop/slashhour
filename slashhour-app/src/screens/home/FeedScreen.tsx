@@ -7,32 +7,19 @@ import {
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
 import { Deal } from '../../types/models';
 import FeedDealCard from '../../components/FeedDealCard';
 import DealCardSkeleton from '../../components/DealCardSkeleton';
 import { useFeed } from '../../hooks/useFeed';
+import { useDealNavigation } from '../../hooks/useDealNavigation';
 import { useTheme } from '../../context/ThemeContext';
 import { TYPOGRAPHY, SPACING, LAYOUT } from '../../theme';
 import { STATIC_RADIUS } from '../../theme/constants';
 
 export default function FeedScreen() {
   const { colors } = useTheme();
-  const navigation = useNavigation<any>();
   const { deals, isLoading, error, isRefreshing, handleRefresh } = useFeed();
-
-  const handleDealPress = useCallback((deal: Deal) => {
-    navigation.navigate('DealDetail', { deal });
-  }, [navigation]);
-
-  const handleBusinessPress = useCallback((deal: Deal) => {
-    if (deal.business?.id) {
-      navigation.navigate('BusinessProfile', {
-        businessId: deal.business.id,
-        businessName: deal.business.business_name,
-      });
-    }
-  }, [navigation]);
+  const { navigateToDeal, navigateToBusinessFromDeal } = useDealNavigation();
 
   const styles = StyleSheet.create({
     container: {
@@ -56,7 +43,6 @@ export default function FeedScreen() {
     },
     listContent: {
       paddingHorizontal: SPACING.xs,
-      paddingTop: SPACING.md,
       paddingBottom: LAYOUT.tabBarHeight + SPACING.xxl,
     },
     cardWrapper: {
@@ -122,12 +108,12 @@ export default function FeedScreen() {
       >
         <FeedDealCard
           deal={item}
-          onPress={() => handleDealPress(item)}
-          onBusinessPress={() => handleBusinessPress(item)}
+          onPress={() => navigateToDeal(item)}
+          onBusinessPress={() => navigateToBusinessFromDeal(item)}
         />
       </View>
     ),
-    [handleDealPress, handleBusinessPress, styles]
+    [navigateToDeal, navigateToBusinessFromDeal, styles]
   );
 
   // Memoize keyExtractor for FlashList
@@ -135,10 +121,7 @@ export default function FeedScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Your Deals</Text>
-        </View>
+      <SafeAreaView style={styles.container} edges={[]}>
         <FlashList
           data={[1, 2, 3, 4, 5, 6]}
           keyExtractor={(item) => `skeleton-${item}`}
@@ -151,10 +134,7 @@ export default function FeedScreen() {
 
   if (error) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Your Deals</Text>
-        </View>
+      <SafeAreaView style={styles.container} edges={[]}>
         <View style={styles.centerContainer}>
           <Text style={styles.errorText}>😕</Text>
           <Text style={styles.errorMessage}>{error}</Text>
@@ -165,10 +145,7 @@ export default function FeedScreen() {
 
   if (deals.length === 0) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Your Deals</Text>
-        </View>
+      <SafeAreaView style={styles.container} edges={[]}>
         <View style={styles.centerContainer}>
           <Text style={styles.emptyText}>📭</Text>
           <Text style={styles.emptyMessage}>No deals yet!</Text>
@@ -181,13 +158,7 @@ export default function FeedScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Your Deals</Text>
-        <Text style={styles.headerSubtitle}>
-          {deals.length} deal{deals.length !== 1 ? 's' : ''} from businesses you follow
-        </Text>
-      </View>
+    <SafeAreaView style={styles.container} edges={[]}>
       <FlashList
         data={deals}
         keyExtractor={feedKeyExtractor}

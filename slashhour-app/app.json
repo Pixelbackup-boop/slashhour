@@ -26,20 +26,6 @@
         }
       ]
     ],
-    "intentFilters": [
-      {
-        "action": "VIEW",
-        "data": [
-          {
-            "scheme": "slashhour"
-          }
-        ],
-        "category": [
-          "BROWSABLE",
-          "DEFAULT"
-        ]
-      }
-    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.slashhourapp"
@@ -51,8 +37,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.slashhourapp",
-      "googleServicesFile": "./google-services.json"
+      "package": "com.anonymous.slashhourapp"
     },
     "web": {
       "favicon": "./assets/favicon.png"

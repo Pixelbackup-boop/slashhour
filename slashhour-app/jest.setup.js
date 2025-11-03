@@ -1,4 +1,12 @@
 // Jest setup file
+import '@testing-library/jest-native/extend-expect';
+
+// Suppress console errors during tests (optional)
+global.console = {
+  ...console,
+  error: jest.fn(),
+  warn: jest.fn(),
+};
 
 // Mock Reanimated
 jest.mock('react-native-reanimated', () => {

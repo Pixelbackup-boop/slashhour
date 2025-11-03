@@ -10,8 +10,19 @@ const mockBusiness: Business = {
   id: 'business-1',
   owner_id: 'owner-1',
   business_name: 'Test Business',
+  slug: 'test-business',
   category: 'restaurant',
+  location: { lat: 0, lng: 0 },
   address: '123 Main St, City, Country',
+  city: 'City',
+  country: 'Country',
+  images: [],
+  follower_count: 0,
+  total_deals_posted: 0,
+  total_redemptions: 0,
+  average_rating: 0,
+  subscription_tier: 'free',
+  is_verified: false,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
 };
@@ -42,7 +53,7 @@ describe('BusinessCard', () => {
   });
 
   it('does not crash when address is missing', () => {
-    const businessWithoutAddress = { ...mockBusiness, address: undefined };
+    const businessWithoutAddress = { ...mockBusiness, address: undefined } as unknown as Business;
 
     const { getByText } = render(<BusinessCard business={businessWithoutAddress} />);
 
