@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FeedScreen from './FeedScreen';
 import NearYouScreen from './NearYouScreen';
 import TabBar, { Tab } from '../../components/TabBar';
@@ -14,9 +14,20 @@ const tabs: Tab[] = [
 
 export default function HomeScreen({ navigation }: any) {
   const [activeTab, setActiveTab] = useState<'following' | 'nearby'>('following');
+  const insets = useSafeAreaInsets();
+
+  // Memoize container style to prevent recreating on every render
+  const containerStyle = useMemo(() => [
+    styles.container,
+    {
+      paddingTop: insets.top,
+      paddingLeft: insets.left,
+      paddingRight: insets.right,
+    }
+  ], [insets.top, insets.left, insets.right]);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <View style={containerStyle}>
       <LogoHeader />
 
       <TabBar
@@ -26,7 +37,7 @@ export default function HomeScreen({ navigation }: any) {
       />
 
       {activeTab === 'following' ? <FeedScreen /> : <NearYouScreen />}
-    </SafeAreaView>
+    </View>
   );
 }
 

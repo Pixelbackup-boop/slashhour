@@ -66,8 +66,34 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
 
 /**
+ * CRITICAL FIX (2025 Best Practice): Define header options at module level
+ * to prevent function recreation on every render. This ensures headers
+ * behave like the fixed bottom tab bar - stable and performant.
+ *
+ * Source: React Navigation docs + 2025 performance guidelines
+ * "Always define your animation configuration at the top-level of the file
+ * to ensure that the references don't change across re-renders."
+ */
+const HEADER_WITH_BACK_BUTTON = {
+  headerShown: true,
+  header: () => <AppHeader showBackButton={true} />,
+} as const;
+
+const HEADER_WITHOUT_BACK = {
+  headerShown: true,
+  header: () => <AppHeader showBackButton={false} />,
+} as const;
+
+const HEADER_WITH_BACK_FADE = {
+  ...HEADER_WITH_BACK_BUTTON,
+  animation: 'fade' as const,
+  animationDuration: 200,
+};
+
+/**
  * Helper function to create common stack screens with AppHeader
  * This reduces code duplication across nested navigators
+ * Now using static header options for performance
  */
 function createCommonStackScreens(StackNavigator: any) {
   return (
@@ -75,26 +101,17 @@ function createCommonStackScreens(StackNavigator: any) {
       <StackNavigator.Screen
         name="DealDetail"
         component={DealDetailScreen}
-        options={{
-          headerShown: true,
-          header: () => <AppHeader showBackButton={true} />,
-        }}
+        options={HEADER_WITH_BACK_BUTTON}
       />
       <StackNavigator.Screen
         name="DealDetails"
         component={DealDetailScreen}
-        options={{
-          headerShown: true,
-          header: () => <AppHeader showBackButton={true} />,
-        }}
+        options={HEADER_WITH_BACK_BUTTON}
       />
       <StackNavigator.Screen
         name="BusinessProfile"
         component={BusinessProfileScreen}
-        options={{
-          headerShown: true,
-          header: () => <AppHeader showBackButton={true} />,
-        }}
+        options={HEADER_WITH_BACK_BUTTON}
       />
     </>
   );
@@ -162,10 +179,7 @@ function InboxStackNavigator() {
       <InboxStack.Screen
         name="Chat"
         component={ChatScreen}
-        options={{
-          headerShown: true,
-          header: () => <AppHeader showBackButton={true} />,
-        }}
+        options={HEADER_WITH_BACK_BUTTON}
       />
     </InboxStack.Navigator>
   );
@@ -188,70 +202,42 @@ function ProfileStackNavigator() {
       <ProfileStack.Screen
         name="RedemptionHistory"
         component={RedemptionHistoryScreen}
-        options={{
-          headerShown: true,
-          header: () => <AppHeader showBackButton={true} />,
-        }}
+        options={HEADER_WITH_BACK_BUTTON}
       />
       <ProfileStack.Screen
         name="FollowingList"
         component={FollowingListScreen}
-        options={{
-          headerShown: true,
-          header: () => <AppHeader showBackButton={true} />,
-        }}
+        options={HEADER_WITH_BACK_BUTTON}
       />
       <ProfileStack.Screen
         name="FollowersList"
         component={FollowersListScreen}
-        options={{
-          headerShown: true,
-          header: () => <AppHeader showBackButton={true} />,
-        }}
+        options={HEADER_WITH_BACK_BUTTON}
       />
       <ProfileStack.Screen
         name="Bookmarks"
         component={BookmarksScreen}
-        options={{
-          headerShown: true,
-          header: () => <AppHeader showBackButton={true} />,
-        }}
+        options={HEADER_WITH_BACK_BUTTON}
       />
       <ProfileStack.Screen
         name="EditBusinessProfile"
         component={EditBusinessProfileScreen}
-        options={{
-          headerShown: true,
-          header: () => <AppHeader showBackButton={true} />,
-        }}
+        options={HEADER_WITH_BACK_BUTTON}
       />
       <ProfileStack.Screen
         name="RegisterBusiness"
         component={RegisterBusinessScreen}
-        options={{
-          headerShown: true,
-          header: () => <AppHeader showBackButton={true} />,
-        }}
+        options={HEADER_WITH_BACK_BUTTON}
       />
       <ProfileStack.Screen
         name="CreateDeal"
         component={CreateDealScreen}
-        options={{
-          animation: 'fade',
-          animationDuration: 200,
-          headerShown: true,
-          header: () => <AppHeader showBackButton={true} />,
-        }}
+        options={HEADER_WITH_BACK_FADE}
       />
       <ProfileStack.Screen
         name="EditDeal"
         component={EditDealScreen}
-        options={{
-          animation: 'fade',
-          animationDuration: 200,
-          headerShown: true,
-          header: () => <AppHeader showBackButton={true} />,
-        }}
+        options={HEADER_WITH_BACK_FADE}
       />
     </ProfileStack.Navigator>
   );
@@ -461,11 +447,7 @@ export default function AppNavigator() {
             <Stack.Screen
               name="UXTest"
               component={SimpleTestScreen}
-              options={{
-                title: '🧪 Test Screen',
-                headerShown: true,
-                header: () => <AppHeader showBackButton={true} />,
-              }}
+              options={HEADER_WITH_BACK_BUTTON}
             />
           </>
         )}

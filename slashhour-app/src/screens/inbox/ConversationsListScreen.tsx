@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { useUser } from '../../stores/useAuthStore';
 import { useSocket } from '../../hooks/useSocket';
@@ -19,6 +19,7 @@ import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, SIZES, LAYOUT } from '../
 import { Conversation } from '../../types/models';
 
 export default function ConversationsListScreen({ navigation }: any) {
+  const insets = useSafeAreaInsets();
   const user = useUser();
   const { isConnected, connect } = useSocket();
   const {
@@ -153,9 +154,19 @@ export default function ConversationsListScreen({ navigation }: any) {
     </View>
   );
 
+  // Memoize container style to prevent recreating on every render
+  const containerStyle = useMemo(() => [
+    styles.container,
+    {
+      paddingTop: insets.top,
+      paddingLeft: insets.left,
+      paddingRight: insets.right,
+    }
+  ], [insets.top, insets.left, insets.right]);
+
   if (isLoading && conversations.length === 0) {
     return (
-      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <View style={containerStyle}>
         <LogoHeader />
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Messages</Text>
@@ -167,12 +178,12 @@ export default function ConversationsListScreen({ navigation }: any) {
           <ActivityIndicator size="large" color={COLORS.primary} />
           <Text style={styles.loadingText}>Loading conversations...</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <View style={containerStyle}>
       <LogoHeader />
       {/* Header */}
       <View style={styles.header}>
@@ -209,7 +220,7 @@ export default function ConversationsListScreen({ navigation }: any) {
           initialNumToRender={15}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 

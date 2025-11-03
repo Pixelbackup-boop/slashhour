@@ -9,7 +9,7 @@ import {
   Alert,
   TextInput,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { useAuthStore } from '../../stores/useAuthStore';
 import { authService } from '../../services/api/authService';
@@ -24,6 +24,7 @@ import LogoHeader from '../../components/LogoHeader';
 import { TYPOGRAPHY, SPACING, RADIUS, SHADOWS, SIZES, LAYOUT, COLORS } from '../../theme';
 
 export default function ProfileScreen({ navigation }: any) {
+  const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { user, updateUser, logout } = useAuthStore();
   const { stats, isLoading, error } = useUserProfile();
@@ -183,8 +184,19 @@ export default function ProfileScreen({ navigation }: any) {
     },
   }), [colors]);
 
+  // Memoize container style to prevent recreating on every render
+  const containerStyle = useMemo(() => [
+    styles.container,
+    dynamicStyles.container,
+    {
+      paddingTop: insets.top,
+      paddingLeft: insets.left,
+      paddingRight: insets.right,
+    }
+  ], [insets.top, insets.left, insets.right, dynamicStyles.container]);
+
   return (
-    <SafeAreaView style={[styles.container, dynamicStyles.container]} edges={['top', 'left', 'right']}>
+    <View style={containerStyle}>
       <LogoHeader />
       {/* Header */}
       <View style={[styles.header, dynamicStyles.header]}>
@@ -451,7 +463,7 @@ export default function ProfileScreen({ navigation }: any) {
         {/* Bottom padding for tab bar */}
         <View style={{ height: LAYOUT.tabBarHeight + SPACING.lg }} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

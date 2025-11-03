@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   Animated,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Swipeable } from 'react-native-gesture-handler';
@@ -21,6 +21,7 @@ import notificationService, {
 import { logger } from '../../utils/logger';
 
 const NotificationsScreen: React.FC = () => {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -259,19 +260,29 @@ const NotificationsScreen: React.FC = () => {
     );
   };
 
+  // Memoize container style to prevent recreating on every render
+  const containerStyle = useMemo(() => [
+    styles.container,
+    {
+      paddingTop: insets.top,
+      paddingLeft: insets.left,
+      paddingRight: insets.right,
+    }
+  ], [insets.top, insets.left, insets.right]);
+
   if (loading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <View style={containerStyle}>
         <LogoHeader />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#E63946" />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <View style={containerStyle}>
       <LogoHeader />
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Notifications</Text>
@@ -302,7 +313,7 @@ const NotificationsScreen: React.FC = () => {
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}
       />
-    </SafeAreaView>
+    </View>
   );
 };
 

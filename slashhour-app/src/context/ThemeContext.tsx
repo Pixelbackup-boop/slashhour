@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
 import { useColorScheme } from 'react-native';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { paperTheme, paperDarkTheme } from '../theme/paperTheme';
@@ -12,6 +12,7 @@ import { getColors } from '../theme/tokens';
  * - Manual theme override
  * - Persistence (can be added with AsyncStorage)
  * - React Native Paper integration
+ * - Optimized with useMemo to prevent unnecessary re-renders (2025 best practice)
  */
 
 type ThemeMode = 'light' | 'dark' | 'auto';
@@ -39,31 +40,35 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     ? systemColorScheme === 'dark'
     : themeMode === 'dark';
 
-  // Get the current color palette
-  const colors = getColors(isDark);
+  // CRITICAL FIX: Memoize colors object to prevent recreation on every render
+  // This is a 2025 best practice for performance optimization
+  const colors = useMemo(() => getColors(isDark), [isDark]);
 
   // Toggle between light and dark (removes auto mode)
-  const toggleTheme = () => {
+  // Memoize callback to prevent recreation
+  const toggleTheme = React.useCallback(() => {
     setThemeMode(current => {
       if (current === 'auto') {
         return systemColorScheme === 'dark' ? 'light' : 'dark';
       }
       return current === 'light' ? 'dark' : 'light';
     });
-  };
+  }, [systemColorScheme]);
 
   // Log theme changes for debugging
   useEffect(() => {
     console.log(`🎨 Theme changed: Mode=${themeMode}, IsDark=${isDark}, System=${systemColorScheme}`);
   }, [themeMode, isDark, systemColorScheme]);
 
-  const value: ThemeContextType = {
+  // CRITICAL FIX: Memoize context value to prevent all consumers from re-rendering
+  // This is essential for performance in 2025 React Native apps
+  const value: ThemeContextType = useMemo(() => ({
     isDark,
     themeMode,
     setThemeMode,
     toggleTheme,
     colors,
-  };
+  }), [isDark, themeMode, toggleTheme, colors]);
 
   // Select Paper theme based on dark mode
   const paperThemeToUse = isDark ? paperDarkTheme : paperTheme;

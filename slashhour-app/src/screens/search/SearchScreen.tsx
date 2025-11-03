@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSearch } from '../../hooks/useSearch';
 import { useDealNavigation } from '../../hooks/useDealNavigation';
 import { trackScreenView } from '../../services/analytics';
@@ -20,7 +20,10 @@ import { useTheme } from '../../context/ThemeContext';
 import { TYPOGRAPHY, SPACING, RADIUS, LAYOUT } from '../../theme';
 
 export default function SearchScreen({ navigation }: any) {
+  const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+
+  // Search hook
   const {
     query,
     setQuery,
@@ -35,82 +38,17 @@ export default function SearchScreen({ navigation }: any) {
     clearSearch,
     hasSearched,
   } = useSearch();
+
+  // Navigation hook
   const { navigateToDeal, navigateToBusinessFromDeal, navigateToBusinessFromObject } = useDealNavigation();
 
+  // Analytics tracking
   useEffect(() => {
-    trackScreenView('SearchScreen');
+    trackScreenView('Search');
   }, []);
 
-  const renderEmptyState = () => {
-    if (!hasSearched) {
-      return (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyStateIcon}>🔍</Text>
-          <Text style={styles.emptyStateTitle}>Search Slashhour</Text>
-          <Text style={styles.emptyStateText}>
-            Find amazing deals and businesses near you
-          </Text>
-          <View style={styles.suggestionsContainer}>
-            <Text style={styles.suggestionsTitle}>Try searching for:</Text>
-            <View style={styles.suggestionChips}>
-              {['Pizza', 'Coffee', 'Electronics', 'Beauty'].map((suggestion) => (
-                <TouchableOpacity
-                  key={suggestion}
-                  style={styles.suggestionChip}
-                  onPress={() => {
-                    setQuery(suggestion);
-                    setTimeout(() => search(), 100);
-                  }}
-                >
-                  <Text style={styles.suggestionText}>{suggestion}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        </View>
-      );
-    }
-
-    if (error) {
-      return (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyStateIcon}>⚠️</Text>
-          <Text style={styles.emptyStateTitle}>Search Error</Text>
-          <Text style={styles.emptyStateText}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={search}>
-            <Text style={styles.retryButtonText}>Try Again</Text>
-          </TouchableOpacity>
-        </View>
-      );
-    }
-
-    const hasNoResults =
-      results.deals.length === 0 && results.businesses.length === 0;
-
-    if (hasNoResults) {
-      return (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyStateIcon}>😔</Text>
-          <Text style={styles.emptyStateTitle}>No Results Found</Text>
-          <Text style={styles.emptyStateText}>
-            Try adjusting your search or filters
-          </Text>
-          <TouchableOpacity
-            style={styles.clearButton}
-            onPress={() => {
-              clearSearch();
-            }}
-          >
-            <Text style={styles.clearButtonText}>Clear Search</Text>
-          </TouchableOpacity>
-        </View>
-      );
-    }
-
-    return null;
-  };
-
-  const styles = StyleSheet.create({
+  // Memoize styles to prevent recreation on every render
+  const styles = useMemo(() => StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: colors.backgroundSecondary,
@@ -241,7 +179,86 @@ export default function SearchScreen({ navigation }: any) {
     bottomPadding: {
       height: LAYOUT.tabBarHeight + SPACING.xl,
     },
-  });
+  }), [colors]);
+
+  // Memoize container style to prevent recreation on every render
+  const containerStyle = useMemo(() => [
+    styles.container,
+    {
+      paddingTop: insets.top,
+      paddingLeft: insets.left,
+      paddingRight: insets.right,
+    }
+  ], [styles.container, insets.top, insets.left, insets.right]);
+
+  const renderEmptyState = () => {
+    if (!hasSearched) {
+      return (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyStateIcon}>🔍</Text>
+          <Text style={styles.emptyStateTitle}>Search Slashhour</Text>
+          <Text style={styles.emptyStateText}>
+            Find amazing deals and businesses near you
+          </Text>
+          <View style={styles.suggestionsContainer}>
+            <Text style={styles.suggestionsTitle}>Try searching for:</Text>
+            <View style={styles.suggestionChips}>
+              {['Pizza', 'Coffee', 'Electronics', 'Beauty'].map((suggestion) => (
+                <TouchableOpacity
+                  key={suggestion}
+                  style={styles.suggestionChip}
+                  onPress={() => {
+                    setQuery(suggestion);
+                    setTimeout(() => search(), 100);
+                  }}
+                >
+                  <Text style={styles.suggestionText}>{suggestion}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </View>
+      );
+    }
+
+    if (error) {
+      return (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyStateIcon}>⚠️</Text>
+          <Text style={styles.emptyStateTitle}>Search Error</Text>
+          <Text style={styles.emptyStateText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={search}>
+            <Text style={styles.retryButtonText}>Try Again</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    const hasNoResults =
+      results.deals.length === 0 && results.businesses.length === 0;
+
+    if (hasNoResults) {
+      return (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyStateIcon}>😔</Text>
+          <Text style={styles.emptyStateTitle}>No Results Found</Text>
+          <Text style={styles.emptyStateText}>
+            Try adjusting your search or filters
+          </Text>
+          <TouchableOpacity
+            style={styles.clearButton}
+            onPress={() => {
+              clearSearch();
+            }}
+          >
+            <Text style={styles.clearButtonText}>Clear Search</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    return null;
+  };
 
   const renderResults = () => {
     if (isSearching) {
@@ -321,7 +338,7 @@ export default function SearchScreen({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <View style={containerStyle}>
       <LogoHeader />
       {/* Search Bar */}
       <SearchBar
@@ -342,6 +359,6 @@ export default function SearchScreen({ navigation }: any) {
 
       {/* Results */}
       {renderResults()}
-    </SafeAreaView>
+    </View>
   );
 }
