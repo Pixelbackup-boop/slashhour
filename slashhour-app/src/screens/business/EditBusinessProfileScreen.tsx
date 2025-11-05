@@ -19,18 +19,11 @@ import LocationService from '../../services/location/LocationService';
 import ReverseGeocodeService from '../../services/location/ReverseGeocodeService';
 import BusinessHoursEditor, { BusinessHours } from '../../components/BusinessHoursEditor';
 import { sanitizeSlug, getSlugValidationError, formatSlugUrl } from '../../utils/slugUtils';
+import { CATEGORIES } from '../../constants/categories';
 
-// Category options with display names
-const CATEGORY_OPTIONS: { value: BusinessCategory; label: string }[] = [
-  { value: 'restaurant', label: 'Restaurant' },
-  { value: 'grocery', label: 'Grocery' },
-  { value: 'fashion', label: 'Fashion' },
-  { value: 'shoes', label: 'Shoes' },
-  { value: 'electronics', label: 'Electronics' },
-  { value: 'home_living', label: 'Home & Living' },
-  { value: 'beauty', label: 'Beauty' },
-  { value: 'health', label: 'Health' },
-];
+// Category options with display names - built from centralized CATEGORIES
+const CATEGORY_OPTIONS: { value: BusinessCategory; label: string }[] =
+  CATEGORIES.map(cat => ({ value: cat.id as BusinessCategory, label: cat.label }));
 
 interface EditBusinessProfileScreenProps {
   route: {

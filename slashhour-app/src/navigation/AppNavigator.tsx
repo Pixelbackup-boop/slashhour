@@ -29,6 +29,12 @@ import EditDealScreen from '../screens/post/EditDealScreen';
 import SimpleTestScreen from '../screens/test/SimpleTestScreen';
 import NotificationsScreen from '../screens/notifications/NotificationsScreen';
 import SettingsScreen from '../screens/settings/SettingsScreen';
+import NotificationSettingsScreen from '../screens/settings/NotificationSettingsScreen';
+import AccountSettingsScreen from '../screens/settings/AccountSettingsScreen';
+import YouFollowSettingsScreen from '../screens/settings/YouFollowSettingsScreen';
+import NearYouSettingsScreen from '../screens/settings/NearYouSettingsScreen';
+import VerifyEmailScreen from '../screens/settings/VerifyEmailScreen';
+import VerifyPhoneScreen from '../screens/settings/VerifyPhoneScreen';
 import { Deal, Business } from '../types/models';
 
 type RootStackParamList = {
@@ -201,6 +207,36 @@ function ProfileStackNavigator() {
         name="Settings"
         component={SettingsScreen}
         options={HEADER_WITH_BACK_BUTTON}
+      />
+      <ProfileStack.Screen
+        name="NotificationSettings"
+        component={NotificationSettingsScreen}
+        options={HEADER_WITH_BACK_BUTTON}
+      />
+      <ProfileStack.Screen
+        name="AccountSettings"
+        component={AccountSettingsScreen}
+        options={HEADER_WITH_BACK_BUTTON}
+      />
+      <ProfileStack.Screen
+        name="YouFollowSettings"
+        component={YouFollowSettingsScreen}
+        options={HEADER_WITH_BACK_BUTTON}
+      />
+      <ProfileStack.Screen
+        name="NearYouSettings"
+        component={NearYouSettingsScreen}
+        options={HEADER_WITH_BACK_BUTTON}
+      />
+      <ProfileStack.Screen
+        name="VerifyEmail"
+        component={VerifyEmailScreen}
+        options={{ headerShown: false }}
+      />
+      <ProfileStack.Screen
+        name="VerifyPhone"
+        component={VerifyPhoneScreen}
+        options={{ headerShown: false }}
       />
       {createCommonStackScreens(ProfileStack)}
 

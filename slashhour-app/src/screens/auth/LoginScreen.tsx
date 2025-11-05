@@ -15,7 +15,14 @@ import { useTheme } from '../../context/ThemeContext';
 import { TYPOGRAPHY, SPACING, SIZES } from '../../theme';
 import { STATIC_RADIUS } from '../../theme/constants';
 
-export default function LoginScreen({ navigation }: any) {
+// Type definitions (following TypeScript 2025 guidelines)
+interface LoginScreenProps {
+  navigation: {
+    navigate: (screen: string) => void;
+  };
+}
+
+export default function LoginScreen({ navigation }: LoginScreenProps) {
   const { colors } = useTheme();
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [password, setPassword] = useState('');

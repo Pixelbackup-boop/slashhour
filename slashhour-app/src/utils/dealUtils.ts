@@ -1,16 +1,10 @@
 import { BusinessCategory } from '../types/models';
+import { CATEGORIES } from '../constants/categories';
 
 // Category options for deal creation/editing
-export const DEAL_CATEGORIES: { value: BusinessCategory; label: string }[] = [
-  { value: 'restaurant', label: 'Restaurant' },
-  { value: 'grocery', label: 'Grocery' },
-  { value: 'fashion', label: 'Fashion' },
-  { value: 'shoes', label: 'Shoes' },
-  { value: 'electronics', label: 'Electronics' },
-  { value: 'home_living', label: 'Home & Living' },
-  { value: 'beauty', label: 'Beauty' },
-  { value: 'health', label: 'Health' },
-];
+// Re-export from centralized categories for consistent UI format
+export const DEAL_CATEGORIES: { value: BusinessCategory; label: string }[] =
+  CATEGORIES.map(cat => ({ value: cat.id as BusinessCategory, label: cat.label }));
 
 // Valid days options for deal scheduling
 export const VALID_DAYS_OPTIONS = [

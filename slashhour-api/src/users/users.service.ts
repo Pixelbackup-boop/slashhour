@@ -3,13 +3,17 @@ import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ChangeEmailDto } from './dto/change-email.dto';
+import { ChangePhoneDto } from './dto/change-phone.dto';
 import { UserStatsDto } from './dto/user-stats.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { VerificationService } from '../services/verification/verification.service';
 
 @Injectable()
 export class UsersService {
   constructor(
-    private prisma: PrismaService,
+    private readonly prisma: PrismaService,
+    private readonly verificationService: VerificationService,
   ) {}
 
   /**
@@ -285,5 +289,197 @@ export class UsersService {
       data: { avatar_url: base64Image },
     });
     return this.transformPrismaUser(prismaUser);
+  }
+
+  // ============================================
+  // ACCOUNT MANAGEMENT (NEW)
+  // ============================================
+
+  /**
+   * Change user email address
+   * Sets email_verified to false and returns updated user
+   */
+  async changeEmail(userId: string, changeEmailDto: ChangeEmailDto): Promise<User> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Check if email is already in use
+    const existingEmail = await this.prisma.users.findUnique({
+      where: { email: changeEmailDto.newEmail },
+    });
+    if (existingEmail && existingEmail.id !== userId) {
+      throw new ConflictException('Email already in use');
+    }
+
+    // Update email and set verified to false
+    const prismaUser = await this.prisma.users.update({
+      where: { id: userId },
+      data: {
+        email: changeEmailDto.newEmail,
+        email_verified: false,
+      },
+    });
+
+    return this.transformPrismaUser(prismaUser);
+  }
+
+  /**
+   * Change user phone number
+   * Sets phone_verified to false and returns updated user
+   */
+  async changePhone(userId: string, changePhoneDto: ChangePhoneDto): Promise<User> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Check if phone is already in use
+    const existingPhone = await this.prisma.users.findUnique({
+      where: { phone: changePhoneDto.newPhone },
+    });
+    if (existingPhone && existingPhone.id !== userId) {
+      throw new ConflictException('Phone number already in use');
+    }
+
+    // Update phone and set verified to false
+    const prismaUser = await this.prisma.users.update({
+      where: { id: userId },
+      data: {
+        phone: changePhoneDto.newPhone,
+        phone_verified: false,
+      },
+    });
+
+    return this.transformPrismaUser(prismaUser);
+  }
+
+  /**
+   * Deactivate account (temporary)
+   * User can reactivate by logging back in
+   */
+  async deactivateAccount(userId: string): Promise<void> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    await this.prisma.users.update({
+      where: { id: userId },
+      data: { status: 'inactive' },
+    });
+  }
+
+  /**
+   * Schedule account for permanent deletion
+   * Sets status to 'pending_deletion' with 30-day grace period
+   */
+  async scheduleDeletion(userId: string): Promise<void> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Set deletion date to 30 days from now
+    const deletionDate = new Date();
+    deletionDate.setDate(deletionDate.getDate() + 30);
+
+    await this.prisma.users.update({
+      where: { id: userId },
+      data: {
+        status: 'pending_deletion',
+        scheduled_deletion_date: deletionDate,
+      },
+    });
+  }
+
+  /**
+   * Cancel scheduled deletion and reactivate account
+   * Called when user logs in during grace period
+   */
+  async cancelDeletion(userId: string): Promise<void> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.status !== 'pending_deletion') {
+      throw new BadRequestException('Account is not scheduled for deletion');
+    }
+
+    await this.prisma.users.update({
+      where: { id: userId },
+      data: {
+        status: 'active',
+        scheduled_deletion_date: null,
+      },
+    });
+  }
+
+  /**
+   * Send verification email
+   */
+  async sendEmailVerification(userId: string): Promise<void> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (!user.email) {
+      throw new BadRequestException('No email address on file');
+    }
+
+    await this.verificationService.sendEmailVerificationCode(userId, user.email);
+  }
+
+  /**
+   * Send verification SMS
+   */
+  async sendPhoneVerification(userId: string): Promise<void> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (!user.phone) {
+      throw new BadRequestException('No phone number on file');
+    }
+
+    await this.verificationService.sendPhoneVerificationCode(userId, user.phone);
+  }
+
+  /**
+   * Verify email code
+   */
+  async verifyEmailCode(userId: string, code: string): Promise<boolean> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const isValid = await this.verificationService.verifyCode(userId, code, 'email');
+    if (!isValid) {
+      throw new BadRequestException('Invalid or expired verification code');
+    }
+
+    return true;
+  }
+
+  /**
+   * Verify phone code
+   */
+  async verifyPhoneCode(userId: string, code: string): Promise<boolean> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const isValid = await this.verificationService.verifyCode(userId, code, 'phone');
+    if (!isValid) {
+      throw new BadRequestException('Invalid or expired verification code');
+    }
+
+    return true;
   }
 }

@@ -16,17 +16,14 @@ import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SIZES } from '../../theme';
 import { BusinessCategory } from '../../types/models';
 import LocationService from '../../services/location/LocationService';
 import ReverseGeocodeService from '../../services/location/ReverseGeocodeService';
+import { CATEGORIES } from '../../constants/categories';
 
-const BUSINESS_CATEGORIES: { value: BusinessCategory; label: string }[] = [
-  { value: 'restaurant', label: '🍕 Restaurant' },
-  { value: 'grocery', label: '🛒 Grocery' },
-  { value: 'fashion', label: '👕 Fashion' },
-  { value: 'shoes', label: '👟 Shoes' },
-  { value: 'electronics', label: '📱 Electronics' },
-  { value: 'home_living', label: '🏠 Home & Living' },
-  { value: 'beauty', label: '💄 Beauty' },
-  { value: 'health', label: '💊 Health' },
-];
+// Build business categories from centralized CATEGORIES constant
+const BUSINESS_CATEGORIES: { value: BusinessCategory; label: string }[] =
+  CATEGORIES.map(cat => ({
+    value: cat.id as BusinessCategory,
+    label: `${cat.icon} ${cat.label}`
+  }));
 
 export default function RegisterBusinessScreen({ navigation }: any) {
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);

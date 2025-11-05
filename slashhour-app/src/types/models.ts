@@ -18,6 +18,7 @@ export interface User {
   status: string;
   email_verified: boolean;
   phone_verified: boolean;
+  scheduled_deletion_date?: string; // ISO date string for 30-day grace period
   created_at: string;
   updated_at: string;
 }

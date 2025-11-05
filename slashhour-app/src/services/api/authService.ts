@@ -27,4 +27,12 @@ export const authService = {
     // This is kept for backwards compatibility
     apiClient.clearToken();
   },
+
+  /**
+   * Cancel scheduled account deletion (30-day grace period)
+   * This reactivates the account and cancels the deletion timer
+   */
+  cancelDeletion: async (): Promise<void> => {
+    await apiClient.post('/users/cancel-deletion', {});
+  },
 };

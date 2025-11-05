@@ -25,6 +25,96 @@ export const useLogin = (): UseLoginReturn => {
       loginStart();
       const response = await authService.login({ emailOrPhone, password });
 
+      // Check if user has scheduled deletion (30-day grace period)
+      if (response.user.status === 'pending_deletion') {
+        // Calculate days remaining in grace period
+        let daysRemainingText = '';
+        if (response.user.scheduled_deletion_date) {
+          const deletionDate = new Date(response.user.scheduled_deletion_date);
+          const now = new Date();
+          const daysRemaining = Math.ceil((deletionDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+          daysRemainingText = `\n\n⏰ Your account will be permanently deleted in ${daysRemaining} ${daysRemaining === 1 ? 'day' : 'days'}.\n`;
+        }
+
+        // Show reactivation prompt (like Facebook/Instagram)
+        Alert.alert(
+          'Account Scheduled for Deletion',
+          'You previously scheduled your account for permanent deletion. ' +
+          'Do you want to cancel the deletion and continue logging in?' +
+          daysRemainingText +
+          '\n⚠️ If you continue:\n' +
+          '• Your deletion will be cancelled\n' +
+          '• Your account will be fully restored\n' +
+          '• You can use the app normally',
+          [
+            {
+              text: 'Cancel Deletion & Login',
+              onPress: async () => {
+                try {
+                  // Cancel the scheduled deletion via API
+                  await authService.cancelDeletion();
+
+                  // Complete login with restored account
+                  loginSuccess(
+                    { ...response.user, status: 'active' },
+                    response.accessToken,
+                    response.refreshToken
+                  );
+
+                  // Track login event
+                  const loginMethod = emailOrPhone.includes('@')
+                    ? 'email'
+                    : emailOrPhone.includes('+')
+                    ? 'phone'
+                    : 'username';
+                  trackLogin(loginMethod);
+
+                  Alert.alert(
+                    'Welcome Back!',
+                    'Your account deletion has been cancelled. Your account is fully restored.'
+                  );
+                } catch (error) {
+                  loginFailure('Failed to cancel deletion. Please try again.');
+                  logError(error, { context: 'cancelDeletion' });
+                }
+              },
+            },
+            {
+              text: 'Keep Deletion Scheduled',
+              style: 'cancel',
+              onPress: () => {
+                // Don't complete login, keep account scheduled for deletion
+                loginFailure('Account remains scheduled for deletion');
+              },
+            },
+          ],
+          { cancelable: false }
+        );
+        return;
+      }
+
+      // Check if user account is deactivated (temporary deactivation)
+      if (response.user.status === 'inactive') {
+        // Automatically reactivate on login
+        loginSuccess(
+          { ...response.user, status: 'active' },
+          response.accessToken,
+          response.refreshToken
+        );
+
+        // Track login event
+        const loginMethod = emailOrPhone.includes('@')
+          ? 'email'
+          : emailOrPhone.includes('+')
+          ? 'phone'
+          : 'username';
+        trackLogin(loginMethod);
+
+        Alert.alert('Welcome Back!', 'Your account has been reactivated.');
+        return;
+      }
+
+      // Normal login flow
       loginSuccess(response.user, response.accessToken, response.refreshToken);
 
       // Track login event

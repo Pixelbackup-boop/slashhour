@@ -15,6 +15,7 @@ import { UploadModule } from './upload/upload.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { BookmarksModule } from './bookmarks/bookmarks.module';
+import { CronModule } from './cron/cron.module';
 import { LoggerService } from './common/services/logger.service';
 import { PrismaModule } from './prisma/prisma.module';
 
@@ -43,6 +44,9 @@ import { PrismaModule } from './prisma/prisma.module';
     NotificationsModule,
     ReviewsModule,
     BookmarksModule,
+
+    // Cron Jobs
+    CronModule,
   ],
   controllers: [AppController],
   providers: [

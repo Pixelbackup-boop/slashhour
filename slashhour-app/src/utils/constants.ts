@@ -12,17 +12,8 @@ export const SENTRY_DSN = __DEV__
   ? '' // Leave empty in development to avoid noise
   : 'https://db542917e54d740a2074a1cc87254c9d@o4510187433295872.ingest.us.sentry.io/4510187468292096';
 
-// Essential Categories
-export const CATEGORIES = [
-  { key: 'restaurant', name: 'Restaurants & Food', icon: '🍕', color: '#FF6B6B' },
-  { key: 'grocery', name: 'Grocery & Supermarkets', icon: '🛒', color: '#4ECDC4' },
-  { key: 'fashion', name: 'Fashion & Clothing', icon: '👗', color: '#95E1D3' },
-  { key: 'shoes', name: 'Shoes & Footwear', icon: '👟', color: '#F38181' },
-  { key: 'electronics', name: 'Electronics & Gadgets', icon: '📱', color: '#AA96DA' },
-  { key: 'home_living', name: 'Home & Living', icon: '🏠', color: '#FCBAD3' },
-  { key: 'beauty', name: 'Beauty & Personal Care', icon: '💄', color: '#FFD93D' },
-  { key: 'health', name: 'Health & Pharmacy', icon: '⚕️', color: '#6BCB77' },
-];
+// NOTE: CATEGORIES moved to src/constants/categories.ts for centralized management
+// Import from there instead: import { CATEGORIES } from '../constants/categories';
 
 // Radius Options (in km)
 export const RADIUS_OPTIONS = [2, 3, 5, 10];

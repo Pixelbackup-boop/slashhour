@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { SearchType, SearchFilters as ISearchFilters } from '../hooks/useSearch';
+import { CATEGORIES } from '../constants/categories';
 
 interface SearchFiltersProps {
   searchType: SearchType;
@@ -9,13 +10,11 @@ interface SearchFiltersProps {
   onFiltersChange: (filters: ISearchFilters) => void;
 }
 
-const CATEGORIES = [
+// Build category filter options from centralized CATEGORIES
+// Includes "All" option + all categories from constants
+const CATEGORY_OPTIONS = [
   { label: 'All', value: undefined },
-  { label: 'Restaurant', value: 'restaurant' },
-  { label: 'Grocery', value: 'grocery' },
-  { label: 'Fashion', value: 'fashion' },
-  { label: 'Electronics', value: 'electronics' },
-  { label: 'Beauty', value: 'beauty' },
+  ...CATEGORIES.map(cat => ({ label: cat.label, value: cat.id })),
 ];
 
 const DISCOUNT_FILTERS = [
@@ -76,14 +75,14 @@ export default function SearchFilters({
               key={category.label}
               style={[
                 styles.chip,
-                filters.category === category.value && styles.chipActive,
+                filters.category === category.id && styles.chipActive,
               ]}
-              onPress={() => updateFilter('category', category.value)}
+              onPress={() => updateFilter('category', category.id)}
             >
               <Text
                 style={[
                   styles.chipText,
-                  filters.category === category.value && styles.chipTextActive,
+                  filters.category === category.id && styles.chipTextActive,
                 ]}
               >
                 {category.label}
