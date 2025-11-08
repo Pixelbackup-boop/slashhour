@@ -1,31 +1,10 @@
-/**
- * Business category enum matching Prisma schema
- */
-export enum BusinessCategory {
-  RESTAURANT = 'restaurant',
-  GROCERY = 'grocery',
-  FASHION = 'fashion',
-  SHOES = 'shoes',
-  ELECTRONICS = 'electronics',
-  HOME_LIVING = 'home_living',
-  BEAUTY = 'beauty',
-  HEALTH = 'health',
-}
-
-/**
- * Subscription tier enum matching Prisma schema
- */
-export enum SubscriptionTier {
-  FREE = 'free',
-  ESSENTIAL = 'essential',
-  CHAMPION = 'champion',
-  ANCHOR = 'anchor',
-}
+import { BusinessCategory, SubscriptionTier } from '../../common/constants';
 
 /**
  * Business entity interface
  * Now using Prisma for database operations - this is kept as a TypeScript type
  */
+export { BusinessCategory, SubscriptionTier };
 export interface Business {
   id: string;
   owner_id: string;

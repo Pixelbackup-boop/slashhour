@@ -115,6 +115,34 @@ export default React.memo(function ShopDealCard({
     return 'DEAL';
   };
 
+  // Helper to get deal status info
+  const getStatusInfo = () => {
+    const status = deal.status?.toLowerCase();
+
+    // Check if deal is deleted
+    if (status === 'deleted') {
+      return { badge: '🚫 Deleted', isInactive: true, color: '#757575' };
+    }
+
+    // Check if deal is expired (by status OR by expiration time)
+    const now = new Date();
+    const expires = new Date(deal.expires_at);
+    const isExpiredByTime = expires.getTime() - now.getTime() <= 0;
+
+    if (status === 'expired' || isExpiredByTime) {
+      return { badge: '⏰ Expired', isInactive: true, color: '#FF9800' };
+    }
+
+    // Check if deal is sold out
+    if (status === 'sold_out') {
+      return { badge: '📦 Sold Out', isInactive: true, color: '#9C27B0' };
+    }
+
+    return { badge: null, isInactive: false, color: null };
+  };
+
+  const statusInfo = getStatusInfo();
+
   return (
     <Animated.View
       entering={FadeInDown.duration(400).springify()}
@@ -188,16 +216,23 @@ export default React.memo(function ShopDealCard({
             )}
           </View>
 
-          {/* Discount Badge and Timer */}
+          {/* Discount Badge and Timer / Status Badge */}
           <View style={styles.discountRow}>
-            <View style={styles.discountBadge}>
-              <Text style={styles.discountText}>{getDiscountText()}</Text>
-            </View>
-            <View style={styles.timer}>
-              <Text style={styles.timerIcon}>⏰</Text>
-              <Text style={styles.timerText}>{timeRemaining}</Text>
-            </View>
-          </View>
+            {statusInfo.isInactive ? (
+              <View style={[styles.statusBadge, { backgroundColor: statusInfo.color }]}>
+                <Text style={styles.statusText}>{statusInfo.badge}</Text>
+              </View>
+            ) : (
+              <>
+                <View style={styles.discountBadge}>
+                  <Text style={styles.discountText}>{getDiscountText()}</Text>
+                </View>
+                <View style={styles.timer}>
+                  <Text style={styles.timerIcon}>⏰</Text>
+                  <Text style={styles.timerText}>{timeRemaining}</Text>
+                </View>
+              </>
+            )}</View>
         </View>
       </TouchableOpacity>
     </Animated.View>
@@ -329,5 +364,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#ff5252',
     fontWeight: '500',
+  },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+  },
+  statusText: {
+    color: COLORS.white,
+    fontSize: 13,
+    fontWeight: '600',
   },
 });

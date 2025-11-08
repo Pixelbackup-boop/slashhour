@@ -1,9 +1,7 @@
 import { IsEmail, IsString, MinLength, IsOptional, IsPhoneNumber, IsEnum } from 'class-validator';
+import { UserType } from '../../common/constants';
 
-export enum UserType {
-  CONSUMER = 'consumer',
-  BUSINESS = 'business',
-}
+export { UserType };
 
 export class RegisterDto {
   @IsString()

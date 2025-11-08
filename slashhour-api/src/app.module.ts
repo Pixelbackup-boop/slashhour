@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
@@ -18,6 +20,7 @@ import { BookmarksModule } from './bookmarks/bookmarks.module';
 import { CronModule } from './cron/cron.module';
 import { LoggerService } from './common/services/logger.service';
 import { PrismaModule } from './prisma/prisma.module';
+import { CacheModule } from './cache/cache.module';
 
 @Module({
   imports: [
@@ -27,8 +30,19 @@ import { PrismaModule } from './prisma/prisma.module';
       envFilePath: '.env',
     }),
 
+    // Rate Limiting - 2025 Security Best Practice
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,  // Time window: 60 seconds
+        limit: 100,  // Max 100 requests per minute per IP
+      },
+    ]),
+
     // Prisma Module (Global)
     PrismaModule,
+
+    // Cache Module (Global)
+    CacheModule,
 
     // Feature Modules
     UsersModule,
@@ -54,6 +68,11 @@ import { PrismaModule } from './prisma/prisma.module';
     {
       provide: LoggerService,
       useValue: new LoggerService('AppModule'),
+    },
+    // Global rate limiting guard - 2025 Security Best Practice
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
   ],
   exports: [LoggerService],

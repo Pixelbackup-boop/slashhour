@@ -104,6 +104,34 @@ export default React.memo(function DealCard({ deal, onPress, onBusinessPress }: 
     return 'SPECIAL DEAL';
   };
 
+  // Helper to get deal status info
+  const getStatusInfo = () => {
+    const status = deal.status?.toLowerCase();
+
+    // Check if deal is deleted
+    if (status === 'deleted') {
+      return { badge: '🚫 Deleted', isInactive: true, color: '#757575' };
+    }
+
+    // Check if deal is expired (by status OR by expiration time)
+    const now = new Date();
+    const expires = new Date(deal.expires_at);
+    const isExpiredByTime = expires.getTime() - now.getTime() <= 0;
+
+    if (status === 'expired' || isExpiredByTime) {
+      return { badge: '⏰ Expired', isInactive: true, color: '#FF9800' };
+    }
+
+    // Check if deal is sold out
+    if (status === 'sold_out') {
+      return { badge: '📦 Sold Out', isInactive: true, color: '#9C27B0' };
+    }
+
+    return { badge: null, isInactive: false, color: null };
+  };
+
+  const statusInfo = getStatusInfo();
+
   return (
     <Animated.View
       entering={FadeInDown.duration(400).springify()}
@@ -140,13 +168,21 @@ export default React.memo(function DealCard({ deal, onPress, onBusinessPress }: 
       </View>
 
       <View style={styles.footer}>
-        <View style={styles.discountBadge}>
-          <Text style={styles.discountText}>{getDiscountText()}</Text>
-        </View>
-        <View style={styles.countdownContainer}>
-          <Text style={styles.countdownIcon}>⏰</Text>
-          <Text style={styles.countdownText}>{timeRemaining}</Text>
-        </View>
+        {statusInfo.isInactive ? (
+          <View style={[styles.statusBadge, { backgroundColor: statusInfo.color }]}>
+            <Text style={styles.statusText}>{statusInfo.badge}</Text>
+          </View>
+        ) : (
+          <>
+            <View style={styles.discountBadge}>
+              <Text style={styles.discountText}>{getDiscountText()}</Text>
+            </View>
+            <View style={styles.countdownContainer}>
+              <Text style={styles.countdownIcon}>⏰</Text>
+              <Text style={styles.countdownText}>{timeRemaining}</Text>
+            </View>
+          </>
+        )}
       </View>
 
         {deal.quantity_available && (
@@ -246,5 +282,16 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.fontSize.xs,
     color: COLORS.error,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
+  },
+  statusBadge: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: RADIUS.md,
+    alignSelf: 'flex-start',
+  },
+  statusText: {
+    color: COLORS.white,
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
   },
 });

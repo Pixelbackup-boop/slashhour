@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -7,6 +7,7 @@ import sharp from 'sharp';
 
 @Injectable()
 export class UploadService {
+  private readonly logger = new Logger(UploadService.name);
   private uploadDir: string;
   private baseUrl: string;
 
@@ -25,7 +26,7 @@ export class UploadService {
     const host = this.configService.get('SERVER_HOST', this.getLocalIP());
     this.baseUrl = `http://${host}:${port}/uploads`;
 
-    console.log(`📁 UploadService initialized - Files will be accessible at: ${this.baseUrl}`);
+    this.logger.log(`UploadService initialized - Files accessible at: ${this.baseUrl}`);
   }
 
   /**
@@ -69,11 +70,7 @@ export class UploadService {
     const isImage = this.isImage(file.mimetype);
 
     // DEBUG: Log file info to diagnose AVIF conversion issue
-    console.log(`📤 Uploading file:`);
-    console.log(`   - Original name: ${file.originalname}`);
-    console.log(`   - MIME type: ${file.mimetype}`);
-    console.log(`   - Is image? ${isImage}`);
-    console.log(`   - Buffer size: ${file.buffer.length} bytes`);
+    this.logger.debug(`Uploading file: ${file.originalname} (${file.mimetype}), image: ${isImage}, size: ${file.buffer.length} bytes`);
 
     const fileExtension = isImage ? '.avif' : path.extname(file.originalname);
     const filename = `${uuidv4()}${fileExtension}`;
@@ -99,9 +96,9 @@ export class UploadService {
           })
           .toFile(filePath);
 
-        console.log(`✅ Converted image to AVIF: ${filename}`);
+        this.logger.debug(`Converted image to AVIF: ${filename}`);
       } catch (error) {
-        console.error(`❌ Failed to convert image to AVIF:`, error);
+        this.logger.error(`Failed to convert image to AVIF: ${error.message}`, error.stack);
         throw error;
       }
     } else {

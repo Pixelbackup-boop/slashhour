@@ -31,6 +31,12 @@ export class CreateDealDto {
   @Min(0)
   discounted_price: number;
 
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  discount_percentage?: number;
+
   @IsString()
   @Length(1, 50)
   category: string;

@@ -11,11 +11,11 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { NotificationsService } from './notifications.service.js';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
-import { RegisterDeviceTokenDto } from './dto/register-device-token.dto.js';
-import { SendNotificationDto } from './dto/send-notification.dto.js';
-import { MarkAsReadDto } from './dto/mark-as-read.dto.js';
+import { NotificationsService } from './notifications.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RegisterDeviceTokenDto } from './dto/register-device-token.dto';
+import { SendNotificationDto } from './dto/send-notification.dto';
+import { MarkAsReadDto } from './dto/mark-as-read.dto';
 
 @Controller('notifications')
 @UseGuards(JwtAuthGuard)

@@ -1,5 +1,5 @@
 import { IsString, IsEnum, IsOptional, IsObject, IsArray } from 'class-validator';
-import { NotificationType } from '../entities/notification.entity.js';
+import { NotificationType } from '../entities/notification.entity';
 
 export class SendNotificationDto {
   @IsArray()

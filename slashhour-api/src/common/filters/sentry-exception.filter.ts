@@ -4,6 +4,7 @@ import {
   ArgumentsHost,
   HttpException,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { captureException } from '../../config/sentry.config';
@@ -13,6 +14,8 @@ import { captureException } from '../../config/sentry.config';
  */
 @Catch()
 export class SentryExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(SentryExceptionFilter.name);
+
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
@@ -39,14 +42,10 @@ export class SentryExceptionFilter implements ExceptionFilter {
     }
 
     // Log error for debugging
-    console.error('Error:', {
-      timestamp: new Date().toISOString(),
-      path: request.url,
-      method: request.method,
-      status,
-      message,
-      stack: exception instanceof Error ? exception.stack : undefined,
-    });
+    this.logger.error(
+      `${request.method} ${request.url} - Status: ${status}`,
+      exception instanceof Error ? exception.stack : undefined,
+    );
 
     // Send response
     response.status(status).json({

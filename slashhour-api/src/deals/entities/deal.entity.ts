@@ -1,14 +1,10 @@
+import { DealStatus } from '../../common/constants';
+
 /**
  * Deal entity interface
  * Now using Prisma for database operations - this is kept as a TypeScript type
  */
-
-export enum DealStatus {
-  ACTIVE = 'active',
-  PAUSED = 'paused',
-  EXPIRED = 'expired',
-  SOLD_OUT = 'sold_out',
-}
+export { DealStatus };
 
 export interface Deal {
   id: string;

@@ -8,7 +8,6 @@ import {
   Param,
   Query,
   UseGuards,
-  Request,
   UseInterceptors,
   UploadedFiles,
 } from '@nestjs/common';
@@ -17,6 +16,7 @@ import { DealsService } from './deals.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateDealDto } from './dto/create-deal.dto';
 import { UpdateDealDto } from './dto/update-deal.dto';
+import { CurrentUser, Public, UserType } from '../common/decorators';
 
 @Controller('deals')
 export class DealsController {
@@ -24,12 +24,13 @@ export class DealsController {
 
   @Post('business/:businessId')
   @UseGuards(JwtAuthGuard)
+  @UserType('business') // Only business users can create deals
   async create(
-    @Request() req,
+    @CurrentUser('id') userId: string,
     @Param('businessId') businessId: string,
     @Body() createDealDto: CreateDealDto,
   ) {
-    return this.dealsService.create(req.user.id, businessId, createDealDto);
+    return this.dealsService.create(userId, businessId, createDealDto);
   }
 
   /**
@@ -39,22 +40,19 @@ export class DealsController {
    */
   @Post('business/:businessId/multipart')
   @UseGuards(JwtAuthGuard)
+  @UserType('business') // Only business users can create deals
   @UseInterceptors(FilesInterceptor('images', 10)) // Max 10 images
   async createWithMultipart(
-    @Request() req,
+    @CurrentUser('id') userId: string,
     @Param('businessId') businessId: string,
     @Body() body: any, // FormData fields
     @UploadedFiles() files: Express.Multer.File[],
   ) {
-    return this.dealsService.createWithMultipart(
-      req.user.id,
-      businessId,
-      body,
-      files,
-    );
+    return this.dealsService.createWithMultipart(userId, businessId, body, files);
   }
 
   @Get()
+  @Public() // Public endpoint - no auth required
   async findAll(
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 20,
@@ -63,11 +61,13 @@ export class DealsController {
   }
 
   @Get('active')
+  @Public() // Public endpoint - no auth required
   async getActiveDeals() {
     return this.dealsService.getActiveDeals();
   }
 
   @Get('flash')
+  @Public() // Public endpoint - no auth required
   async getFlashDeals() {
     return this.dealsService.getFlashDeals();
   }
@@ -79,18 +79,19 @@ export class DealsController {
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  async findOne(@Request() req, @Param('id') id: string) {
-    return this.dealsService.findOne(id, req.user.id);
+  async findOne(@CurrentUser('id') userId: string, @Param('id') id: string) {
+    return this.dealsService.findOne(id, userId);
   }
 
   @Put(':id')
   @UseGuards(JwtAuthGuard)
+  @UserType('business')
   async update(
-    @Request() req,
+    @CurrentUser('id') userId: string,
     @Param('id') id: string,
     @Body() updateDealDto: UpdateDealDto,
   ) {
-    return this.dealsService.update(id, req.user.id, updateDealDto);
+    return this.dealsService.update(id, userId, updateDealDto);
   }
 
   /**
@@ -99,30 +100,27 @@ export class DealsController {
    */
   @Put(':id/multipart')
   @UseGuards(JwtAuthGuard)
+  @UserType('business')
   @UseInterceptors(FilesInterceptor('images', 10)) // Max 10 images
   async updateWithMultipart(
-    @Request() req,
+    @CurrentUser('id') userId: string,
     @Param('id') id: string,
     @Body() body: any, // FormData fields
     @UploadedFiles() files: Express.Multer.File[],
   ) {
-    return this.dealsService.updateWithMultipart(
-      id,
-      req.user.id,
-      body,
-      files,
-    );
+    return this.dealsService.updateWithMultipart(id, userId, body, files);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
-  async delete(@Request() req, @Param('id') id: string) {
-    return this.dealsService.delete(id, req.user.id);
+  @UserType('business')
+  async delete(@CurrentUser('id') userId: string, @Param('id') id: string) {
+    return this.dealsService.delete(id, userId);
   }
 
   @Post(':id/redeem')
   @UseGuards(JwtAuthGuard)
-  async redeem(@Request() req, @Param('id') id: string) {
-    return this.dealsService.redeemDeal(id, req.user.id);
+  async redeem(@CurrentUser('id') userId: string, @Param('id') id: string) {
+    return this.dealsService.redeemDeal(id, userId);
   }
 }

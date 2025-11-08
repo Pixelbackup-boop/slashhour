@@ -1,11 +1,11 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service.js';
-import { getFirebaseApp } from '../config/firebase.config.js';
+import { PrismaService } from '../prisma/prisma.service';
+import { getFirebaseApp } from '../config/firebase.config';
 import * as admin from 'firebase-admin';
-import { NotificationType } from './entities/notification.entity.js';
-import { RegisterDeviceTokenDto } from './dto/register-device-token.dto.js';
-import { SendNotificationDto } from './dto/send-notification.dto.js';
-import { MarkAsReadDto } from './dto/mark-as-read.dto.js';
+import { NotificationType } from './entities/notification.entity';
+import { RegisterDeviceTokenDto } from './dto/register-device-token.dto';
+import { SendNotificationDto } from './dto/send-notification.dto';
+import { MarkAsReadDto } from './dto/mark-as-read.dto';
 
 @Injectable()
 export class NotificationsService {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -186,7 +186,7 @@ function InboxStackNavigator() {
       <InboxStack.Screen
         name="Chat"
         component={ChatScreen}
-        options={HEADER_WITH_BACK_BUTTON}
+        options={{ headerShown: false }}
       />
     </InboxStack.Navigator>
   );
@@ -325,6 +325,8 @@ function MainTabNavigator() {
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.gray400,
+        // Hide tab bar when keyboard appears (both iOS and Android - critical for chat input visibility)
+        tabBarHideOnKeyboard: true,
         tabBarStyle: {
           backgroundColor: colors.white,
           borderTopWidth: 1,
@@ -332,10 +334,7 @@ function MainTabNavigator() {
           height: tabBarHeight,
           paddingBottom: insets.bottom || SPACING.sm,
           paddingTop: SPACING.sm,
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
+          // Remove absolute positioning to allow tabBarHideOnKeyboard to work
           ...SHADOWS.lg,
         },
         tabBarLabelStyle: {

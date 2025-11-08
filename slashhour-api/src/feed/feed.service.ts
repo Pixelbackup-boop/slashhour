@@ -1,6 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { DealStatus } from '../deals/entities/deal.entity';
 import { PrismaService } from '../prisma/prisma.service';
+import { FollowStatus } from '../follows/entities/follow.entity';
+import { GeospatialUtil } from '../common/utils/geospatial.util';
 
 interface LocationParams {
   lat?: number;
@@ -26,7 +28,7 @@ export class FeedService {
     const followedBusinesses = await this.prisma.follows.findMany({
       where: {
         user_id: userId,
-        status: 'active' as any,
+        status: FollowStatus.ACTIVE,
       },
       select: {
         business_id: true,
@@ -55,7 +57,7 @@ export class FeedService {
       this.prisma.deals.findMany({
         where: {
           business_id: { in: businessIds },
-          status: DealStatus.ACTIVE as any,
+          status: DealStatus.ACTIVE,
           starts_at: { lte: now },
           expires_at: { gt: now },
         },
@@ -67,7 +69,7 @@ export class FeedService {
       this.prisma.deals.count({
         where: {
           business_id: { in: businessIds },
-          status: DealStatus.ACTIVE as any,
+          status: DealStatus.ACTIVE,
           starts_at: { lte: now },
           expires_at: { gt: now },
         },
@@ -155,8 +157,10 @@ export class FeedService {
       throw new Error('User not found');
     }
 
-    const lat = locationParams.lat ?? (user.default_location as any)?.lat;
-    const lng = locationParams.lng ?? (user.default_location as any)?.lng;
+    // Extract location using type-safe utility
+    const userLocation = GeospatialUtil.extractGeoPoint(user.default_location);
+    const lat = locationParams.lat ?? userLocation?.lat;
+    const lng = locationParams.lng ?? userLocation?.lng;
     const radius = locationParams.radius ?? user.default_radius_km ?? 5;
 
     if (!lat || !lng) {
@@ -292,11 +296,13 @@ export class FeedService {
         updated_at: row.business_updated_at,
       };
 
-      const businessLat = (business.location as any)?.lat;
-      const businessLng = (business.location as any)?.lng;
+      // Extract business location using type-safe utility
+      const businessLocation = GeospatialUtil.extractGeoPoint(business.location);
+      const businessLat = businessLocation?.lat ?? 0;
+      const businessLng = businessLocation?.lng ?? 0;
 
       let distance = 0;
-      if (businessLat && businessLng) {
+      if (businessLocation && businessLat && businessLng) {
         distance = this.calculateDistance(lat, lng, businessLat, businessLng);
       }
 

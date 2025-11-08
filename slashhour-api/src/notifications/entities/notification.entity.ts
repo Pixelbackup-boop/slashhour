@@ -1,17 +1,10 @@
+import { NotificationType } from '../../common/constants';
+
 /**
  * Notification entity interface
  * Using Prisma for database operations
  */
-
-export enum NotificationType {
-  NEW_DEAL = 'new_deal',
-  FLASH_DEAL = 'flash_deal',
-  DEAL_EXPIRING_SOON = 'deal_expiring_soon',
-  NEW_FOLLOWER = 'new_follower',
-  NEW_MESSAGE = 'new_message',
-  DEAL_REDEEMED = 'deal_redeemed',
-  SYSTEM = 'system',
-}
+export { NotificationType };
 
 export interface Notification {
   id: string;

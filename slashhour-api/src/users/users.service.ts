@@ -8,6 +8,8 @@ import { ChangePhoneDto } from './dto/change-phone.dto';
 import { UserStatsDto } from './dto/user-stats.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { VerificationService } from '../services/verification/verification.service';
+import { UserMapper } from '../common/mappers/user.mapper';
+import { FollowStatus } from '../follows/entities/follow.entity';
 
 @Injectable()
 export class UsersService {
@@ -18,16 +20,13 @@ export class UsersService {
 
   /**
    * Transform Prisma user (snake_case) to User entity (camelCase)
+   * Using type-safe UserMapper following 2025 best practices
    */
   private transformPrismaUser(prismaUser: any): User {
-    const { user_type, ...rest } = prismaUser;
-    return {
-      ...rest,
-      userType: user_type,
-    } as User;
+    return UserMapper.toDomain(prismaUser);
   }
 
-  async create(userData: Partial<User>): Promise<User> {
+  async create(userData: Partial<User> & { name: string; username: string }): Promise<User> {
     // Check if user already exists
     const existingUser = await this.findByIdentifier(
       userData.email || userData.phone || userData.username || '',
@@ -38,7 +37,7 @@ export class UsersService {
     }
 
     const prismaUser = await this.prisma.users.create({
-      data: userData as any,
+      data: UserMapper.toPrismaCreate(userData),
     });
     return this.transformPrismaUser(prismaUser);
   }
@@ -67,7 +66,7 @@ export class UsersService {
     try {
       const prismaUser = await this.prisma.users.update({
         where: { id },
-        data: updateData as any,
+        data: UserMapper.toPrismaUpdate(updateData),
       });
       return this.transformPrismaUser(prismaUser);
     } catch (error) {
@@ -109,10 +108,10 @@ export class UsersService {
       }
     }
 
-    // Update user fields
+    // Update user fields (UpdateProfileDto fields match User entity, safe to use directly)
     const prismaUser = await this.prisma.users.update({
       where: { id: userId },
-      data: updateDto as any,
+      data: updateDto,
     });
     return this.transformPrismaUser(prismaUser);
   }
@@ -175,7 +174,7 @@ export class UsersService {
     const followingCount = await this.prisma.follows.count({
       where: {
         user_id: userId,
-        status: 'active' as any,
+        status: FollowStatus.ACTIVE,
       },
     });
 

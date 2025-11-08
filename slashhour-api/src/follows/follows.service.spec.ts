@@ -245,6 +245,268 @@ describe('FollowsService - Critical Paths', () => {
     });
   });
 
+  describe('muteBusiness', () => {
+    it('should successfully mute a business', async () => {
+      const userId = 'user-123';
+      const businessId = 'business-456';
+      const activeFollow = {
+        id: 'follow-123',
+        user_id: userId,
+        business_id: businessId,
+        status: 'active',
+      };
+
+      mockPrismaService.follows.findFirst.mockResolvedValue(activeFollow);
+      mockPrismaService.follows.update.mockResolvedValue({
+        ...activeFollow,
+        status: 'muted',
+      });
+
+      const result = await service.muteBusiness(userId, businessId);
+
+      expect(result).toEqual({ message: 'Successfully muted business' });
+      expect(mockPrismaService.follows.update).toHaveBeenCalledWith({
+        where: { id: 'follow-123' },
+        data: { status: 'muted' },
+      });
+    });
+
+    it('should throw error when not following business', async () => {
+      const userId = 'user-123';
+      const businessId = 'business-456';
+
+      mockPrismaService.follows.findFirst.mockResolvedValue(null);
+
+      await expect(
+        service.muteBusiness(userId, businessId),
+      ).rejects.toThrow(NotFoundException);
+      await expect(
+        service.muteBusiness(userId, businessId),
+      ).rejects.toThrow('Not following this business');
+    });
+
+    it('should throw error when follow status is not active', async () => {
+      const userId = 'user-123';
+      const businessId = 'business-456';
+
+      mockPrismaService.follows.findFirst.mockResolvedValue({
+        id: 'follow-123',
+        status: 'unfollowed',
+      });
+
+      await expect(
+        service.muteBusiness(userId, businessId),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('unmuteBusiness', () => {
+    it('should successfully unmute a business', async () => {
+      const userId = 'user-123';
+      const businessId = 'business-456';
+      const mutedFollow = {
+        id: 'follow-123',
+        user_id: userId,
+        business_id: businessId,
+        status: 'muted',
+      };
+
+      mockPrismaService.follows.findFirst.mockResolvedValue(mutedFollow);
+      mockPrismaService.follows.update.mockResolvedValue({
+        ...mutedFollow,
+        status: 'active',
+      });
+
+      const result = await service.unmuteBusiness(userId, businessId);
+
+      expect(result).toEqual({ message: 'Successfully unmuted business' });
+      expect(mockPrismaService.follows.update).toHaveBeenCalledWith({
+        where: { id: 'follow-123' },
+        data: { status: 'active' },
+      });
+    });
+
+    it('should throw error when business is not muted', async () => {
+      const userId = 'user-123';
+      const businessId = 'business-456';
+
+      mockPrismaService.follows.findFirst.mockResolvedValue({
+        id: 'follow-123',
+        status: 'active',
+      });
+
+      await expect(
+        service.unmuteBusiness(userId, businessId),
+      ).rejects.toThrow(NotFoundException);
+      await expect(
+        service.unmuteBusiness(userId, businessId),
+      ).rejects.toThrow('Business is not muted');
+    });
+
+    it('should throw error when not following business', async () => {
+      const userId = 'user-123';
+      const businessId = 'business-456';
+
+      mockPrismaService.follows.findFirst.mockResolvedValue(null);
+
+      await expect(
+        service.unmuteBusiness(userId, businessId),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('updateNotificationPreferences', () => {
+    it('should update notification preferences', async () => {
+      const userId = 'user-123';
+      const businessId = 'business-456';
+      const activeFollow = {
+        id: 'follow-123',
+        user_id: userId,
+        business_id: businessId,
+        status: 'active',
+      };
+
+      mockPrismaService.follows.findFirst.mockResolvedValue(activeFollow);
+      mockPrismaService.follows.update.mockResolvedValue({
+        ...activeFollow,
+        notify_new_deals: false,
+        notify_flash_deals: true,
+      });
+
+      const result = await service.updateNotificationPreferences(
+        userId,
+        businessId,
+        { notify_new_deals: false, notify_flash_deals: true },
+      );
+
+      expect(result.message).toBe('Notification preferences updated');
+      expect(result.preferences).toEqual({
+        notify_new_deals: false,
+        notify_flash_deals: true,
+      });
+    });
+
+    it('should update only notify_new_deals', async () => {
+      const userId = 'user-123';
+      const businessId = 'business-456';
+      const activeFollow = {
+        id: 'follow-123',
+        user_id: userId,
+        business_id: businessId,
+        status: 'active',
+        notify_new_deals: true,
+        notify_flash_deals: false,
+      };
+
+      mockPrismaService.follows.findFirst.mockResolvedValue(activeFollow);
+      mockPrismaService.follows.update.mockResolvedValue({
+        ...activeFollow,
+        notify_new_deals: false,
+      });
+
+      await service.updateNotificationPreferences(userId, businessId, {
+        notify_new_deals: false,
+      });
+
+      expect(mockPrismaService.follows.update).toHaveBeenCalledWith({
+        where: { id: 'follow-123' },
+        data: { notify_new_deals: false },
+      });
+    });
+
+    it('should throw error when not following business', async () => {
+      const userId = 'user-123';
+      const businessId = 'business-456';
+
+      mockPrismaService.follows.findFirst.mockResolvedValue(null);
+
+      await expect(
+        service.updateNotificationPreferences(userId, businessId, {
+          notify_new_deals: false,
+        }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw error when follow status is unfollowed', async () => {
+      const userId = 'user-123';
+      const businessId = 'business-456';
+
+      mockPrismaService.follows.findFirst.mockResolvedValue({
+        id: 'follow-123',
+        status: 'unfollowed',
+      });
+
+      await expect(
+        service.updateNotificationPreferences(userId, businessId, {
+          notify_new_deals: false,
+        }),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('getFollowedBusinesses', () => {
+    it('should return list of followed businesses', async () => {
+      const userId = 'user-123';
+      const follows = [
+        {
+          id: 'follow-1',
+          user_id: userId,
+          business_id: 'business-1',
+          status: 'active',
+          notify_new_deals: true,
+          notify_flash_deals: false,
+          followed_at: new Date(),
+          businesses: {
+            id: 'business-1',
+            business_name: 'Business One',
+            slug: 'business-one',
+            category: 'restaurant',
+          },
+        },
+        {
+          id: 'follow-2',
+          user_id: userId,
+          business_id: 'business-2',
+          status: 'muted',
+          notify_new_deals: false,
+          notify_flash_deals: false,
+          followed_at: new Date(),
+          businesses: {
+            id: 'business-2',
+            business_name: 'Business Two',
+            slug: 'business-two',
+            category: 'retail',
+          },
+        },
+      ];
+
+      mockPrismaService.follows.findMany.mockResolvedValue(follows);
+
+      const result = await service.getFollowedBusinesses(userId);
+
+      expect(result.total).toBe(2);
+      expect(result.businesses).toHaveLength(2);
+      expect(result.businesses[0]).toMatchObject({
+        id: 'business-1',
+        business_name: 'Business One',
+        follow_status: 'active',
+        notify_new_deals: true,
+      });
+      expect(result.businesses[1].follow_status).toBe('muted');
+    });
+
+    it('should return empty array when no followed businesses', async () => {
+      const userId = 'user-123';
+
+      mockPrismaService.follows.findMany.mockResolvedValue([]);
+
+      const result = await service.getFollowedBusinesses(userId);
+
+      expect(result.total).toBe(0);
+      expect(result.businesses).toHaveLength(0);
+    });
+  });
+
   describe('getFollowStatus', () => {
     it('should return following status when user is actively following business', async () => {
       const userId = 'user-123';

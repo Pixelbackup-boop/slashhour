@@ -1,10 +1,12 @@
 import * as Sentry from '@sentry/node';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
+import { Logger } from '@nestjs/common';
 
 /**
  * Initialize Sentry for error tracking and performance monitoring
  */
 export const initSentry = () => {
+  const logger = new Logger('SentryConfig');
   const dsn = process.env.SENTRY_DSN;
   const environment = process.env.SENTRY_ENVIRONMENT || process.env.NODE_ENV || 'development';
 
@@ -61,9 +63,9 @@ export const initSentry = () => {
       ],
     });
 
-    console.log('✅ Sentry initialized for error tracking');
+    logger.log('Sentry initialized for error tracking');
   } else {
-    console.log('ℹ️ Sentry disabled (no DSN or development environment)');
+    logger.log('Sentry disabled (no DSN or development environment)');
   }
 };
 
@@ -73,9 +75,10 @@ export const initSentry = () => {
  * Use Sentry.startSpan() for newer implementations
  */
 export const startTransaction = (name: string, op: string) => {
+  const logger = new Logger('SentryConfig');
   // Sentry v8+ uses different transaction API
   // This is a placeholder for future implementation
-  console.log(`Transaction: ${name} (${op})`);
+  logger.debug(`Transaction: ${name} (${op})`);
   return null;
 };
 

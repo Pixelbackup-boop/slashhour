@@ -1,17 +1,22 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Logger } from '@nestjs/common';
 import { DealStatus } from './entities/deal.entity';
 import { CreateDealDto } from './dto/create-deal.dto';
 import { UpdateDealDto } from './dto/update-deal.dto';
 import { UploadService } from '../upload/upload.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { DealMapper } from '../common/mappers/deal.mapper';
+import { CacheService, CacheTTL, CachePrefix } from '../cache/cache.service';
 
 @Injectable()
 export class DealsService {
+  private readonly logger = new Logger(DealsService.name);
+
   constructor(
     private prisma: PrismaService,
     private uploadService: UploadService,
     private notificationsService: NotificationsService,
+    private cacheService: CacheService,
   ) {}
 
   async create(userId: string, businessId: string, createDealDto: CreateDealDto) {
@@ -39,10 +44,7 @@ export class DealsService {
     }
 
     const deal = await this.prisma.deals.create({
-      data: {
-        ...createDealDto,
-        business_id: businessId,
-      } as any,
+      data: DealMapper.toPrismaCreate(createDealDto, businessId),
     });
 
     // Send notification to followers asynchronously (don't wait for it)
@@ -51,6 +53,12 @@ export class DealsService {
       .catch(() => {
         // Silently fail - notification is non-critical
       });
+
+    // Invalidate related caches
+    await Promise.all([
+      this.cacheService.invalidateDeal(deal.id),
+      this.cacheService.invalidateBusiness(businessId),
+    ]);
 
     return {
       message: 'Deal created successfully',
@@ -78,13 +86,10 @@ export class DealsService {
     files: Express.Multer.File[],
   ) {
     // DEBUG: Log method entry
-    console.log('🎯 createWithMultipart called');
-    console.log(`   - userId: ${userId}`);
-    console.log(`   - businessId: ${businessId}`);
-    console.log(`   - files length: ${files?.length || 0}`);
+    this.logger.debug('createWithMultipart called');
+    this.logger.debug(`userId: ${userId}, businessId: ${businessId}, files: ${files?.length || 0}`);
     if (files && files.length > 0) {
-      console.log(`   - files[0] mimetype: ${files[0].mimetype}`);
-      console.log(`   - files[0] size: ${files[0].size || files[0].buffer?.length || 'unknown'}`);
+      this.logger.debug(`File[0] - mimetype: ${files[0].mimetype}, size: ${files[0].size || files[0].buffer?.length || 'unknown'}`);
     }
 
     // Verify business exists and user is owner
@@ -152,10 +157,7 @@ export class DealsService {
     }
 
     const deal = await this.prisma.deals.create({
-      data: {
-        ...createDealDto,
-        business_id: businessId,
-      } as any,
+      data: DealMapper.toPrismaCreate(createDealDto, businessId),
     });
 
     // Send notification to followers asynchronously (don't wait for it)
@@ -164,6 +166,12 @@ export class DealsService {
       .catch(() => {
         // Silently fail - notification is non-critical
       });
+
+    // Invalidate related caches
+    await Promise.all([
+      this.cacheService.invalidateDeal(deal.id),
+      this.cacheService.invalidateBusiness(businessId),
+    ]);
 
     return {
       message: 'Deal created successfully',
@@ -176,14 +184,14 @@ export class DealsService {
 
     const [deals, total] = await Promise.all([
       this.prisma.deals.findMany({
-        where: { status: DealStatus.ACTIVE as any },
+        where: { status: DealStatus.ACTIVE },
         skip,
         take: limit,
         orderBy: { created_at: 'desc' },
         include: { businesses: true },
       }),
       this.prisma.deals.count({
-        where: { status: DealStatus.ACTIVE as any },
+        where: { status: DealStatus.ACTIVE },
       }),
     ]);
 
@@ -196,23 +204,40 @@ export class DealsService {
   }
 
   async findOne(id: string, userId?: string) {
-    const deal = await this.prisma.deals.findUnique({
-      where: { id },
-      include: { businesses: true },
-    });
+    // Cache key for base deal data (without user-specific fields)
+    const cacheKey = this.cacheService.buildKey(CachePrefix.DEAL, id);
+
+    // Try to get from cache first
+    const deal = await this.cacheService.wrap(
+      cacheKey,
+      async () => {
+        const result = await this.prisma.deals.findUnique({
+          where: { id },
+          include: { businesses: true },
+        });
+
+        if (!result) {
+          return null;
+        }
+
+        return result;
+      },
+      CacheTTL.TWO_MINUTES,
+    );
 
     if (!deal) {
       throw new NotFoundException('Deal not found');
     }
 
     // Transform deal to match frontend interface
-    const { businesses, ...dealData } = deal as any;
-    const transformedDeal: any = {
+    const { businesses, ...dealData } = deal;
+    const transformedDeal = {
       ...dealData,
       business: businesses, // Rename from 'businesses' to 'business'
+      isBookmarked: false, // Default value
     };
 
-    // Include bookmark status if userId is provided
+    // Include bookmark status if userId is provided (don't cache this part)
     if (userId) {
       const bookmark = await this.prisma.bookmarks.findUnique({
         where: {
@@ -271,8 +296,14 @@ export class DealsService {
 
     const updatedDeal = await this.prisma.deals.update({
       where: { id },
-      data: updateDealDto as any,
+      data: DealMapper.toPrismaUpdate(updateDealDto),
     });
+
+    // Invalidate related caches
+    await Promise.all([
+      this.cacheService.invalidateDeal(id),
+      this.cacheService.invalidateBusiness(deal.business_id),
+    ]);
 
     return {
       message: 'Deal updated successfully',
@@ -358,8 +389,14 @@ export class DealsService {
 
     const updatedDeal = await this.prisma.deals.update({
       where: { id },
-      data: updateDealDto as any,
+      data: DealMapper.toPrismaUpdate(updateDealDto),
     });
+
+    // Invalidate related caches
+    await Promise.all([
+      this.cacheService.invalidateDeal(id),
+      this.cacheService.invalidateBusiness(deal.business_id),
+    ]);
 
     return {
       message: 'Deal updated successfully',
@@ -385,8 +422,14 @@ export class DealsService {
     // Soft delete: Mark as deleted instead of removing from database
     await this.prisma.deals.update({
       where: { id },
-      data: { status: 'deleted' as any },
+      data: DealMapper.createStatusUpdate('deleted' as DealStatus),
     });
+
+    // Invalidate related caches
+    await Promise.all([
+      this.cacheService.invalidateDeal(id),
+      this.cacheService.invalidateBusiness(deal.business_id),
+    ]);
 
     return {
       message: 'Deal deleted successfully',
@@ -410,7 +453,7 @@ export class DealsService {
     if (new Date() > deal.expires_at) {
       await this.prisma.deals.update({
         where: { id: dealId },
-        data: { status: DealStatus.EXPIRED as any },
+        data: DealMapper.createStatusUpdate(DealStatus.EXPIRED),
       });
       throw new BadRequestException('Deal has expired');
     }
@@ -426,7 +469,7 @@ export class DealsService {
         // Already sold out
         await this.prisma.deals.update({
           where: { id: dealId },
-          data: { status: DealStatus.SOLD_OUT as any },
+          data: DealMapper.createStatusUpdate(DealStatus.SOLD_OUT),
         });
         throw new BadRequestException('Deal is sold out');
       }
@@ -444,7 +487,7 @@ export class DealsService {
       if (newQuantityRedeemed >= deal.quantity_available) {
         await this.prisma.deals.update({
           where: { id: dealId },
-          data: { status: DealStatus.SOLD_OUT as any },
+          data: DealMapper.createStatusUpdate(DealStatus.SOLD_OUT),
         });
       }
     }
@@ -459,39 +502,55 @@ export class DealsService {
   }
 
   async getActiveDeals() {
-    const now = new Date();
-    const deals = await this.prisma.deals.findMany({
-      where: {
-        status: DealStatus.ACTIVE as any,
-        starts_at: { lte: now },
-        expires_at: { gt: now },
-      },
-      include: { businesses: true },
-      orderBy: { created_at: 'desc' },
-    });
+    const cacheKey = this.cacheService.buildKey(CachePrefix.DEAL, 'active');
 
-    return {
-      total: deals.length,
-      deals,
-    };
+    return this.cacheService.wrap(
+      cacheKey,
+      async () => {
+        const now = new Date();
+        const deals = await this.prisma.deals.findMany({
+          where: {
+            status: DealStatus.ACTIVE,
+            starts_at: { lte: now },
+            expires_at: { gt: now },
+          },
+          include: { businesses: true },
+          orderBy: { created_at: 'desc' },
+        });
+
+        return {
+          total: deals.length,
+          deals,
+        };
+      },
+      CacheTTL.TWO_MINUTES,
+    );
   }
 
   async getFlashDeals() {
-    const now = new Date();
-    const deals = await this.prisma.deals.findMany({
-      where: {
-        status: DealStatus.ACTIVE as any,
-        is_flash_deal: true,
-        starts_at: { lte: now },
-        expires_at: { gt: now },
-      },
-      include: { businesses: true },
-      orderBy: { created_at: 'desc' },
-    });
+    const cacheKey = this.cacheService.buildKey(CachePrefix.DEAL, 'flash');
 
-    return {
-      total: deals.length,
-      deals,
-    };
+    return this.cacheService.wrap(
+      cacheKey,
+      async () => {
+        const now = new Date();
+        const deals = await this.prisma.deals.findMany({
+          where: {
+            status: DealStatus.ACTIVE,
+            is_flash_deal: true,
+            starts_at: { lte: now },
+            expires_at: { gt: now },
+          },
+          include: { businesses: true },
+          orderBy: { created_at: 'desc' },
+        });
+
+        return {
+          total: deals.length,
+          deals,
+        };
+      },
+      CacheTTL.TWO_MINUTES,
+    );
   }
 }

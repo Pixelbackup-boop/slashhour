@@ -146,12 +146,21 @@ export default React.memo(function FeedDealCard({
   const getStatusInfo = () => {
     const status = deal.status?.toLowerCase();
 
+    // Check if deal is deleted
     if (status === 'deleted') {
       return { badge: '🚫 Deleted', isInactive: true, color: '#757575' };
     }
-    if (status === 'expired') {
+
+    // Check if deal is expired (by status OR by expiration time)
+    const now = new Date();
+    const expires = new Date(deal.expires_at);
+    const isExpiredByTime = expires.getTime() - now.getTime() <= 0;
+
+    if (status === 'expired' || isExpiredByTime) {
       return { badge: '⏰ Expired', isInactive: true, color: '#FF9800' };
     }
+
+    // Check if deal is sold out
     if (status === 'sold_out') {
       return { badge: '📦 Sold Out', isInactive: true, color: '#9C27B0' };
     }

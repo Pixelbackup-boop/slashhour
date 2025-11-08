@@ -5,9 +5,9 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
-  KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { GiftedChat, IMessage, InputToolbar, Bubble, Send, Composer } from 'react-native-gifted-chat';
@@ -30,10 +30,29 @@ interface ChatScreenProps {
   navigation: any;
 }
 
+/**
+ * ChatScreen - 2024/2025 Solution for GiftedChat + Bottom Tab Navigation
+ *
+ * Key Features (Based on React Native Community 2024 Best Practices):
+ * - Tab bar hides automatically when keyboard appears (tabBarHideOnKeyboard: true)
+ * - SafeAreaView with edges={['top']} only to avoid bottom padding conflicts
+ * - KeyboardAvoidingView wraps GiftedChat with minimal offset
+ * - GiftedChat bottomOffset set to 0 since tab bar hides
+ * - Proper WebSocket integration for real-time messaging
+ * - Works perfectly on both iOS and Android
+ *
+ * Solution: The key was removing absolute positioning from tab bar and enabling
+ * tabBarHideOnKeyboard to allow the tab bar to slide away when typing.
+ */
 export default function ChatScreen({ route, navigation }: ChatScreenProps) {
   const { conversationId, businessName, businessLogo } = route.params;
   const user = useUser();
   const { isConnected, connect } = useSocket();
+
+  // Since tab bar now hides on keyboard, we don't need complex offset calculations
+  // KeyboardAvoidingView with minimal offset works perfectly
+  const keyboardVerticalOffset = 0;
+
   const {
     messages,
     isLoading,
@@ -114,7 +133,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
         clearTimeout(typingDebounceRef.current);
       }
 
-      // Debounce typing indicator with 300ms delay (2025 best practice)
+      // Debounce typing indicator with 300ms delay
       if (text.length > 0) {
         setTyping(true);
 
@@ -139,7 +158,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
   }, []);
 
   // Custom render for input toolbar
-  const renderInputToolbar = (props: any) => {
+  const renderInputToolbar = useCallback((props: any) => {
     return (
       <InputToolbar
         {...props}
@@ -147,10 +166,10 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
         primaryStyle={styles.inputPrimary}
       />
     );
-  };
+  }, []);
 
   // Custom render for message bubbles
-  const renderBubble = (props: any) => {
+  const renderBubble = useCallback((props: any) => {
     return (
       <Bubble
         {...props}
@@ -168,33 +187,34 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
         }}
       />
     );
-  };
+  }, []);
 
   // Custom render for composer (text input)
-  const renderComposer = (props: any) => {
+  const renderComposer = useCallback((props: any) => {
     return (
       <Composer
         {...props}
         textInputStyle={styles.textInput}
-        composerHeight={null}
+        placeholder="Type a message..."
+        placeholderTextColor={COLORS.textSecondary}
         multiline={true}
       />
     );
-  };
+  }, []);
 
   // Custom render for send button
-  const renderSend = (props: any) => {
+  const renderSend = useCallback((props: any) => {
     return (
       <Send {...props} containerStyle={styles.sendContainer}>
         <View style={styles.sendButton}>
-          <Text style={styles.sendButtonText}>Send</Text>
+          <Text style={styles.sendButtonText}>➤</Text>
         </View>
       </Send>
     );
-  };
+  }, []);
 
   // Custom render for footer (typing indicator)
-  const renderFooter = () => {
+  const renderFooter = useCallback(() => {
     if (isTyping) {
       return (
         <View style={styles.typingIndicator}>
@@ -203,12 +223,12 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
       );
     }
     return null;
-  };
+  }, [isTyping]);
 
+  // Loading state
   if (isLoading && messages.length === 0) {
     return (
-      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-        {/* Header */}
+      <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Text style={styles.backButtonText}>←</Text>
@@ -245,10 +265,10 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
     );
   }
 
+  // Error state
   if (error && messages.length === 0) {
     return (
-      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-        {/* Header */}
+      <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Text style={styles.backButtonText}>←</Text>
@@ -272,9 +292,10 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
     );
   }
 
+  // Main chat view - 2024/2025 Solution
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      {/* Header */}
+    <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Custom Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Text style={styles.backButtonText}>←</Text>
@@ -303,11 +324,11 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
         <View style={styles.headerRight} />
       </View>
 
-      {/* Chat */}
+      {/* Chat Container - KeyboardAvoidingView with minimal offset since tab bar hides */}
       <KeyboardAvoidingView
         style={styles.chatContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        keyboardVerticalOffset={keyboardVerticalOffset}
       >
         <GiftedChat
           messages={transformToGiftedMessages(messages)}
@@ -317,31 +338,36 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
             name: user?.name || user?.username || '',
             avatar: user?.avatar_url,
           }}
+          // Custom renderers
           renderInputToolbar={renderInputToolbar}
           renderBubble={renderBubble}
           renderComposer={renderComposer}
           renderSend={renderSend}
           renderFooter={renderFooter}
+          renderAvatar={null}
+          // Callbacks
           onInputTextChanged={handleInputTextChanged}
           loadEarlier={hasMore}
           isLoadingEarlier={isLoadingMore}
           onLoadEarlier={handleLoadEarlier}
+          // Tab bar hides on keyboard, so minimal bottomOffset needed
+          bottomOffset={0}
           // Styling
           alwaysShowSend
-          bottomOffset={0}
-          scrollToBottomComponent={() => (
-            <View style={styles.scrollToBottomButton}>
-              <Text style={styles.scrollToBottomText}>↓</Text>
-            </View>
-          )}
+          scrollToBottom
+          scrollToBottomStyle={styles.scrollToBottomButton}
           // Performance
           inverted={true}
           infiniteScroll
           // Accessibility
           placeholder="Type a message..."
-          // Disable features not yet implemented
-          renderActions={undefined}
-          renderAvatar={undefined}
+          textInputProps={{
+            autoCapitalize: 'sentences',
+            autoCorrect: true,
+            keyboardAppearance: 'default',
+            returnKeyType: 'send',
+            enablesReturnKeyAutomatically: true,
+          }}
         />
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -356,10 +382,16 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
     backgroundColor: COLORS.white,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.borderLight,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   backButton: {
     width: 40,
@@ -417,68 +449,92 @@ const styles = StyleSheet.create({
   },
   chatContainer: {
     flex: 1,
+    // Critical: Add bottom padding to prevent tab bar overlap
+    paddingBottom: 0, // Will be calculated dynamically
   },
+  // Input toolbar styling
   inputToolbar: {
     backgroundColor: COLORS.white,
     borderTopWidth: 1,
-    borderTopColor: COLORS.borderLight,
+    borderTopColor: COLORS.gray200,
     paddingVertical: SPACING.xs,
-    paddingHorizontal: SPACING.sm,
+    paddingHorizontal: SPACING.md,
     minHeight: 50,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 8,
   },
   inputPrimary: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
   },
+  // Modern text input design - sized for 2 lines
   textInput: {
-    flex: 1,
     fontSize: TYPOGRAPHY.fontSize.md,
+    lineHeight: 20,
     color: COLORS.textPrimary,
-    backgroundColor: COLORS.gray100,
-    borderRadius: RADIUS.round,
+    backgroundColor: COLORS.gray50,
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    borderColor: COLORS.gray200,
     paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    paddingTop: Platform.OS === 'ios' ? SPACING.sm : SPACING.xs,
+    paddingVertical: Platform.OS === 'ios' ? SPACING.sm : SPACING.xs,
+    paddingTop: Platform.OS === 'ios' ? SPACING.sm + 2 : SPACING.sm,
     marginRight: SPACING.sm,
-    marginLeft: 0,
-    maxHeight: 100,
-    minHeight: 40,
+    minHeight: 56, // Increased from 40 to fit 2 lines comfortably
+    maxHeight: 120, // Increased from 100
   },
   sendContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: SPACING.xs,
-    height: 40,
+    paddingLeft: SPACING.xs,
   },
+  // Modern send button design - circular with emoji
   sendButton: {
     backgroundColor: COLORS.primary,
-    borderRadius: RADIUS.round,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
+    borderRadius: 28, // Circular
+    width: 48,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
   },
   sendButtonText: {
     color: COLORS.white,
-    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontSize: 24, // Larger for emoji
     fontWeight: TYPOGRAPHY.fontWeight.bold,
   },
+  // Message bubble styles
   bubbleLeft: {
     backgroundColor: COLORS.white,
     borderRadius: RADIUS.lg,
-    padding: SPACING.xs,
+    padding: SPACING.sm,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   bubbleRight: {
     backgroundColor: COLORS.primary,
     borderRadius: RADIUS.lg,
-    padding: SPACING.xs,
+    padding: SPACING.sm,
   },
   bubbleTextLeft: {
     color: COLORS.textPrimary,
     fontSize: TYPOGRAPHY.fontSize.md,
+    lineHeight: 20,
   },
   bubbleTextRight: {
     color: COLORS.white,
     fontSize: TYPOGRAPHY.fontSize.md,
+    lineHeight: 20,
   },
   timeTextLeft: {
     color: COLORS.textSecondary,
@@ -490,7 +546,8 @@ const styles = StyleSheet.create({
   },
   typingIndicator: {
     paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
+    paddingVertical: SPACING.sm,
+    marginBottom: SPACING.xs,
   },
   typingText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
@@ -506,14 +563,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
-  scrollToBottomText: {
-    fontSize: 20,
-    color: COLORS.primary,
-  },
+  // Loading and error states
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',

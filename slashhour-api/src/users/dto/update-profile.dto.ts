@@ -16,6 +16,8 @@ import { Type } from 'class-transformer';
 class LocationDto {
   lat: number;
   lng: number;
+  // Add index signature for Prisma InputJsonObject compatibility (2025 best practice)
+  [key: string]: number;
 }
 
 export class UpdateProfileDto {

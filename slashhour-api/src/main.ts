@@ -8,6 +8,7 @@ import { LoggerService } from './common/services/logger.service';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import * as bodyParser from 'body-parser';
+import helmet from 'helmet';
 
 // Initialize Sentry error tracking before anything else
 initSentry();
@@ -17,6 +18,21 @@ async function bootstrap() {
     bufferLogs: true,
     bodyParser: false, // Disable default body parser so we can configure it
   });
+
+  // Security headers - 2025 Security Best Practice
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          scriptSrc: ["'self'"],
+          imgSrc: ["'self'", 'data:', 'https:'],
+        },
+      },
+      crossOriginEmbedderPolicy: false, // Allow Swagger to work
+    }),
+  );
 
   // Configure body parser with increased limits for image uploads
   app.use(bodyParser.json({ limit: '50mb' }));
