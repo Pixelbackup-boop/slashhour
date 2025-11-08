@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BusinessesController } from './businesses.controller';
 import { BusinessesService } from './businesses.service';
+import { BusinessCategory } from '../common/constants';
 import { CreateBusinessDto } from './dto/create-business.dto';
 import { UpdateBusinessDto } from './dto/update-business.dto';
 
@@ -28,7 +29,7 @@ describe('BusinessesController', () => {
     owner_id: mockUserId,
     business_name: 'Test Pizza',
     slug: 'test-pizza',
-    category: 'food_beverage',
+    category: BusinessCategory.FOOD_BEVERAGE,
     subcategory: 'pizza',
     location: { lat: 40.7128, lng: -74.0060 },
     address: '123 Main St',
@@ -92,7 +93,7 @@ describe('BusinessesController', () => {
       const createDto: CreateBusinessDto = {
         business_name: 'New Pizza Place',
         slug: 'new-pizza-place',
-        category: 'food_beverage',
+        category: BusinessCategory.FOOD_BEVERAGE,
         subcategory: 'pizza',
         location: { lat: 40.7128, lng: -74.0060 },
         address: '456 Broadway',
@@ -315,7 +316,7 @@ describe('BusinessesController', () => {
       const lat = 40.7128;
       const lng = -74.0060;
       const radius = 10;
-      const category = 'food_beverage';
+      const category = BusinessCategory.FOOD_BEVERAGE;
 
       const mockResponse = {
         businesses: [

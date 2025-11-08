@@ -136,6 +136,7 @@ describe('UsersService', () => {
           email: mockEmail,
           username: 'anotheruser',
           password: 'password123',
+          name: 'Another User',
           userType: 'consumer',
         }),
       ).rejects.toThrow(ConflictException);
@@ -149,6 +150,7 @@ describe('UsersService', () => {
           email: 'another@example.com',
           username: mockUsername,
           password: 'password123',
+          name: 'Another User',
           userType: 'consumer',
         }),
       ).rejects.toThrow(ConflictException);
@@ -162,6 +164,7 @@ describe('UsersService', () => {
           phone: mockPhone,
           username: 'anotheruser',
           password: 'password123',
+          name: 'Another User',
           userType: 'consumer',
         }),
       ).rejects.toThrow(ConflictException);
@@ -458,8 +461,8 @@ describe('UsersService', () => {
 
       const result = await service.getUserStats(mockUserId);
 
-      expect(result.favoriteCategories[0]).toBe('restaurant'); // Most used
-      expect(result.favoriteCategories[1]).toBe('grocery');
+      expect(result.favoriteCategories?.[0]).toBe('restaurant'); // Most used
+      expect(result.favoriteCategories?.[1]).toBe('grocery');
     });
 
     it('should calculate savings vs goal when goal is set', async () => {

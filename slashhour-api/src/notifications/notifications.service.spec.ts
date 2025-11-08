@@ -103,7 +103,7 @@ describe('NotificationsService', () => {
   describe('registerDeviceToken', () => {
     const registerDto = {
       device_token: mockDeviceToken,
-      device_type: 'ios',
+      device_type: 'ios' as const,
       device_name: 'iPhone 14',
     };
 
@@ -160,7 +160,7 @@ describe('NotificationsService', () => {
 
       const updateDto = {
         device_token: mockDeviceToken,
-        device_type: 'android',
+        device_type: 'android' as const,
         device_name: 'Pixel 7',
       };
 
@@ -280,10 +280,12 @@ describe('NotificationsService', () => {
             success: false,
             error: {
               code: 'messaging/invalid-registration-token',
-            } as admin.messaging.MessagingError,
+              name: 'FirebaseError',
+              message: 'Invalid registration token',
+            } as unknown as Error,
           },
         ],
-      } as admin.messaging.BatchResponse);
+      } as unknown as admin.messaging.BatchResponse);
 
       // Should not throw even if FCM fails
       await expect(

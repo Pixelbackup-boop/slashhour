@@ -5,6 +5,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UnauthorizedException, ConflictException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { UserType } from '../common/constants';
 
 describe('AuthService - Critical Paths', () => {
   let service: AuthService;
@@ -62,7 +63,7 @@ describe('AuthService - Critical Paths', () => {
         username: 'testuser',
         password: 'Password123!',
         name: 'Test User',
-        userType: 'consumer' as const,
+        userType: UserType.CONSUMER,
       };
 
       mockPrismaService.users.findFirst.mockResolvedValue(null);
@@ -93,7 +94,7 @@ describe('AuthService - Critical Paths', () => {
         username: 'testuser',
         password: 'Password123!',
         name: 'Test User',
-        userType: 'consumer' as const,
+        userType: UserType.CONSUMER,
       };
 
       mockPrismaService.users.findFirst.mockResolvedValue({
@@ -112,7 +113,7 @@ describe('AuthService - Critical Paths', () => {
         username: 'existinguser',
         password: 'Password123!',
         name: 'Test User',
-        userType: 'consumer' as const,
+        userType: UserType.CONSUMER,
       };
 
       mockPrismaService.users.findFirst.mockResolvedValue({
@@ -131,7 +132,7 @@ describe('AuthService - Critical Paths', () => {
         username: 'testuser',
         password: 'Password123!',
         name: 'Test User',
-        userType: 'consumer' as const,
+        userType: UserType.CONSUMER,
       };
 
       mockPrismaService.users.findFirst.mockResolvedValue(null);

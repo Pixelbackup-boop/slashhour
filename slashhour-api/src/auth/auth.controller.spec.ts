@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { RegisterDto } from './dto/register.dto';
+import { RegisterDto, UserType } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
 describe('AuthController', () => {
@@ -62,7 +62,7 @@ describe('AuthController', () => {
         username: 'newuser',
         password: 'Password123!',
         name: 'New User',
-        userType: 'consumer',
+        userType: UserType.CONSUMER,
       };
 
       const mockResponse = {
@@ -82,7 +82,7 @@ describe('AuthController', () => {
   describe('POST /auth/login', () => {
     it('should login with email', async () => {
       const loginDto: LoginDto = {
-        identifier: 'test@example.com',
+        emailOrPhone: 'test@example.com',
         password: 'Password123!',
       };
 

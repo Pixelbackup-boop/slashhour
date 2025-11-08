@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BusinessesService } from './businesses.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { BusinessCategory } from '../common/constants';
 import { UploadService } from '../upload/upload.service';
 import {
   NotFoundException,
@@ -23,7 +24,7 @@ describe('BusinessesService', () => {
     business_name: 'Test Pizza Shop',
     slug: 'test-pizza-shop',
     description: 'Best pizza in town',
-    category: 'restaurant',
+    category: BusinessCategory.RESTAURANT,
     subcategory: 'italian',
     location: { lat: 40.7128, lng: -74.0060 },
     address: '123 Main St',
@@ -118,7 +119,7 @@ describe('BusinessesService', () => {
     const createBusinessDto = {
       business_name: 'New Pizza Shop',
       slug: 'new-pizza-shop',
-      category: 'restaurant' as const,
+      category: BusinessCategory.RESTAURANT,
       location: { lat: 40.7128, lng: -74.0060 },
       address: '456 Main St',
       city: 'New York',
@@ -326,18 +327,18 @@ describe('BusinessesService', () => {
         );
         mockPrismaService.businesses.update.mockResolvedValue({
           ...businessWithoutCategoryChange,
-          category: 'grocery',
+          category: BusinessCategory.GROCERY,
         });
 
         const result = await service.update(mockBusinessId, mockUserId, {
-          category: 'grocery',
+          category: BusinessCategory.GROCERY,
         });
 
-        expect(result.business.category).toBe('grocery');
+        expect(result.business.category).toBe(BusinessCategory.GROCERY);
         expect(mockPrismaService.businesses.update).toHaveBeenCalledWith({
           where: { id: mockBusinessId },
           data: expect.objectContaining({
-            category: 'grocery',
+            category: BusinessCategory.GROCERY,
             category_last_changed_at: expect.any(Date),
           }),
         });
@@ -357,11 +358,11 @@ describe('BusinessesService', () => {
         );
         mockPrismaService.businesses.update.mockResolvedValue({
           ...businessWithOldCategoryChange,
-          category: 'grocery',
+          category: BusinessCategory.GROCERY,
         });
 
         await expect(
-          service.update(mockBusinessId, mockUserId, { category: 'grocery' }),
+          service.update(mockBusinessId, mockUserId, { category: BusinessCategory.GROCERY }),
         ).resolves.toBeTruthy();
       });
 
@@ -379,7 +380,7 @@ describe('BusinessesService', () => {
         );
 
         await expect(
-          service.update(mockBusinessId, mockUserId, { category: 'grocery' }),
+          service.update(mockBusinessId, mockUserId, { category: BusinessCategory.GROCERY }),
         ).rejects.toThrow(ForbiddenException);
         expect(mockPrismaService.businesses.update).not.toHaveBeenCalled();
       });

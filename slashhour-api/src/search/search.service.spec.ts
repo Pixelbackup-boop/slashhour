@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SearchService } from './search.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { BusinessCategory } from '../common/constants';
 
 describe('SearchService', () => {
   let service: SearchService;
@@ -10,7 +11,7 @@ describe('SearchService', () => {
     id: 'business-123',
     business_name: 'Test Pizza',
     description: 'Best pizza in town',
-    category: 'food_beverage',
+    category: BusinessCategory.FOOD_BEVERAGE,
     location: { lat: 40.7128, lng: -74.006 },
     is_verified: true,
     follower_count: 100,
@@ -21,7 +22,7 @@ describe('SearchService', () => {
     business_id: 'business-123',
     title: '50% Off Pizza',
     description: 'Great deal on pizza',
-    category: 'food_beverage',
+    category: BusinessCategory.FOOD_BEVERAGE,
     original_price: 20.0,
     discounted_price: 10.0,
     discount_percentage: 50,
@@ -90,10 +91,10 @@ describe('SearchService', () => {
         mockPrismaService.businesses.findMany.mockResolvedValue([mockBusiness]);
         mockPrismaService.businesses.count.mockResolvedValue(1);
 
-        await service.searchBusinesses({ category: 'food_beverage' }, 1, 20);
+        await service.searchBusinesses({ category: BusinessCategory.FOOD_BEVERAGE }, 1, 20);
 
         expect(mockPrismaService.businesses.findMany).toHaveBeenCalledWith({
-          where: { category: 'food_beverage' },
+          where: { category: BusinessCategory.FOOD_BEVERAGE },
           orderBy: { follower_count: 'desc' },
           skip: 0,
           take: 20,
@@ -121,7 +122,7 @@ describe('SearchService', () => {
         await service.searchBusinesses(
           {
             query: 'pizza',
-            category: 'food_beverage',
+            category: BusinessCategory.FOOD_BEVERAGE,
             verified: true,
           },
           1,
@@ -134,7 +135,7 @@ describe('SearchService', () => {
               { business_name: { contains: 'pizza', mode: 'insensitive' } },
               { description: { contains: 'pizza', mode: 'insensitive' } },
             ],
-            category: 'food_beverage',
+            category: BusinessCategory.FOOD_BEVERAGE,
             is_verified: true,
           },
           orderBy: { follower_count: 'desc' },
@@ -218,7 +219,7 @@ describe('SearchService', () => {
 
         await service.searchBusinesses(
           {
-            category: 'food_beverage',
+            category: BusinessCategory.FOOD_BEVERAGE,
             lat: 40.7128,
             lng: -74.006,
             radius: 5,
@@ -260,12 +261,12 @@ describe('SearchService', () => {
         mockPrismaService.deals.findMany.mockResolvedValue([mockDeal]);
         mockPrismaService.deals.count.mockResolvedValue(1);
 
-        await service.searchDeals({ category: 'food_beverage' });
+        await service.searchDeals({ category: BusinessCategory.FOOD_BEVERAGE });
 
         expect(mockPrismaService.deals.findMany).toHaveBeenCalledWith(
           expect.objectContaining({
             where: expect.objectContaining({
-              category: 'food_beverage',
+              category: BusinessCategory.FOOD_BEVERAGE,
             }),
           }),
         );
@@ -432,7 +433,7 @@ describe('SearchService', () => {
 
         await service.searchDeals({
           query: 'pizza',
-          category: 'food_beverage',
+          category: BusinessCategory.FOOD_BEVERAGE,
           minPrice: 5,
           maxPrice: 20,
           minDiscount: 30,
@@ -508,7 +509,7 @@ describe('SearchService', () => {
         business_business_name: 'Test Pizza',
         business_slug: 'test-pizza',
         business_description: 'Best pizza in town',
-        business_category: 'food_beverage',
+        business_category: BusinessCategory.FOOD_BEVERAGE,
         business_subcategory: null,
         business_category_last_changed_at: null,
         business_location: { lat: 40.7128, lng: -74.006 },
@@ -571,7 +572,7 @@ describe('SearchService', () => {
       expect(result.deals[0].businesses).toMatchObject({
         id: 'business-123',
         business_name: 'Test Pizza',
-        category: 'food_beverage',
+        category: BusinessCategory.FOOD_BEVERAGE,
       });
 
       expect(result.totals.businesses).toBe(10);

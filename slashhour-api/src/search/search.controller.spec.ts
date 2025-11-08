@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SearchController } from './search.controller';
 import { SearchService } from './search.service';
+import { BusinessCategory } from '../common/constants';
 
 describe('SearchController', () => {
   let controller: SearchController;
@@ -52,10 +53,10 @@ describe('SearchController', () => {
 
       mockSearchService.searchBusinesses.mockResolvedValue(mockResponse);
 
-      await controller.searchBusinesses(undefined, 'food_beverage');
+      await controller.searchBusinesses(undefined, BusinessCategory.FOOD_BEVERAGE);
 
       expect(mockSearchService.searchBusinesses).toHaveBeenCalledWith(
-        { query: undefined, category: 'food_beverage', lat: undefined, lng: undefined, radius: undefined, verified: undefined },
+        { query: undefined, category: BusinessCategory.FOOD_BEVERAGE, lat: undefined, lng: undefined, radius: undefined, verified: undefined },
         1,
         20,
       );
@@ -155,10 +156,10 @@ describe('SearchController', () => {
 
       mockSearchService.searchDeals.mockResolvedValue(mockResponse);
 
-      await controller.searchDeals(undefined, 'food_beverage');
+      await controller.searchDeals(undefined, BusinessCategory.FOOD_BEVERAGE);
 
       expect(mockSearchService.searchDeals).toHaveBeenCalledWith(
-        expect.objectContaining({ category: 'food_beverage' }),
+        expect.objectContaining({ category: BusinessCategory.FOOD_BEVERAGE }),
         1,
         20,
       );

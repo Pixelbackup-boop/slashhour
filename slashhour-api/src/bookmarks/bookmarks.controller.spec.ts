@@ -118,7 +118,7 @@ describe('BookmarksController', () => {
 
       mockBookmarksService.getUserBookmarks.mockResolvedValue(mockResponse);
 
-      const result = await controller.getUserBookmarks(mockRequest as never, 1, 20);
+      const result = await controller.getUserBookmarks(mockRequest as never, '1', '20');
 
       expect(result).toEqual(mockResponse);
       expect(mockBookmarksService.getUserBookmarks).toHaveBeenCalledWith(

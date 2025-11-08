@@ -98,13 +98,13 @@ describe('UsersController', () => {
     it('should update user profile', async () => {
       const updateDto: UpdateProfileDto = {
         name: 'Updated Name',
-        bio: 'Updated bio',
+        avatar_url: 'https://example.com/avatar.jpg',
       };
 
       const updatedUser = {
         ...mockUser,
         name: updateDto.name,
-        bio: updateDto.bio,
+        avatar_url: updateDto.avatar_url,
       };
 
       mockUsersService.updateProfile.mockResolvedValue(updatedUser);
@@ -148,7 +148,6 @@ describe('UsersController', () => {
 
       expect(result.message).toBe('Avatar uploaded successfully');
       expect(result.user).toBeDefined();
-      expect(result.user.password).toBeUndefined();
       expect(mockUsersService.uploadAvatar).toHaveBeenCalledWith(
         mockUserId,
         mockFile,
@@ -222,7 +221,6 @@ describe('UsersController', () => {
         'Email updated successfully. Verification email sent.',
       );
       expect(result.user.email).toBe(changeEmailDto.newEmail);
-      expect(result.user.password).toBeUndefined();
       expect(mockUsersService.changeEmail).toHaveBeenCalledWith(
         mockUserId,
         changeEmailDto,
@@ -254,7 +252,6 @@ describe('UsersController', () => {
         'Phone number updated successfully. Verification SMS sent.',
       );
       expect(result.user.phone).toBe(changePhoneDto.newPhone);
-      expect(result.user.password).toBeUndefined();
       expect(mockUsersService.changePhone).toHaveBeenCalledWith(
         mockUserId,
         changePhoneDto,

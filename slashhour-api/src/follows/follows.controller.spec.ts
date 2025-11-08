@@ -228,7 +228,7 @@ describe('FollowsController', () => {
         mockBusinessId,
       );
 
-      expect(result.isFollowing).toBe(false);
+      expect(result.is_following).toBe(false);
     });
   });
 });
