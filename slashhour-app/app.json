@@ -17,6 +17,25 @@
       "color": "#E63946",
       "androidMode": "default"
     },
+    "intentFilters": [
+      {
+        "action": "VIEW",
+        "autoVerify": true,
+        "data": [
+          {
+            "scheme": "https",
+            "host": "slashhour.com",
+            "pathPrefix": "/deals"
+          },
+          {
+            "scheme": "https",
+            "host": "www.slashhour.com",
+            "pathPrefix": "/deals"
+          }
+        ],
+        "category": ["BROWSABLE", "DEFAULT"]
+      }
+    ],
     "plugins": [
       [
         "expo-notifications",
@@ -24,11 +43,22 @@
           "color": "#E63946",
           "defaultChannel": "default"
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Slashhour to access your camera to scan QR codes for redemptions.",
+          "microphonePermission": false
+        }
       ]
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.slashhourapp"
+      "bundleIdentifier": "com.anonymous.slashhourapp",
+      "associatedDomains": [
+        "applinks:slashhour.com",
+        "applinks:www.slashhour.com"
+      ]
     },
     "android": {
       "adaptiveIcon": {

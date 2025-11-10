@@ -19,6 +19,8 @@ import ChatScreen from '../screens/inbox/ChatScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 import DealDetailScreen from '../screens/deal/DealDetailScreen';
 import RedemptionHistoryScreen from '../screens/redemption/RedemptionHistoryScreen';
+import BusinessRedemptionsScreen from '../screens/redemption/BusinessRedemptionsScreen';
+import QRScannerScreen from '../screens/redemption/QRScannerScreen';
 import FollowingListScreen from '../screens/following/FollowingListScreen';
 import FollowersListScreen from '../screens/followers/FollowersListScreen';
 import BookmarksScreen from '../screens/bookmarks/BookmarksScreen';
@@ -45,6 +47,8 @@ type RootStackParamList = {
   DealDetail: { deal: Deal };
   DealDetails: { dealId: string };
   RedemptionHistory: undefined;
+  BusinessRedemptions: { businessId: string; businessName: string };
+  QRScanner: { businessId: string; businessName: string };
   FollowingList: undefined;
   FollowersList: { businessId: string };
   Bookmarks: undefined;
@@ -253,6 +257,16 @@ function ProfileStackNavigator() {
         name="RedemptionHistory"
         component={RedemptionHistoryScreen}
         options={HEADER_WITH_BACK_BUTTON}
+      />
+      <ProfileStack.Screen
+        name="BusinessRedemptions"
+        component={BusinessRedemptionsScreen}
+        options={HEADER_WITH_BACK_BUTTON}
+      />
+      <ProfileStack.Screen
+        name="QRScanner"
+        component={QRScannerScreen}
+        options={{ headerShown: false }}
       />
       <ProfileStack.Screen
         name="FollowingList"
