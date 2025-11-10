@@ -45,10 +45,10 @@ export function getDealWebUrl(deal: Deal): string {
 
   const slug = slugParts.join('-');
 
-  // Append short ID at the end for uniqueness
-  const shortId = deal.id.split('-')[0]; // Use first part of UUID
-
-  return `https://slashhour.com/deals/${slug}-${shortId}`;
+  // Append full UUID at the end for uniqueness and compatibility
+  // Note: In a production app with a website, you could use a shorter ID
+  // and add a database lookup endpoint to resolve it to the full UUID
+  return `https://slashhour.com/deals/${slug}-${deal.id}`;
 }
 
 /**
@@ -119,12 +119,12 @@ export async function shareDeal(deal: Deal): Promise<void> {
 export function getBusinessWebUrl(businessId: string, businessName: string, city?: string): string {
   const nameSlug = slugify(businessName);
   const citySlug = city ? slugify(city) : '';
-  const shortId = businessId.split('-')[0];
 
   const slugParts = [nameSlug, citySlug].filter(Boolean);
   const slug = slugParts.join('-');
 
-  return `https://slashhour.com/businesses/${slug}-${shortId}`;
+  // Append full UUID for compatibility
+  return `https://slashhour.com/businesses/${slug}-${businessId}`;
 }
 
 /**

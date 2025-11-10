@@ -8,6 +8,7 @@ import { useUser, useIsAuthenticated } from '../stores/useAuthStore';
 import { useTheme } from '../context/ThemeContext';
 import { SHADOWS, SPACING } from '../theme';
 import { navigationRef } from './navigationRef';
+import { linking } from './linking';
 import AppHeader from '../components/AppHeader';
 import { Icon, IconName } from '../components/icons';
 import LoginScreen from '../screens/auth/LoginScreen';
@@ -486,7 +487,7 @@ export default function AppNavigator() {
   };
 
   return (
-    <NavigationContainer ref={navigationRef} theme={navigationTheme}>
+    <NavigationContainer ref={navigationRef} linking={linking} theme={navigationTheme}>
       <Stack.Navigator
         screenOptions={{
           headerShown: false,

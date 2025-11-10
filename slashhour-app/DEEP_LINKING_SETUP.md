@@ -6,22 +6,22 @@ This document explains how to set up your website (slashhour.com) to work with t
 
 ### Deal URLs (SEO-Friendly)
 ```
-https://slashhour.com/deals/{discount}-{title}-{business}-{city}-{shortId}
+https://slashhour.com/deals/{discount}-{title}-{business}-{city}-{uuid}
 ```
 
 **Example:**
 ```
-https://slashhour.com/deals/50-off-pizza-margherita-joes-pizzeria-new-york-abc123
+https://slashhour.com/deals/50-off-pizza-margherita-joes-pizzeria-new-york-a1b2c3d4-e5f6-7890-abcd-ef1234567890
 ```
 
 ### Business URLs (SEO-Friendly)
 ```
-https://slashhour.com/businesses/{business-name}-{city}-{shortId}
+https://slashhour.com/businesses/{business-name}-{city}-{uuid}
 ```
 
 **Example:**
 ```
-https://slashhour.com/businesses/joes-pizzeria-new-york-abc123
+https://slashhour.com/businesses/joes-pizzeria-new-york-a1b2c3d4-e5f6-7890-abcd-ef1234567890
 ```
 
 ## Required Website Files
@@ -95,14 +95,18 @@ keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -sto
 Your website needs to extract the deal ID from the SEO-friendly URL:
 
 ```javascript
-// Example: 50-off-pizza-margherita-joes-pizzeria-new-york-abc123
+// Example: 50-off-pizza-margherita-joes-pizzeria-new-york-a1b2c3d4-e5f6-7890-abcd-ef1234567890
 function extractDealId(urlSlug) {
-  // The last segment after the final hyphen is the short ID
-  const parts = urlSlug.split('-');
-  const shortId = parts[parts.length - 1];
+  // UUID format: 8-4-4-4-12 characters separated by hyphens
+  // Extract the UUID from the end of the slug
+  const uuidRegex = /([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})$/i;
+  const match = urlSlug.match(uuidRegex);
 
-  // You'll need to look up the full UUID from your database using this short ID
-  return shortId;
+  if (match) {
+    return match[1]; // This is the full UUID
+  }
+
+  return null;
 }
 ```
 
@@ -172,7 +176,7 @@ When someone shares a deal, add these meta tags to your deal page:
 ### iOS Testing
 1. Deploy the apple-app-site-association file
 2. Build and install the app on your device
-3. Send yourself a link via Messages: `https://slashhour.com/deals/test-deal-abc123`
+3. Send yourself a link via Messages: `https://slashhour.com/deals/50-off-test-deal-a1b2c3d4-e5f6-7890-abcd-ef1234567890`
 4. Long-press the link → Should show "Open in Slashhour"
 
 ### Android Testing
@@ -187,20 +191,25 @@ When someone shares a deal, add these meta tags to your deal page:
 
 ## Database Schema Recommendation
 
-To support SEO-friendly URLs, add a `slug` field to your deals table:
+The current implementation uses full UUIDs in URLs for simplicity. If you want shorter URLs in the future, you can add a short ID mapping:
 
 ```sql
-ALTER TABLE deals ADD COLUMN slug VARCHAR(255);
-CREATE INDEX idx_deals_slug ON deals(slug);
+-- Optional: Add a short ID for even more SEO-friendly URLs
+ALTER TABLE deals ADD COLUMN short_id VARCHAR(8) UNIQUE;
+CREATE INDEX idx_deals_short_id ON deals(short_id);
 
 -- Or use a separate mapping table
 CREATE TABLE deal_slugs (
-  slug VARCHAR(255) PRIMARY KEY,
+  short_id VARCHAR(8) PRIMARY KEY,
   deal_id UUID REFERENCES deals(id),
   created_at TIMESTAMP DEFAULT NOW()
 );
 CREATE INDEX idx_deal_slugs_deal_id ON deal_slugs(deal_id);
+
+-- You would then need to create an API endpoint to resolve short IDs to UUIDs
 ```
+
+**Note**: The app currently uses full UUIDs for compatibility, so this is optional for future optimization.
 
 ## URL Redirect Logic
 
