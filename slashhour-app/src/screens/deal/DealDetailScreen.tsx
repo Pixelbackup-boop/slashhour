@@ -20,6 +20,7 @@ import { Icon } from '../../components/icons';
 import { useDealDetail } from '../../hooks/useDealDetail';
 import { useDeal } from '../../hooks/queries/useDealsQuery';
 import { useBookmark } from '../../hooks/useBookmarks';
+import { useUser } from '../../stores/useAuthStore';
 import { haptics } from '../../utils/haptics';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../../theme';
 
@@ -74,6 +75,9 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
     handleRedeem,
     closeRedemptionModal,
   } = useDealDetail(deal);
+
+  // Get current user to check ownership
+  const currentUser = useUser();
 
   // Bookmark state management
   const { isBookmarked, toggleBookmark, isProcessing, setIsBookmarked } = useBookmark(deal?.id || '', false);
@@ -363,12 +367,16 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
       marginBottom: SPACING.xxl,
     },
     redeemButtonDisabled: {
-      backgroundColor: COLORS.gray300,
+      backgroundColor: '#BDBDBD', // Darker grey, more obviously disabled
+      opacity: 0.6, // Dimmed appearance
     },
     redeemButtonText: {
       fontSize: TYPOGRAPHY.fontSize.lg,
       fontWeight: TYPOGRAPHY.fontWeight.bold,
       color: COLORS.white,
+    },
+    redeemButtonTextDisabled: {
+      color: '#666666', // Dark grey text for disabled state
     },
     // Bookmark Button
     bookmarkButton: {
@@ -441,7 +449,8 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
                 <Text style={styles.shopName}>{deal.business?.business_name}</Text>
               </TouchableOpacity>
             </View>
-            {deal.business?.id && (
+            {/* Only show Follow button if user is NOT the business owner */}
+            {deal.business?.id && currentUser?.id !== deal.business.owner_id && (
               <View style={styles.headerRight}>
                 <FollowButton
                   businessId={deal.business.id}
@@ -560,7 +569,10 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
             {isRedeeming ? (
               <ActivityIndicator color={COLORS.white} />
             ) : (
-              <Text style={styles.redeemButtonText}>
+              <Text style={[
+                styles.redeemButtonText,
+                statusInfo.isInactive && styles.redeemButtonTextDisabled
+              ]}>
                 {statusInfo.isInactive ? 'DEAL NO LONGER AVAILABLE' : 'Redeem This Deal'}
               </Text>
             )}
