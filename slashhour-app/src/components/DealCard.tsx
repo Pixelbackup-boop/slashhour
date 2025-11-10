@@ -13,6 +13,7 @@ import { getCategoryImage } from '../utils/categoryImages';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme';
 import ImageCarousel from './ImageCarousel';
 import { haptics } from '../utils/haptics';
+import { Icon } from './icons';
 
 interface DealCardProps {
   deal: Deal;
@@ -110,7 +111,7 @@ export default React.memo(function DealCard({ deal, onPress, onBusinessPress }: 
 
     // Check if deal is deleted
     if (status === 'deleted') {
-      return { badge: '🚫 Deleted', isInactive: true, color: '#757575' };
+      return { badge: 'Deleted', isInactive: true, color: '#757575', icon: 'x-circle' };
     }
 
     // Check if deal is expired (by status OR by expiration time)
@@ -119,15 +120,15 @@ export default React.memo(function DealCard({ deal, onPress, onBusinessPress }: 
     const isExpiredByTime = expires.getTime() - now.getTime() <= 0;
 
     if (status === 'expired' || isExpiredByTime) {
-      return { badge: '⏰ Expired', isInactive: true, color: '#FF9800' };
+      return { badge: 'Expired', isInactive: true, color: '#FF9800', icon: 'clock' };
     }
 
     // Check if deal is sold out
     if (status === 'sold_out') {
-      return { badge: '📦 Sold Out', isInactive: true, color: '#9C27B0' };
+      return { badge: 'Sold Out', isInactive: true, color: '#9C27B0', icon: 'package' };
     }
 
-    return { badge: null, isInactive: false, color: null };
+    return { badge: null, isInactive: false, color: null, icon: null };
   };
 
   const statusInfo = getStatusInfo();
@@ -169,7 +170,8 @@ export default React.memo(function DealCard({ deal, onPress, onBusinessPress }: 
 
       <View style={styles.footer}>
         {statusInfo.isInactive ? (
-          <View style={[styles.statusBadge, { backgroundColor: statusInfo.color }]}>
+          <View style={[styles.statusBadge, statusInfo.color ? { backgroundColor: statusInfo.color } : null]}>
+            <Icon name={statusInfo.icon as any} size={13} color={COLORS.white} style="solid" />
             <Text style={styles.statusText}>{statusInfo.badge}</Text>
           </View>
         ) : (
@@ -178,7 +180,7 @@ export default React.memo(function DealCard({ deal, onPress, onBusinessPress }: 
               <Text style={styles.discountText}>{getDiscountText()}</Text>
             </View>
             <View style={styles.countdownContainer}>
-              <Text style={styles.countdownIcon}>⏰</Text>
+              <Icon name="clock" size={16} color={COLORS.primary} style="line" />
               <Text style={styles.countdownText}>{timeRemaining}</Text>
             </View>
           </>
@@ -261,10 +263,7 @@ const styles = StyleSheet.create({
   countdownContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  countdownIcon: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    marginRight: SPACING.xs,
+    gap: 4,
   },
   countdownText: {
     fontSize: TYPOGRAPHY.fontSize.xs,
@@ -284,6 +283,9 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
   statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
     borderRadius: RADIUS.md,

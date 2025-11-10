@@ -17,12 +17,14 @@ import { BusinessCategory } from '../../types/models';
 import LocationService from '../../services/location/LocationService';
 import ReverseGeocodeService from '../../services/location/ReverseGeocodeService';
 import { CATEGORIES } from '../../constants/categories';
+import { Icon } from '../../components/icons';
 
 // Build business categories from centralized CATEGORIES constant
-const BUSINESS_CATEGORIES: { value: BusinessCategory; label: string }[] =
+const BUSINESS_CATEGORIES: { value: BusinessCategory; label: string; icon: string }[] =
   CATEGORIES.map(cat => ({
     value: cat.id as BusinessCategory,
-    label: `${cat.icon} ${cat.label}`
+    label: cat.label,
+    icon: cat.icon
   }));
 
 export default function RegisterBusinessScreen({ navigation }: any) {
@@ -174,9 +176,9 @@ export default function RegisterBusinessScreen({ navigation }: any) {
   };
 
   const getCategoryLabel = () => {
-    if (!formData.category) return 'Select Category';
+    if (!formData.category) return null;
     const category = BUSINESS_CATEGORIES.find(cat => cat.value === formData.category);
-    return category ? category.label : formData.category;
+    return category || null;
   };
 
   return (
@@ -216,9 +218,20 @@ export default function RegisterBusinessScreen({ navigation }: any) {
             onPress={() => setShowCategoryPicker(!showCategoryPicker)}
             disabled={isLoading}
           >
-            <Text style={[styles.pickerButtonText, !formData.category && styles.placeholderText]}>
-              {getCategoryLabel()}
-            </Text>
+            <View style={styles.pickerButtonContent}>
+              {getCategoryLabel() ? (
+                <>
+                  <Icon name={getCategoryLabel()!.icon} size={20} color={COLORS.textPrimary} style="line" />
+                  <Text style={styles.pickerButtonText}>
+                    {getCategoryLabel()!.label}
+                  </Text>
+                </>
+              ) : (
+                <Text style={[styles.pickerButtonText, styles.placeholderText]}>
+                  Select Category
+                </Text>
+              )}
+            </View>
             <Text style={styles.pickerArrow}>{showCategoryPicker ? '▲' : '▼'}</Text>
           </TouchableOpacity>
 
@@ -233,6 +246,7 @@ export default function RegisterBusinessScreen({ navigation }: any) {
                     setShowCategoryPicker(false);
                   }}
                 >
+                  <Icon name={category.icon} size={20} color={COLORS.textPrimary} style="line" />
                   <Text style={styles.pickerOptionText}>{category.label}</Text>
                 </TouchableOpacity>
               ))}
@@ -261,7 +275,7 @@ export default function RegisterBusinessScreen({ navigation }: any) {
             {isGettingLocation ? (
               <ActivityIndicator color={COLORS.white} size="small" />
             ) : (
-              <Text style={styles.locationButtonIcon}>📍</Text>
+              <Icon name="location" size={20} color={COLORS.white} style="line" />
             )}
             <Text style={styles.locationButtonText}>
               {isGettingLocation ? 'Getting Location...' : 'Use My Current Location'}
@@ -439,10 +453,6 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
     height: SIZES.button.lg,
   },
-  locationButtonIcon: {
-    fontSize: 20,
-    marginRight: SPACING.xs,
-  },
   locationButtonText: {
     ...TYPOGRAPHY.styles.button,
     color: COLORS.textInverse,
@@ -486,6 +496,12 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
     minHeight: SIZES.input.md,
   },
+  pickerButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    flex: 1,
+  },
   pickerButtonText: {
     fontSize: TYPOGRAPHY.fontSize.md,
     color: COLORS.textPrimary,
@@ -507,6 +523,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   pickerOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
     padding: SPACING.md,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.borderLight,

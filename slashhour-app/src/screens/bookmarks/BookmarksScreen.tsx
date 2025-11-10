@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBookmarksList } from '../../hooks/useBookmarksList';
 import { trackScreenView } from '../../services/analytics';
 import FeedDealCard from '../../components/FeedDealCard';
+import { Icon } from '../../components/icons';
 import { Deal } from '../../types/models';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, LAYOUT } from '../../theme';
 
@@ -78,7 +79,7 @@ export default function BookmarksScreen({ navigation }: any) {
     if (error) {
       return (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyStateIcon}>⚠️</Text>
+          <Icon name="alert" size={64} color={COLORS.error} style="line" />
           <Text style={styles.emptyStateTitle}>Error Loading</Text>
           <Text style={styles.emptyStateText}>{error}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={refresh}>
@@ -90,7 +91,7 @@ export default function BookmarksScreen({ navigation }: any) {
 
     return (
       <View style={styles.emptyState}>
-        <Text style={styles.emptyStateIcon}>🤍</Text>
+        <Icon name="heart" size={64} color={COLORS.gray400} style="line" />
         <Text style={styles.emptyStateTitle}>No Saved Deals</Text>
         <Text style={styles.emptyStateText}>
           Tap the heart icon on any deal to save it for later
@@ -212,10 +213,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: SPACING.xxl,
-  },
-  emptyStateIcon: {
-    fontSize: 64,
-    marginBottom: SPACING.md,
+    gap: SPACING.md,
   },
   emptyStateTitle: {
     fontSize: TYPOGRAPHY.fontSize.xl,

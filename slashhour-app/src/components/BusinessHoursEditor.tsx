@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Switch, TouchableOpacity, Alert } from 'react-native';
+import { Icon } from './icons';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../theme';
 import TimeSelect from './TimeSelect';
 
@@ -111,10 +112,16 @@ export default function BusinessHoursEditor({ hours, onChange }: BusinessHoursEd
       {/* Action Buttons */}
       <View style={styles.actionButtons}>
         <TouchableOpacity style={styles.actionButton} onPress={handleSetWeekdayHours}>
-          <Text style={styles.actionButtonText}>📅 Set Mon-Fri</Text>
+          <View style={styles.actionButtonContent}>
+            <Icon name="calendar" size={16} color={COLORS.textPrimary} style="line" />
+            <Text style={styles.actionButtonText}>Set Mon-Fri</Text>
+          </View>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton} onPress={handleCopyToAll}>
-          <Text style={styles.actionButtonText}>📋 Copy to All</Text>
+          <View style={styles.actionButtonContent}>
+            <Icon name="clipboard" size={16} color={COLORS.textPrimary} style="line" />
+            <Text style={styles.actionButtonText}>Copy to All</Text>
+          </View>
         </TouchableOpacity>
       </View>
 
@@ -189,11 +196,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.borderLight,
   },
+  actionButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xs,
+  },
   actionButtonText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     color: COLORS.textPrimary,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    textAlign: 'center',
   },
   dayRow: {
     marginBottom: SPACING.lg,

@@ -16,6 +16,7 @@ import CountdownBox from '../../components/CountdownBox';
 import StockBar from '../../components/StockBar';
 import FollowButton from '../../components/FollowButton';
 import ImageCarousel from '../../components/ImageCarousel';
+import { Icon } from '../../components/icons';
 import { useDealDetail } from '../../hooks/useDealDetail';
 import { useDeal } from '../../hooks/queries/useDealsQuery';
 import { useBookmark } from '../../hooks/useBookmarks';
@@ -113,8 +114,8 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }} edges={['left', 'right', 'bottom']}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: SPACING.xl }}>
-          <Text style={{ fontSize: 48, marginBottom: SPACING.md }}>😕</Text>
-          <Text style={{ fontSize: TYPOGRAPHY.fontSize.lg, color: COLORS.error, textAlign: 'center' }}>
+          <Icon name="face-frown" size={48} color={COLORS.error} style="line" />
+          <Text style={{ fontSize: TYPOGRAPHY.fontSize.lg, color: COLORS.error, textAlign: 'center', marginTop: SPACING.md }}>
             Failed to load deal
           </Text>
           <TouchableOpacity
@@ -150,16 +151,16 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
     const status = deal.status?.toLowerCase();
 
     if (status === 'deleted') {
-      return { badge: '🚫 Deleted', isInactive: true, color: '#757575' };
+      return { badge: 'Deleted', isInactive: true, color: '#757575', icon: 'x-circle' };
     }
     if (status === 'expired') {
-      return { badge: '⏰ Expired', isInactive: true, color: '#FF9800' };
+      return { badge: 'Expired', isInactive: true, color: '#FF9800', icon: 'clock' };
     }
     if (status === 'sold_out') {
-      return { badge: '📦 Sold Out', isInactive: true, color: '#9C27B0' };
+      return { badge: 'Sold Out', isInactive: true, color: '#9C27B0', icon: 'package' };
     }
 
-    return { badge: null, isInactive: false, color: null };
+    return { badge: null, isInactive: false, color: null, icon: null };
   };
 
   const statusInfo = getStatusInfo();
@@ -288,6 +289,9 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
       marginBottom: SPACING.xl,
     },
     statusBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
       paddingHorizontal: SPACING.lg,
       paddingVertical: SPACING.md,
       borderRadius: RADIUS.round,
@@ -384,9 +388,6 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
       elevation: 3,
       zIndex: 10,
     },
-    bookmarkIcon: {
-      fontSize: 18,
-    },
   });
 
   return (
@@ -411,7 +412,12 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
             activeOpacity={0.8}
             disabled={isProcessing}
           >
-            <Text style={styles.bookmarkIcon}>{isBookmarked ? '❤️' : '🤍'}</Text>
+            <Icon
+              name="heart"
+              size={18}
+              color={isBookmarked ? COLORS.error : COLORS.gray400}
+              style={isBookmarked ? 'solid' : 'line'}
+            />
           </TouchableOpacity>
         </View>
 
@@ -485,6 +491,7 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
           {statusInfo.isInactive && (
             <View style={styles.statusBadgeSection}>
               <View style={[styles.statusBadge, { backgroundColor: statusInfo.color }]}>
+                <Icon name={statusInfo.icon as any} size={16} color={COLORS.white} style="solid" />
                 <Text style={styles.statusBadgeText}>{statusInfo.badge}</Text>
               </View>
             </View>

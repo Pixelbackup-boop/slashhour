@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRedemptionHistory } from '../../hooks/useRedemptionHistory';
 import RedemptionCard from '../../components/RedemptionCard';
 import { trackScreenView } from '../../services/analytics';
+import { Icon } from '../../components/icons';
 
 export default function RedemptionHistoryScreen({ navigation }: any) {
   const {
@@ -57,7 +58,7 @@ export default function RedemptionHistoryScreen({ navigation }: any) {
 
     return (
       <View style={styles.emptyState}>
-        <Text style={styles.emptyIcon}>🎉</Text>
+        <Icon name="award" size={64} color={COLORS.textSecondary} style="line" />
         <Text style={styles.emptyTitle}>No Redemptions Yet</Text>
         <Text style={styles.emptyText}>
           Start exploring deals and redeem your first offer to see it here!
@@ -77,7 +78,7 @@ export default function RedemptionHistoryScreen({ navigation }: any) {
 
     return (
       <View style={styles.errorState}>
-        <Text style={styles.errorIcon}>⚠️</Text>
+        <Icon name="alert" size={64} color="#F38181" style="line" />
         <Text style={styles.errorTitle}>Oops!</Text>
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity style={styles.retryButton} onPress={refresh}>
@@ -229,10 +230,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 40,
   },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
   emptyTitle: {
     fontSize: 20,
     fontWeight: '700',
@@ -262,10 +259,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 40,
-  },
-  errorIcon: {
-    fontSize: 64,
-    marginBottom: 16,
   },
   errorTitle: {
     fontSize: 20,

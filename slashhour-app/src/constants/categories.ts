@@ -11,10 +11,12 @@
  * Future: This can be fetched from admin API instead of hardcoded
  */
 
+import { IconName } from '../components/icons';
+
 export interface Category {
   id: string;
   label: string;
-  icon: string;
+  icon: IconName;
   description?: string;
 }
 
@@ -28,49 +30,49 @@ export const CATEGORIES: Category[] = [
   {
     id: 'restaurant',
     label: 'Restaurant',
-    icon: '🍽️',
+    icon: 'building',
     description: 'Restaurants, cafes, and eateries',
   },
   {
     id: 'grocery',
     label: 'Grocery',
-    icon: '🛒',
+    icon: 'cart',
     description: 'Supermarkets and grocery stores',
   },
   {
     id: 'fashion',
     label: 'Fashion',
-    icon: '👕',
+    icon: 'shopping-bag',
     description: 'Clothing and accessories',
   },
   {
     id: 'shoes',
     label: 'Shoes',
-    icon: '👟',
+    icon: 'shopping-bag',
     description: 'Footwear and shoe stores',
   },
   {
     id: 'electronics',
     label: 'Electronics',
-    icon: '📱',
+    icon: 'lightning',
     description: 'Tech gadgets and electronics',
   },
   {
     id: 'home_living',
     label: 'Home & Living',
-    icon: '🏠',
+    icon: 'home-simple',
     description: 'Furniture and home decor',
   },
   {
     id: 'beauty',
     label: 'Beauty',
-    icon: '💄',
+    icon: 'star',
     description: 'Cosmetics and beauty products',
   },
   {
     id: 'health',
     label: 'Health',
-    icon: '⚕️',
+    icon: 'shield',
     description: 'Health and wellness',
   },
 ];

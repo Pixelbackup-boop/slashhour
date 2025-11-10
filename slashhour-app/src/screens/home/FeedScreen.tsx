@@ -13,6 +13,7 @@ import DealCardSkeleton from '../../components/DealCardSkeleton';
 import { useFeed } from '../../hooks/useFeed';
 import { useDealNavigation } from '../../hooks/useDealNavigation';
 import { useTheme } from '../../context/ThemeContext';
+import { Icon } from '../../components/icons';
 import { TYPOGRAPHY, SPACING, LAYOUT } from '../../theme';
 import { STATIC_RADIUS } from '../../theme/constants';
 
@@ -67,10 +68,6 @@ export default function FeedScreen() {
       fontSize: TYPOGRAPHY.fontSize.md,
       color: colors.textSecondary,
     },
-    errorText: {
-      fontSize: 64,
-      marginBottom: SPACING.md,
-    },
     errorMessage: {
       fontSize: TYPOGRAPHY.fontSize.md,
       color: colors.white,
@@ -80,10 +77,6 @@ export default function FeedScreen() {
       textAlign: 'center',
       marginBottom: SPACING.sm,
       fontWeight: TYPOGRAPHY.fontWeight.medium,
-    },
-    emptyText: {
-      fontSize: 64,
-      marginBottom: SPACING.md,
     },
     emptyMessage: {
       ...TYPOGRAPHY.styles.h3,
@@ -136,7 +129,7 @@ export default function FeedScreen() {
     return (
       <SafeAreaView style={styles.container} edges={[]}>
         <View style={styles.centerContainer}>
-          <Text style={styles.errorText}>😕</Text>
+          <Icon name="face-frown" size={48} color={colors.textSecondary} style="line" />
           <Text style={styles.errorMessage}>{error}</Text>
         </View>
       </SafeAreaView>
@@ -147,7 +140,7 @@ export default function FeedScreen() {
     return (
       <SafeAreaView style={styles.container} edges={[]}>
         <View style={styles.centerContainer}>
-          <Text style={styles.emptyText}>📭</Text>
+          <Icon name="inbox" size={64} color={colors.textSecondary} style="line" />
           <Text style={styles.emptyMessage}>No deals yet!</Text>
           <Text style={styles.emptySubtext}>
             Follow some businesses to see their deals here

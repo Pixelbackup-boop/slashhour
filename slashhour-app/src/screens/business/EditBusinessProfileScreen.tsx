@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEditBusinessProfile } from '../../hooks/useEditBusinessProfile';
 import { trackScreenView } from '../../services/analytics';
+import { Icon } from '../../components/icons';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, SIZES } from '../../theme';
 import { Business, BusinessCategory } from '../../types/models';
 import LocationService from '../../services/location/LocationService';
@@ -234,7 +235,8 @@ export default function EditBusinessProfileScreen({ route, navigation }: EditBus
 
       {error && (
         <View style={styles.errorBanner}>
-          <Text style={styles.errorText}>⚠️ {error}</Text>
+          <Icon name="alert" size={16} color={COLORS.white} style="line" />
+          <Text style={styles.errorText}>{error}</Text>
         </View>
       )}
 
@@ -252,7 +254,10 @@ export default function EditBusinessProfileScreen({ route, navigation }: EditBus
             placeholderTextColor={COLORS.textTertiary}
           />
 
-          <Text style={styles.label}>URL Slug * {isSlugLocked && '🔒'}</Text>
+          <View style={styles.labelRow}>
+            <Text style={styles.label}>URL Slug *</Text>
+            {isSlugLocked && <Icon name="lock" size={16} color={COLORS.textSecondary} style="solid" />}
+          </View>
           <TextInput
             style={[
               styles.input,
@@ -272,7 +277,10 @@ export default function EditBusinessProfileScreen({ route, navigation }: EditBus
             <Text style={styles.slugPreviewUrl}>{formatSlugUrl(formData.slug || 'your-shop-name')}</Text>
           </View>
           {isSlugLocked && (
-            <Text style={styles.slugLockedMessage}>🔒 URL slug cannot be changed after it's set</Text>
+            <View style={styles.slugLockedMessageContainer}>
+              <Icon name="lock" size={14} color={COLORS.textSecondary} style="solid" />
+              <Text style={styles.slugLockedMessage}>URL slug cannot be changed after it's set</Text>
+            </View>
           )}
           {!isSlugLocked && slugError && (
             <Text style={styles.validationError}>{slugError}</Text>
@@ -300,7 +308,10 @@ export default function EditBusinessProfileScreen({ route, navigation }: EditBus
             {formData.description?.length || 0}/150 characters
           </Text>
 
-          <Text style={styles.label}>Category * {!categoryRestriction.canChange && '🔒'}</Text>
+          <View style={styles.labelRow}>
+            <Text style={styles.label}>Category *</Text>
+            {!categoryRestriction.canChange && <Icon name="lock" size={16} color={COLORS.textSecondary} style="solid" />}
+          </View>
           <TouchableOpacity
             style={[
               styles.categoryContainer,
@@ -315,9 +326,12 @@ export default function EditBusinessProfileScreen({ route, navigation }: EditBus
             {categoryRestriction.canChange ? (
               <Text style={styles.categoryNote}>Tap to change • Can only be changed once per month</Text>
             ) : (
-              <Text style={styles.categoryLockedNote}>
-                🔒 Can be changed again in {categoryRestriction.daysRemaining} day(s)
-              </Text>
+              <View style={styles.categoryLockedNoteContainer}>
+                <Icon name="lock" size={12} color={COLORS.textSecondary} style="solid" />
+                <Text style={styles.categoryLockedNote}>
+                  Can be changed again in {categoryRestriction.daysRemaining} day(s)
+                </Text>
+              </View>
             )}
           </TouchableOpacity>
         </View>
@@ -360,7 +374,10 @@ export default function EditBusinessProfileScreen({ route, navigation }: EditBus
         {/* Tab Content */}
         {activeTab === 'contact' && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>📞 Contact Information</Text>
+            <View style={styles.sectionTitleRow}>
+            <Icon name="phone" size={20} color={COLORS.textPrimary} style="line" />
+            <Text style={styles.sectionTitle}>Contact Information</Text>
+          </View>
 
             <Text style={styles.label}>Phone</Text>
             <TextInput
@@ -398,7 +415,10 @@ export default function EditBusinessProfileScreen({ route, navigation }: EditBus
 
         {activeTab === 'location' && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>📍 Location</Text>
+            <View style={styles.sectionTitleRow}>
+              <Icon name="marker" size={20} color={COLORS.textPrimary} style="line" />
+              <Text style={styles.sectionTitle}>Location</Text>
+            </View>
 
             <TouchableOpacity
               style={styles.locationButton}
@@ -408,7 +428,7 @@ export default function EditBusinessProfileScreen({ route, navigation }: EditBus
               {isGettingLocation ? (
                 <ActivityIndicator color={COLORS.white} size="small" />
               ) : (
-                <Text style={styles.locationButtonIcon}>📍</Text>
+                <Icon name="marker" size={20} color={COLORS.white} style="line" />
               )}
               <Text style={styles.locationButtonText}>
                 {isGettingLocation ? 'Getting Location...' : 'Use My Current Location'}
@@ -576,13 +596,16 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
   errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: COLORS.error,
     padding: SPACING.md,
+    gap: SPACING.sm,
   },
   errorText: {
     color: COLORS.white,
     fontSize: TYPOGRAPHY.fontSize.sm,
-    textAlign: 'center',
     fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
   scrollView: {
@@ -593,17 +616,27 @@ const styles = StyleSheet.create({
     padding: SPACING.lg,
     marginTop: SPACING.md,
   },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginBottom: SPACING.lg,
+  },
   sectionTitle: {
     ...TYPOGRAPHY.styles.h3,
     color: COLORS.textPrimary,
-    marginBottom: SPACING.lg,
+  },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    marginBottom: SPACING.xs,
+    marginTop: SPACING.md,
   },
   label: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     color: COLORS.textSecondary,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    marginBottom: SPACING.xs,
-    marginTop: SPACING.md,
   },
   input: {
     borderWidth: 1,
@@ -663,10 +696,6 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
     height: SIZES.button.lg,
   },
-  locationButtonIcon: {
-    fontSize: 20,
-    marginRight: SPACING.xs,
-  },
   locationButtonText: {
     ...TYPOGRAPHY.styles.button,
     color: COLORS.textInverse,
@@ -679,11 +708,16 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.gray50,
     color: COLORS.textTertiary,
   },
+  slugLockedMessageContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    marginTop: SPACING.xs,
+    paddingHorizontal: SPACING.xs,
+  },
   slugLockedMessage: {
     fontSize: TYPOGRAPHY.fontSize.xs,
     color: COLORS.textSecondary,
-    marginTop: SPACING.xs,
-    paddingHorizontal: SPACING.xs,
     fontStyle: 'italic',
   },
   slugPreview: {
@@ -748,11 +782,16 @@ const styles = StyleSheet.create({
   categoryLocked: {
     opacity: 0.6,
   },
+  categoryLockedNoteContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    marginTop: SPACING.xs,
+  },
   categoryLockedNote: {
     fontSize: TYPOGRAPHY.fontSize.xs,
     color: COLORS.textSecondary,
     fontStyle: 'italic',
-    marginTop: SPACING.xs,
   },
   modalOverlay: {
     flex: 1,

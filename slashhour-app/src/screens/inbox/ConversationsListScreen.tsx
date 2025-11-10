@@ -15,6 +15,7 @@ import { useSocket } from '../../hooks/useSocket';
 import { useConversations } from '../../hooks/useConversations';
 import { trackScreenView } from '../../services/analytics';
 import LogoHeader from '../../components/LogoHeader';
+import { Icon } from '../../components/icons';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, SIZES, LAYOUT } from '../../theme';
 import { Conversation } from '../../types/models';
 
@@ -135,7 +136,7 @@ export default function ConversationsListScreen({ navigation }: any) {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <Text style={styles.emptyStateIcon}>💬</Text>
+      <Icon name="message" size={64} color={COLORS.textSecondary} style="line" />
       <Text style={styles.emptyStateTitle}>No Messages Yet</Text>
       <Text style={styles.emptyStateText}>
         Start a conversation with a business by tapping the message button on their profile
@@ -145,7 +146,7 @@ export default function ConversationsListScreen({ navigation }: any) {
 
   const renderError = () => (
     <View style={styles.emptyState}>
-      <Text style={styles.emptyStateIcon}>⚠️</Text>
+      <Icon name="alert" size={64} color={COLORS.error} style="line" />
       <Text style={styles.emptyStateTitle}>Error Loading Messages</Text>
       <Text style={styles.emptyStateText}>{error}</Text>
       <TouchableOpacity style={styles.retryButton} onPress={refresh}>
@@ -358,10 +359,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: SPACING.xxl,
     paddingBottom: LAYOUT.tabBarHeight + 120,
-  },
-  emptyStateIcon: {
-    fontSize: 80,
-    marginBottom: SPACING.lg,
   },
   emptyStateTitle: {
     ...TYPOGRAPHY.styles.h1,

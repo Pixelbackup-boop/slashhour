@@ -9,6 +9,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
+import { Icon } from '../icons';
 import { TYPOGRAPHY, SPACING, RADIUS } from '../../theme';
 import { BusinessReviewsResponse } from '../../types/models';
 import { reviewService } from '../../services/api/reviewService';
@@ -120,7 +121,17 @@ export default function ReviewList({
             <Text style={styles.averageRatingNumber}>
               {reviewData.averageRating.toFixed(1)}
             </Text>
-            <Text style={styles.ratingStars}>⭐⭐⭐⭐⭐</Text>
+            <View style={styles.ratingStarsContainer}>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Icon
+                  key={i}
+                  name="star"
+                  size={20}
+                  color={i <= Math.round(reviewData.averageRating) ? colors.warning : colors.gray300}
+                  style={i <= Math.round(reviewData.averageRating) ? 'solid' : 'line'}
+                />
+              ))}
+            </View>
             <Text style={styles.totalReviewsText}>
               Based on {reviewData.totalReviews}{' '}
               {reviewData.totalReviews === 1 ? 'review' : 'reviews'}
@@ -155,7 +166,7 @@ export default function ReviewList({
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <Text style={styles.emptyStateIcon}>⭐</Text>
+      <Icon name="star" size={64} color={colors.textSecondary} style="line" />
       <Text style={styles.emptyStateText}>No reviews yet</Text>
       <Text style={styles.emptyStateSubtext}>
         Be the first to review this business!
@@ -221,8 +232,9 @@ export default function ReviewList({
       color: colors.textPrimary,
       marginBottom: SPACING.xs,
     },
-    ratingStars: {
-      fontSize: 20,
+    ratingStarsContainer: {
+      flexDirection: 'row',
+      gap: 4,
       marginBottom: SPACING.xs,
     },
     totalReviewsText: {
@@ -274,10 +286,6 @@ export default function ReviewList({
       alignItems: 'center',
       paddingVertical: SPACING.xxl,
       paddingHorizontal: SPACING.lg,
-    },
-    emptyStateIcon: {
-      fontSize: 64,
-      marginBottom: SPACING.md,
     },
     emptyStateText: {
       fontSize: TYPOGRAPHY.fontSize.lg,

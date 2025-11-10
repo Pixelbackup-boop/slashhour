@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useSignUp } from '../../hooks/useSignUp';
 import { trackScreenView } from '../../services/analytics';
+import { Icon } from '../../components/icons';
 import { COLORS, TYPOGRAPHY, SPACING, SIZES } from '../../theme';
 import { STATIC_RADIUS } from '../../theme/constants';
 
@@ -102,7 +103,7 @@ export default function SignUpScreen({ navigation }: any) {
                 onPress={() => setShowPassword(!showPassword)}
                 hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
               >
-                <Text style={styles.eyeIcon}>{showPassword ? '👁️' : '👁️‍🗨️'}</Text>
+                <Icon name={showPassword ? 'eye' : 'eye-off'} size={SIZES.icon.md} color={COLORS.textSecondary} style="line" />
               </TouchableOpacity>
             </View>
 
@@ -122,7 +123,7 @@ export default function SignUpScreen({ navigation }: any) {
                 onPress={() => setShowConfirmPassword(!showConfirmPassword)}
                 hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
               >
-                <Text style={styles.eyeIcon}>{showConfirmPassword ? '👁️' : '👁️‍🗨️'}</Text>
+                <Icon name={showConfirmPassword ? 'eye' : 'eye-off'} size={SIZES.icon.md} color={COLORS.textSecondary} style="line" />
               </TouchableOpacity>
             </View>
 
@@ -225,9 +226,6 @@ const styles = StyleSheet.create({
     right: SPACING.md,
     top: Platform.OS === 'android' ? 16 : SPACING.md,
     padding: SPACING.xs,
-  },
-  eyeIcon: {
-    fontSize: SIZES.icon.md,
   },
   button: {
     backgroundColor: COLORS.primary,

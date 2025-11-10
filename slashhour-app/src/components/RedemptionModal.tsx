@@ -8,6 +8,7 @@ import {
   ScrollView,
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
+import { Icon } from './icons';
 
 interface RedemptionModalProps {
   visible: boolean;
@@ -37,7 +38,7 @@ export default function RedemptionModal({
         <View style={styles.modalView}>
           <ScrollView showsVerticalScrollIndicator={false}>
             <View style={styles.header}>
-              <Text style={styles.successIcon}>✅</Text>
+              <Icon name="check" size={64} color="#6BCB77" style="solid" />
               <Text style={styles.headerTitle}>Deal Redeemed!</Text>
               <Text style={styles.savingsText}>You saved ${savings}</Text>
             </View>
@@ -110,10 +111,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: 24,
-  },
-  successIcon: {
-    fontSize: 64,
-    marginBottom: 8,
+    gap: 8,
   },
   headerTitle: {
     fontSize: 24,

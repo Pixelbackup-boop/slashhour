@@ -18,6 +18,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { trackScreenView } from '../../services/analytics';
 import { TYPOGRAPHY, SPACING, RADIUS, SHADOWS, COLORS, LAYOUT } from '../../theme';
 import { CATEGORIES, getAllCategoryIds, formatSelectedCategories } from '../../constants/categories';
+import { Icon } from '../../components/icons';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -364,7 +365,7 @@ export default function NotificationSettingsScreen({ navigation }: NotificationS
             <View style={styles.accordionContent}>
               {/* Description */}
               <View style={styles.descriptionRow}>
-                <Text style={[styles.descriptionIcon, { color: colors.textSecondary }]}>📍</Text>
+                <Icon name="marker" size={16} color={colors.textSecondary} style="line" />
                 <Text style={[styles.settingDescription, dynamicStyles.settingDescription]}>
                   Get notified about deals near you
                 </Text>
@@ -432,7 +433,7 @@ export default function NotificationSettingsScreen({ navigation }: NotificationS
                         activeOpacity={0.7}
                       >
                         <View style={styles.categoryRowLeft}>
-                          <Text style={styles.categoryIcon}>{category.icon}</Text>
+                          <Icon name={category.icon} size={20} color={colors.textPrimary} style="line" />
                           <Text style={[styles.categoryLabel, { color: colors.textPrimary }]}>
                             {category.label}
                           </Text>
@@ -492,7 +493,7 @@ export default function NotificationSettingsScreen({ navigation }: NotificationS
           {notifyNewDeals && newDealsExpanded && (
             <View style={styles.accordionContent}>
               <View style={styles.descriptionRow}>
-                <Text style={[styles.descriptionIcon, { color: colors.textSecondary }]}>🔔</Text>
+                <Icon name="bell" size={16} color={colors.textSecondary} style="line" />
                 <Text style={[styles.settingDescription, dynamicStyles.settingDescription]}>
                   Get notified when businesses you follow post new deals
                 </Text>
@@ -556,7 +557,7 @@ export default function NotificationSettingsScreen({ navigation }: NotificationS
                         activeOpacity={0.7}
                       >
                         <View style={styles.categoryRowLeft}>
-                          <Text style={styles.categoryIcon}>{category.icon}</Text>
+                          <Icon name={category.icon} size={20} color={colors.textPrimary} style="line" />
                           <Text style={[styles.categoryLabel, { color: colors.textPrimary }]}>
                             {category.label}
                           </Text>
@@ -680,7 +681,7 @@ export default function NotificationSettingsScreen({ navigation }: NotificationS
                         activeOpacity={0.7}
                       >
                         <View style={styles.categoryRowLeft}>
-                          <Text style={styles.categoryIcon}>{category.icon}</Text>
+                          <Icon name={category.icon} size={20} color={colors.textPrimary} style="line" />
                           <Text style={[styles.categoryLabel, { color: colors.textPrimary }]}>
                             {category.label}
                           </Text>
@@ -795,10 +796,6 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
     gap: SPACING.xs,
   },
-  descriptionIcon: {
-    fontSize: 16,
-    marginTop: 2,
-  },
 
   // Categories Summary Button
   categoriesSummary: {
@@ -865,10 +862,7 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
     color: COLORS.textPrimary,
-  },
-  categoryIcon: {
-    fontSize: 18,
-    marginRight: SPACING.sm,
+    marginLeft: SPACING.sm,
   },
   checkbox: {
     width: 20,

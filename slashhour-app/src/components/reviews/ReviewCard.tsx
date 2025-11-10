@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
+import { Icon } from '../icons';
 import { TYPOGRAPHY, SPACING, RADIUS } from '../../theme';
 import { Review } from '../../types/models';
 
@@ -27,9 +28,13 @@ export default function ReviewCard({ review }: ReviewCardProps) {
 
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, index) => (
-      <Text key={index} style={styles.star}>
-        {index < rating ? '⭐' : '☆'}
-      </Text>
+      <Icon
+        key={index}
+        name="star"
+        size={16}
+        color={index < rating ? colors.warning : colors.gray300}
+        style={index < rating ? 'solid' : 'line'}
+      />
     ));
   };
 
@@ -94,11 +99,8 @@ export default function ReviewCard({ review }: ReviewCardProps) {
     },
     starsContainer: {
       flexDirection: 'row',
+      gap: 2,
       marginBottom: SPACING.sm,
-    },
-    star: {
-      fontSize: 16,
-      marginRight: 2,
     },
     reviewText: {
       fontSize: TYPOGRAPHY.fontSize.sm,

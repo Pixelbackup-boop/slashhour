@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { trackScreenView } from '../../services/analytics';
+import { Icon } from '../../components/icons';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, SIZES } from '../../theme';
 
 export default function InboxScreen({ navigation }: any) {
@@ -15,13 +16,13 @@ export default function InboxScreen({ navigation }: any) {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Messages</Text>
         <TouchableOpacity style={styles.composeButton}>
-          <Text style={styles.composeIcon}>✏️</Text>
+          <Icon name="edit" size={SIZES.icon.md} color={COLORS.textPrimary} style="line" />
         </TouchableOpacity>
       </View>
 
       {/* Empty State */}
       <View style={styles.emptyState}>
-        <Text style={styles.emptyStateIcon}>💬</Text>
+        <Icon name="message" size={64} color={COLORS.textSecondary} style="line" />
         <Text style={styles.emptyStateTitle}>No Messages Yet</Text>
         <Text style={styles.emptyStateText}>
           Messages from businesses and support will appear here
@@ -77,19 +78,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  composeIcon: {
-    fontSize: SIZES.icon.md,
-  },
   emptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: SPACING.xxl,
     paddingBottom: 120,
-  },
-  emptyStateIcon: {
-    fontSize: 80,
-    marginBottom: SPACING.lg,
   },
   emptyStateTitle: {
     ...TYPOGRAPHY.styles.h1,

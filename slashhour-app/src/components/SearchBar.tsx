@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, TextInput, TouchableOpacity, Text, StyleSheet, Platform } from 'react-native';
+import { Icon } from './icons';
 
 interface SearchBarProps {
   value: string;
@@ -27,7 +28,7 @@ export default function SearchBar({
   return (
     <View style={styles.container}>
       <View style={styles.searchBox}>
-        <Text style={styles.searchIcon}>🔍</Text>
+        <Icon name="search" size={20} color="#666" style="line" />
         <TextInput
           style={styles.input}
           value={value}
@@ -77,11 +78,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 12,
     height: 48,
-  },
-  searchIcon: {
-    fontSize: 20,
-    marginRight: 8,
-    color: '#666',
+    gap: 8,
   },
   input: {
     flex: 1,

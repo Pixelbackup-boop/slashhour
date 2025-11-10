@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import FollowButton from '../FollowButton';
+import { Icon } from '../icons';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../../theme';
 
 interface BusinessStats {
@@ -70,7 +71,7 @@ function BusinessHeader({
               {isUploading ? (
                 <ActivityIndicator size="small" color={COLORS.white} />
               ) : (
-                <Text style={styles.editBadgeIcon}>✏️</Text>
+                <Icon name="edit" size={14} color={COLORS.white} style="line" />
               )}
             </View>
           )}
@@ -107,7 +108,7 @@ function BusinessHeader({
               onPress={() => Alert.alert('Notifications', 'Notification settings coming soon!')}
               activeOpacity={0.7}
             >
-              <Text style={styles.iconButtonText}>🔔</Text>
+              <Icon name="bell" size={20} color={COLORS.textPrimary} style="line" />
             </TouchableOpacity>
 
             {/* Message Button (Icon Only) */}
@@ -116,7 +117,7 @@ function BusinessHeader({
               onPress={onMessagePress}
               activeOpacity={0.7}
             >
-              <Text style={styles.iconButtonText}>✉️</Text>
+              <Icon name="mail" size={20} color={COLORS.textPrimary} style="line" />
             </TouchableOpacity>
 
             {/* Follow Button - Only show for non-owners */}
@@ -139,7 +140,7 @@ function BusinessHeader({
         <Text style={styles.businessName}>{businessName}</Text>
         {isOwner && (
           <TouchableOpacity onPress={onEditPress} style={styles.editButton}>
-            <Text style={styles.editIcon}>✏️</Text>
+            <Icon name="edit" size={14} color={COLORS.white} style="line" />
           </TouchableOpacity>
         )}
       </View>
@@ -198,9 +199,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: COLORS.white,
   },
-  editBadgeIcon: {
-    fontSize: 14,
-  },
   businessAvatarText: {
     fontSize: 48,
     fontWeight: TYPOGRAPHY.fontWeight.bold,
@@ -232,9 +230,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  editIcon: {
-    fontSize: 14,
-  },
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -261,9 +256,6 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.round,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  iconButtonText: {
-    fontSize: 20,
   },
   followButtonInRow: {
     minWidth: 100,

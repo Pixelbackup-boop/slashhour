@@ -9,6 +9,7 @@ import { useTheme } from '../context/ThemeContext';
 import { SHADOWS, SPACING } from '../theme';
 import { navigationRef } from './navigationRef';
 import AppHeader from '../components/AppHeader';
+import { Icon, IconName } from '../components/icons';
 import LoginScreen from '../screens/auth/LoginScreen';
 import SignUpScreen from '../screens/auth/SignUpScreen';
 import HomeScreen from '../screens/home/HomeScreen';
@@ -101,6 +102,8 @@ const HEADER_WITH_BACK_FADE = {
  * Helper function to create common stack screens with AppHeader
  * This reduces code duplication across nested navigators
  * Now using static header options for performance
+ *
+ * Includes Chat screen so users can message businesses from any tab
  */
 function createCommonStackScreens(StackNavigator: any) {
   return (
@@ -119,6 +122,11 @@ function createCommonStackScreens(StackNavigator: any) {
         name="BusinessProfile"
         component={BusinessProfileScreen}
         options={HEADER_WITH_BACK_BUTTON}
+      />
+      <StackNavigator.Screen
+        name="Chat"
+        component={ChatScreen}
+        options={{ headerShown: false }}
       />
     </>
   );
@@ -353,7 +361,7 @@ function MainTabNavigator() {
         options={{
           tabBarLabel: 'Home',
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon icon="🏠" focused={focused} />
+            <TabIcon iconName="home" color={color} focused={focused} />
           ),
         }}
       />
@@ -363,7 +371,7 @@ function MainTabNavigator() {
         options={{
           tabBarLabel: 'Search',
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon icon="🔍" focused={focused} />
+            <TabIcon iconName="search" color={color} focused={focused} />
           ),
         }}
       />
@@ -373,7 +381,7 @@ function MainTabNavigator() {
         options={{
           tabBarLabel: 'Alerts',
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon icon="🔔" focused={focused} />
+            <TabIcon iconName="bell" color={color} focused={focused} />
           ),
           // Show unread notification count badge
           tabBarBadge: unreadNotificationCount > 0 ? (unreadNotificationCount > 99 ? '99+' : unreadNotificationCount) : undefined,
@@ -396,7 +404,7 @@ function MainTabNavigator() {
         options={{
           tabBarLabel: 'Inbox',
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon icon="💬" focused={focused} />
+            <TabIcon iconName="mail" color={color} focused={focused} />
           ),
           // Show unread message count badge
           tabBarBadge: totalUnreadCount > 0 ? (totalUnreadCount > 99 ? '99+' : totalUnreadCount) : undefined,
@@ -419,7 +427,7 @@ function MainTabNavigator() {
         options={{
           tabBarLabel: 'Profile',
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon icon="👤" focused={focused} />
+            <TabIcon iconName="user" color={color} focused={focused} />
           ),
         }}
       />
@@ -427,26 +435,23 @@ function MainTabNavigator() {
   );
 }
 
-// Tab Icon Component with emoji support
+// Tab Icon Component with icon support
 interface TabIconProps {
-  icon: string;
+  iconName: IconName;
+  color: string;
   focused: boolean;
-  isPrimary?: boolean;
 }
 
-function TabIcon({ icon, focused }: TabIconProps) {
+function TabIcon({ iconName, color, focused }: TabIconProps) {
   return (
-    <Text style={[styles.tabIcon, { opacity: focused ? 1 : 0.6 }]}>
-      {icon}
-    </Text>
+    <Icon
+      name={iconName}
+      size={focused ? 26 : 24}
+      color={color}
+      style={focused ? 'solid' : 'line'}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  tabIcon: {
-    fontSize: 24,
-  },
-});
 
 export default function AppNavigator() {
   const { isDark, colors } = useTheme();

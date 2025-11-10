@@ -16,6 +16,7 @@ import SearchFilters from '../../components/SearchFilters';
 import FeedDealCard from '../../components/FeedDealCard';
 import BusinessCard from '../../components/BusinessCard';
 import LogoHeader from '../../components/LogoHeader';
+import { Icon } from '../../components/icons';
 import { useTheme } from '../../context/ThemeContext';
 import { TYPOGRAPHY, SPACING, RADIUS, LAYOUT } from '../../theme';
 
@@ -107,10 +108,6 @@ export default function SearchScreen({ navigation }: any) {
       alignItems: 'center',
       padding: SPACING.xxl,
     },
-    emptyStateIcon: {
-      fontSize: 64,
-      marginBottom: SPACING.md,
-    },
     emptyStateTitle: {
       ...TYPOGRAPHY.styles.h2,
       color: colors.textPrimary,
@@ -195,7 +192,7 @@ export default function SearchScreen({ navigation }: any) {
     if (!hasSearched) {
       return (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyStateIcon}>🔍</Text>
+          <Icon name="search" size={64} color={colors.textSecondary} style="line" />
           <Text style={styles.emptyStateTitle}>Search Slashhour</Text>
           <Text style={styles.emptyStateText}>
             Find amazing deals and businesses near you
@@ -224,7 +221,7 @@ export default function SearchScreen({ navigation }: any) {
     if (error) {
       return (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyStateIcon}>⚠️</Text>
+          <Icon name="alert" size={64} color={colors.error} style="line" />
           <Text style={styles.emptyStateTitle}>Search Error</Text>
           <Text style={styles.emptyStateText}>{error}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={search}>
@@ -240,7 +237,7 @@ export default function SearchScreen({ navigation }: any) {
     if (hasNoResults) {
       return (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyStateIcon}>😔</Text>
+          <Icon name="face-frown" size={64} color={COLORS.textSecondary} style="line" />
           <Text style={styles.emptyStateTitle}>No Results Found</Text>
           <Text style={styles.emptyStateText}>
             Try adjusting your search or filters

@@ -12,6 +12,7 @@ import {
 import { useLogin } from '../../hooks/useLogin';
 import { useAuthStore } from '../../stores/useAuthStore';
 import { useTheme } from '../../context/ThemeContext';
+import { Icon } from '../../components/icons';
 import { TYPOGRAPHY, SPACING, SIZES } from '../../theme';
 import { STATIC_RADIUS } from '../../theme/constants';
 
@@ -108,9 +109,6 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
       top: Platform.OS === 'android' ? 16 : SPACING.md,
       padding: SPACING.xs,
     },
-    eyeIcon: {
-      fontSize: SIZES.icon.md,
-    },
     button: {
       backgroundColor: colors.primary,
       paddingHorizontal: SPACING.lg,
@@ -199,7 +197,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
               onPress={() => setShowPassword(!showPassword)}
               hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
             >
-              <Text style={styles.eyeIcon}>{showPassword ? '👁️' : '👁️‍🗨️'}</Text>
+              <Icon name={showPassword ? 'eye' : 'eye-off'} size={SIZES.icon.md} color={colors.textSecondary} style="line" />
             </TouchableOpacity>
           </View>
 

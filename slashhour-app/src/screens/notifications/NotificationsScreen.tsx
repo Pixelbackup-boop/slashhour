@@ -14,6 +14,7 @@ import { Image } from 'expo-image';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Swipeable } from 'react-native-gesture-handler';
 import LogoHeader from '../../components/LogoHeader';
+import { Icon } from '../../components/icons';
 import notificationService, {
   Notification,
   NotificationsResponse,
@@ -183,7 +184,7 @@ const NotificationsScreen: React.FC = () => {
         onPress={() => handleDelete(notificationId)}
       >
         <Animated.View style={[styles.deleteActionContent, { transform: [{ scale }] }]}>
-          <Text style={styles.deleteActionText}>🗑️</Text>
+          <Icon name="trash" size={24} color="#FFFFFF" style="line" />
           <Text style={styles.deleteActionLabel}>Delete</Text>
         </Animated.View>
       </TouchableOpacity>
@@ -243,7 +244,7 @@ const NotificationsScreen: React.FC = () => {
 
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
-      <Text style={styles.emptyIcon}>🔔</Text>
+      <Icon name="bell" size={64} color="#999999" style="line" />
       <Text style={styles.emptyTitle}>No Notifications</Text>
       <Text style={styles.emptyText}>
         You'll see notifications here when businesses you follow post new deals
@@ -429,10 +430,7 @@ const styles = StyleSheet.create({
   deleteActionContent: {
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  deleteActionText: {
-    fontSize: 28,
-    marginBottom: 4,
+    gap: 4,
   },
   deleteActionLabel: {
     color: '#FFFFFF',
@@ -444,10 +442,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 40,
-  },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: 16,
   },
   emptyTitle: {
     fontSize: 20,

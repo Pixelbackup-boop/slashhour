@@ -22,6 +22,7 @@ import StatCard from '../../components/StatCard';
 import InfoRow from '../../components/InfoRow';
 import LogoHeader from '../../components/LogoHeader';
 import RightDrawer from '../../components/RightDrawer';
+import { Icon } from '../../components/icons';
 import { TYPOGRAPHY, SPACING, RADIUS, SHADOWS, SIZES, LAYOUT, COLORS } from '../../theme';
 
 export default function ProfileScreen({ navigation }: any) {
@@ -117,12 +118,12 @@ export default function ProfileScreen({ navigation }: any) {
   // Drawer menu items
   const menuItems = [
     {
-      icon: '⚙️',
+      icon: 'settings',
       label: 'Settings',
       onPress: () => navigation.navigate('Settings'),
     },
     {
-      icon: '🔒',
+      icon: 'lock',
       label: 'Privacy',
       onPress: () => {
         // TODO: Navigate to Privacy screen
@@ -130,7 +131,7 @@ export default function ProfileScreen({ navigation }: any) {
       },
     },
     {
-      icon: '❓',
+      icon: 'help-circle',
       label: 'Help',
       onPress: () => {
         // TODO: Navigate to Help screen
@@ -138,7 +139,7 @@ export default function ProfileScreen({ navigation }: any) {
       },
     },
     {
-      icon: '💬',
+      icon: 'message',
       label: 'Support',
       onPress: () => {
         // TODO: Navigate to Support screen
@@ -146,7 +147,7 @@ export default function ProfileScreen({ navigation }: any) {
       },
     },
     {
-      icon: 'ℹ️',
+      icon: 'info',
       label: 'About',
       onPress: () => {
         // TODO: Navigate to About screen
@@ -154,7 +155,7 @@ export default function ProfileScreen({ navigation }: any) {
       },
     },
     {
-      icon: '🚪',
+      icon: 'logout',
       label: 'Logout',
       onPress: handleLogout,
     },
@@ -272,7 +273,7 @@ export default function ProfileScreen({ navigation }: any) {
               {isUpdating ? (
                 <ActivityIndicator size="small" color={colors.white} />
               ) : (
-                <Text style={styles.avatarEditIcon}>✏️</Text>
+                <Icon name="edit" size={14} color={COLORS.white} style="line" />
               )}
             </View>
           </TouchableOpacity>
@@ -324,7 +325,10 @@ export default function ProfileScreen({ navigation }: any) {
           <View style={styles.section}>
             {businesses.length > 0 ? (
               <>
-                <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>🏪 My Shop</Text>
+                <View style={styles.sectionTitleRow}>
+                  <Icon name="building" size={20} color={colors.textPrimary} style="line" />
+                  <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>My Shop</Text>
+                </View>
                 <View style={[styles.infoCard, dynamicStyles.infoCard]}>
                   {businesses.map((business, index) => (
                     <View key={business.id}>
@@ -335,9 +339,7 @@ export default function ProfileScreen({ navigation }: any) {
                       >
                         <View style={styles.businessLeft}>
                           <View style={styles.businessIcon}>
-                            <Text style={styles.businessIconText}>
-                              {business.business_name.charAt(0).toUpperCase()}
-                            </Text>
+                            <Icon name="building" size={24} color={COLORS.white} style="line" />
                           </View>
                           <View style={styles.businessInfo}>
                             <Text style={[styles.businessName, dynamicStyles.businessName]}>{business.business_name}</Text>
@@ -352,10 +354,13 @@ export default function ProfileScreen({ navigation }: any) {
               </>
             ) : (
               <>
-                <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>🏪 Business</Text>
+                <View style={styles.sectionTitleRow}>
+                  <Icon name="building" size={20} color={colors.textPrimary} style="line" />
+                  <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>Business</Text>
+                </View>
                 <View style={[styles.createShopCard, dynamicStyles.createShopCard]}>
                   <View style={styles.createShopIcon}>
-                    <Text style={styles.createShopIconText}>🏪</Text>
+                    <Icon name="building" size={40} color={colors.textPrimary} style="line" />
                   </View>
                   <Text style={[styles.createShopTitle, dynamicStyles.createShopTitle]}>Own a Business?</Text>
                   <Text style={[styles.createShopDescription, dynamicStyles.createShopDescription]}>
@@ -383,7 +388,10 @@ export default function ProfileScreen({ navigation }: any) {
           <>
             {/* Savings Summary */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>💰 Your Savings</Text>
+              <View style={styles.sectionTitleRow}>
+                <Icon name="dollar" size={20} color={colors.textPrimary} style="line" />
+                <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>Your Savings</Text>
+              </View>
               <View style={styles.statsGrid}>
                 <StatCard value={formatCurrency(stats.totalSavings)} label="Total Saved" />
                 <StatCard value={formatCurrency(stats.monthlySavings)} label="This Month" />
@@ -392,7 +400,10 @@ export default function ProfileScreen({ navigation }: any) {
 
             {/* Redemptions */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>🎉 Deals Redeemed</Text>
+              <View style={styles.sectionTitleRow}>
+                <Icon name="award" size={20} color={colors.textPrimary} style="line" />
+                <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>Deals Redeemed</Text>
+              </View>
               <View style={styles.statsGrid}>
                 <StatCard value={stats.totalRedemptions} label="Total Deals" />
                 <StatCard value={stats.monthlyRedemptions} label="This Month" />
@@ -401,7 +412,10 @@ export default function ProfileScreen({ navigation }: any) {
 
             {/* Activity */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>📊 Your Activity</Text>
+              <View style={styles.sectionTitleRow}>
+                <Icon name="chart" size={20} color={colors.textPrimary} style="line" />
+                <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>Your Activity</Text>
+              </View>
               <View style={[styles.infoCard, dynamicStyles.infoCard]}>
                 <InfoRow
                   label="Categories Explored"
@@ -422,7 +436,10 @@ export default function ProfileScreen({ navigation }: any) {
             {/* Savings Impact */}
             {stats.totalSavings > 0 && (
               <View style={styles.impactCard}>
-                <Text style={styles.impactTitle}>🎯 You're Fighting Inflation!</Text>
+                <View style={styles.impactTitleRow}>
+                  <Icon name="target" size={20} color={COLORS.primary} style="line" />
+                  <Text style={styles.impactTitle}>You're Fighting Inflation!</Text>
+                </View>
                 <Text style={styles.impactText}>
                   You've saved {formatCurrency(stats.totalSavings)} on essential goods through Slashhour.
                   That's money back in your pocket!
@@ -439,14 +456,17 @@ export default function ProfileScreen({ navigation }: any) {
 
         {/* Quick Actions */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>📋 Quick Actions</Text>
+          <View style={styles.sectionTitleRow}>
+            <Icon name="list" size={20} color={colors.textPrimary} style="line" />
+            <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>Quick Actions</Text>
+          </View>
           <View style={[styles.infoCard, dynamicStyles.infoCard]}>
             <TouchableOpacity
               style={styles.actionRow}
               onPress={() => navigation.navigate('Bookmarks')}
             >
               <View style={styles.actionLeft}>
-                <Text style={styles.actionIcon}>🤍</Text>
+                <Icon name="heart" size={24} color={colors.textPrimary} style="line" />
                 <Text style={[styles.actionLabel, dynamicStyles.actionText]}>Saved Deals</Text>
               </View>
               <Text style={[styles.actionArrow, dynamicStyles.actionArrow]}>›</Text>
@@ -459,7 +479,7 @@ export default function ProfileScreen({ navigation }: any) {
               onPress={() => navigation.navigate('FollowingList')}
             >
               <View style={styles.actionLeft}>
-                <Text style={styles.actionIcon}>❤️</Text>
+                <Icon name="heart" size={24} color={COLORS.error} style="solid" />
                 <Text style={[styles.actionLabel, dynamicStyles.actionText]}>Following</Text>
               </View>
               <Text style={[styles.actionArrow, dynamicStyles.actionArrow]}>›</Text>
@@ -472,7 +492,7 @@ export default function ProfileScreen({ navigation }: any) {
               onPress={() => navigation.navigate('RedemptionHistory')}
             >
               <View style={styles.actionLeft}>
-                <Text style={styles.actionIcon}>🎫</Text>
+                <Icon name="ticket" size={24} color={colors.textPrimary} style="line" />
                 <Text style={[styles.actionLabel, dynamicStyles.actionText]}>Redemption History</Text>
               </View>
               <Text style={[styles.actionArrow, dynamicStyles.actionArrow]}>›</Text>
@@ -482,7 +502,10 @@ export default function ProfileScreen({ navigation }: any) {
 
         {/* Account Settings */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>⚙️ Account</Text>
+          <View style={styles.sectionTitleRow}>
+            <Icon name="settings" size={20} color={colors.textPrimary} style="line" />
+            <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>Account</Text>
+          </View>
           <View style={[styles.infoCard, dynamicStyles.infoCard]}>
             <InfoRow
               label="Member Since"
@@ -606,10 +629,15 @@ const styles = StyleSheet.create({
   section: {
     padding: SPACING.md,
   },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
+  },
   sectionTitle: {
     ...TYPOGRAPHY.styles.h3,
     color: COLORS.textPrimary,
-    marginBottom: SPACING.md,
   },
   statsGrid: {
     flexDirection: 'row',
@@ -630,10 +658,10 @@ const styles = StyleSheet.create({
   actionLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: SPACING.md,
   },
   actionIcon: {
-    fontSize: SIZES.icon.md,
-    marginRight: SPACING.md,
+    fontSize: 24,
   },
   actionLabel: {
     fontSize: TYPOGRAPHY.fontSize.md,
@@ -659,10 +687,15 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: COLORS.warning,
   },
+  impactTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginBottom: SPACING.sm,
+  },
   impactTitle: {
     ...TYPOGRAPHY.styles.h3,
     color: COLORS.primary,
-    marginBottom: SPACING.sm,
   },
   impactText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
@@ -710,11 +743,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: SPACING.md,
   },
-  businessIconText: {
-    fontSize: 20,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
-    color: COLORS.white,
-  },
   businessInfo: {
     flex: 1,
   },
@@ -744,9 +772,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: SPACING.md,
-  },
-  createShopIconText: {
-    fontSize: 40,
   },
   createShopTitle: {
     ...TYPOGRAPHY.styles.h2,

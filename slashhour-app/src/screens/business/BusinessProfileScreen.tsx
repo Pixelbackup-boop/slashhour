@@ -18,6 +18,7 @@ import { useConversations } from '../../hooks/useConversations';
 import { useTheme } from '../../context/ThemeContext';
 import { trackScreenView } from '../../services/analytics';
 import { dealService } from '../../services/api/dealService';
+import { Icon } from '../../components/icons';
 import ShopDealCard from '../../components/ShopDealCard';
 import DealCardSkeleton from '../../components/DealCardSkeleton';
 import BusinessProfileSkeleton from '../../components/BusinessProfileSkeleton';
@@ -252,10 +253,6 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
       alignItems: 'center',
       padding: SPACING.xxl,
     },
-    errorIcon: {
-      fontSize: 64,
-      marginBottom: SPACING.md,
-    },
     errorMessage: {
       fontSize: TYPOGRAPHY.fontSize.md,
       color: colors.white,
@@ -323,10 +320,6 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
       borderRadius: RADIUS.lg,
       padding: SPACING.xxl,
       alignItems: 'center',
-    },
-    emptyIcon: {
-      fontSize: 64,
-      marginBottom: SPACING.md,
     },
     emptyText: {
       ...TYPOGRAPHY.styles.h3,
@@ -418,7 +411,7 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
   const renderEmptyDeals = useCallback(() => (
     <View style={styles.bottomTabContent}>
       <View style={styles.emptyState}>
-        <Text style={styles.emptyIcon}>📭</Text>
+        <Icon name="inbox" size={64} color={colors.textSecondary} style="line" />
         <Text style={styles.emptyText}>No active deals right now</Text>
         <Text style={styles.emptySubtext}>
           Follow this business to get notified when they post new deals
@@ -426,7 +419,7 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
       </View>
       <View style={{ height: LAYOUT.tabBarHeight + SPACING.lg }} />
     </View>
-  ), []);
+  ), [colors]);
 
   // Render reviews tab
   const renderReviewsTab = useCallback(() => (
@@ -463,7 +456,7 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
     return (
       <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
         <View style={styles.centerContainer}>
-          <Text style={styles.errorIcon}>⚠️</Text>
+          <Icon name="alert" size={64} color={colors.error} style="line" />
           <Text style={styles.errorMessage}>{error || 'Business not found'}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={() => navigation.goBack()}>
             <Text style={styles.retryButtonText}>Go Back</Text>

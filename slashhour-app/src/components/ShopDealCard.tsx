@@ -11,6 +11,7 @@ import { getCategoryImage } from '../utils/categoryImages';
 import { COLORS, TYPOGRAPHY, SPACING } from '../theme';
 import ImageCarousel from './ImageCarousel';
 import { haptics } from '../utils/haptics';
+import { Icon } from './icons';
 
 interface ShopDealCardProps {
   deal: Deal;
@@ -121,7 +122,7 @@ export default React.memo(function ShopDealCard({
 
     // Check if deal is deleted
     if (status === 'deleted') {
-      return { badge: '🚫 Deleted', isInactive: true, color: '#757575' };
+      return { badge: 'Deleted', isInactive: true, color: '#757575', icon: 'x-circle' };
     }
 
     // Check if deal is expired (by status OR by expiration time)
@@ -130,15 +131,15 @@ export default React.memo(function ShopDealCard({
     const isExpiredByTime = expires.getTime() - now.getTime() <= 0;
 
     if (status === 'expired' || isExpiredByTime) {
-      return { badge: '⏰ Expired', isInactive: true, color: '#FF9800' };
+      return { badge: 'Expired', isInactive: true, color: '#FF9800', icon: 'clock' };
     }
 
     // Check if deal is sold out
     if (status === 'sold_out') {
-      return { badge: '📦 Sold Out', isInactive: true, color: '#9C27B0' };
+      return { badge: 'Sold Out', isInactive: true, color: '#9C27B0', icon: 'package' };
     }
 
-    return { badge: null, isInactive: false, color: null };
+    return { badge: null, isInactive: false, color: null, icon: null };
   };
 
   const statusInfo = getStatusInfo();
@@ -174,7 +175,7 @@ export default React.memo(function ShopDealCard({
                 }}
                 activeOpacity={0.8}
               >
-                <Text style={styles.ownerBtnIcon}>✏️</Text>
+                <Icon name="edit" size={16} color={COLORS.textPrimary} style="line" />
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.ownerBtn, styles.deleteBtn]}
@@ -184,7 +185,7 @@ export default React.memo(function ShopDealCard({
                 }}
                 activeOpacity={0.8}
               >
-                <Text style={styles.ownerBtnIcon}>🗑️</Text>
+                <Icon name="trash" size={16} color={COLORS.white} style="line" />
               </TouchableOpacity>
             </View>
           ) : (
@@ -194,7 +195,12 @@ export default React.memo(function ShopDealCard({
               onPress={handleWishlistPress}
               activeOpacity={0.8}
             >
-              <Text style={styles.wishlistIcon}>{isWishlisted ? '❤️' : '🤍'}</Text>
+              <Icon
+                name="heart"
+                size={18}
+                color={isWishlisted ? COLORS.error : COLORS.gray400}
+                style={isWishlisted ? 'solid' : 'line'}
+              />
             </TouchableOpacity>
           )}
         </View>
@@ -219,7 +225,8 @@ export default React.memo(function ShopDealCard({
           {/* Discount Badge and Timer / Status Badge */}
           <View style={styles.discountRow}>
             {statusInfo.isInactive ? (
-              <View style={[styles.statusBadge, { backgroundColor: statusInfo.color }]}>
+              <View style={[styles.statusBadge, statusInfo.color ? { backgroundColor: statusInfo.color } : null]}>
+                <Icon name={statusInfo.icon as any} size={13} color={COLORS.white} style="solid" />
                 <Text style={styles.statusText}>{statusInfo.badge}</Text>
               </View>
             ) : (
@@ -228,7 +235,7 @@ export default React.memo(function ShopDealCard({
                   <Text style={styles.discountText}>{getDiscountText()}</Text>
                 </View>
                 <View style={styles.timer}>
-                  <Text style={styles.timerIcon}>⏰</Text>
+                  <Icon name="clock" size={16} color="#ff5252" style="line" />
                   <Text style={styles.timerText}>{timeRemaining}</Text>
                 </View>
               </>
@@ -300,9 +307,6 @@ const styles = StyleSheet.create({
   deleteBtn: {
     backgroundColor: 'rgba(255, 82, 82, 0.95)',
   },
-  ownerBtnIcon: {
-    fontSize: 16,
-  },
   productInfo: {
     padding: 8,
   },
@@ -357,15 +361,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
   },
-  timerIcon: {
-    fontSize: 16,
-  },
   timerText: {
     fontSize: 12,
     color: '#ff5252',
     fontWeight: '500',
   },
   statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,

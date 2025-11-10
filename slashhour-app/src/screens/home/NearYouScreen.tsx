@@ -17,6 +17,7 @@ import FeedDealCard from '../../components/FeedDealCard';
 import { useNearbyDeals } from '../../hooks/useNearbyDeals';
 import { useDealNavigation } from '../../hooks/useDealNavigation';
 import { useTheme } from '../../context/ThemeContext';
+import { Icon } from '../../components/icons';
 import { TYPOGRAPHY, SPACING, LAYOUT } from '../../theme';
 import { STATIC_RADIUS } from '../../theme/constants';
 
@@ -134,10 +135,6 @@ export default function NearYouScreen() {
       fontSize: TYPOGRAPHY.fontSize.md,
       color: colors.textSecondary,
     },
-    errorText: {
-      fontSize: 64,
-      marginBottom: SPACING.md,
-    },
     errorMessage: {
       fontSize: TYPOGRAPHY.fontSize.md,
       color: colors.white,
@@ -166,10 +163,6 @@ export default function NearYouScreen() {
       color: colors.white,
       fontSize: TYPOGRAPHY.fontSize.md,
       fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    },
-    emptyText: {
-      fontSize: 64,
-      marginBottom: SPACING.md,
     },
     emptyMessage: {
       ...TYPOGRAPHY.styles.h3,
@@ -205,7 +198,7 @@ export default function NearYouScreen() {
     return (
       <SafeAreaView style={styles.container} edges={[]}>
         <View style={styles.centerContainer}>
-          <Text style={styles.errorText}>📍</Text>
+          <Icon name="marker" size={48} color={colors.error} style="line" />
           <Text style={styles.errorMessage}>{error}</Text>
           <View style={styles.errorButtonsContainer}>
             {isLocationError && (
@@ -240,7 +233,7 @@ export default function NearYouScreen() {
           </TouchableOpacity>
         </View>
         <View style={styles.centerContainer}>
-          <Text style={styles.emptyText}>🗺️</Text>
+          <Icon name="map" size={64} color={colors.textSecondary} style="line" />
           <Text style={styles.emptyMessage}>No deals nearby</Text>
           <Text style={styles.emptySubtext}>
             Try increasing your search radius

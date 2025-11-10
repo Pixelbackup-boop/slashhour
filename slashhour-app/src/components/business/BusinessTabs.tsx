@@ -1,5 +1,6 @@
 import React, { useState, memo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Icon } from '../icons';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../../theme';
 import { Business } from '../../types/models';
 import { useBusinessContact } from '../../hooks/useBusinessContact';
@@ -87,7 +88,7 @@ function BusinessTabs({ business, isOwner }: BusinessTabsProps) {
             </>
           ) : isOwner ? (
             <Text style={styles.emptyPrompt}>
-              📍 Please add your location to help more customers find you and increase sales!
+              Please add your location to help more customers find you and increase sales!
             </Text>
           ) : null}
         </View>
@@ -103,7 +104,7 @@ function BusinessTabs({ business, isOwner }: BusinessTabsProps) {
                   onPress={() => handlePhonePress(business.phone!)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.contactIcon}>📞</Text>
+                  <Icon name="phone" size={20} color={COLORS.textPrimary} style="line" />
                   <Text style={styles.contactText}>{business.phone}</Text>
                   <Text style={styles.contactAction}>Call</Text>
                 </TouchableOpacity>
@@ -114,7 +115,7 @@ function BusinessTabs({ business, isOwner }: BusinessTabsProps) {
                   onPress={() => handleEmailPress(business.email!)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.contactIcon}>✉️</Text>
+                  <Icon name="mail" size={20} color={COLORS.textPrimary} style="line" />
                   <Text style={styles.contactText}>{business.email}</Text>
                   <Text style={styles.contactAction}>Email</Text>
                 </TouchableOpacity>
@@ -125,16 +126,19 @@ function BusinessTabs({ business, isOwner }: BusinessTabsProps) {
                   onPress={() => handleWebsitePress(business.website!)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.contactIcon}>🌐</Text>
+                  <Icon name="globe" size={20} color={COLORS.textPrimary} style="line" />
                   <Text style={styles.contactText} numberOfLines={1}>{business.website}</Text>
                   <Text style={styles.contactAction}>Visit</Text>
                 </TouchableOpacity>
               )}
             </>
           ) : isOwner ? (
-            <Text style={styles.emptyPrompt}>
-              📞 Add your contact information to make it easy for customers to reach you!
-            </Text>
+            <View style={styles.emptyPromptContainer}>
+              <Icon name="phone" size={24} color={COLORS.textSecondary} style="line" />
+              <Text style={styles.emptyPrompt}>
+                Add your contact information to make it easy for customers to reach you!
+              </Text>
+            </View>
           ) : null}
         </View>
       )}
@@ -196,14 +200,19 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.xs,
     paddingBottom: SPACING.xs,
   },
+  emptyPromptContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    paddingTop: SPACING.md,
+    paddingBottom: 0,
+  },
   emptyPrompt: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     color: COLORS.textSecondary,
     fontStyle: 'italic',
     lineHeight: 20,
     textAlign: 'center',
-    paddingTop: SPACING.md,
-    paddingBottom: 0,
   },
   description: {
     fontSize: TYPOGRAPHY.fontSize.md,
@@ -226,9 +235,6 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xs,
     borderWidth: 1,
     borderColor: COLORS.borderLight,
-  },
-  contactIcon: {
-    fontSize: 20,
   },
   contactText: {
     fontSize: TYPOGRAPHY.fontSize.sm,

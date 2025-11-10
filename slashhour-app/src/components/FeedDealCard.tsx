@@ -13,6 +13,7 @@ import { STATIC_RADIUS } from '../theme/constants';
 import ImageCarousel from './ImageCarousel';
 import { haptics } from '../utils/haptics';
 import { useBookmark } from '../hooks/useBookmarks';
+import { Icon } from './icons';
 
 interface FeedDealCardProps {
   deal: Deal;
@@ -148,7 +149,7 @@ export default React.memo(function FeedDealCard({
 
     // Check if deal is deleted
     if (status === 'deleted') {
-      return { badge: '🚫 Deleted', isInactive: true, color: '#757575' };
+      return { badge: 'Deleted', icon: 'x-circle', isInactive: true, color: '#757575' };
     }
 
     // Check if deal is expired (by status OR by expiration time)
@@ -157,15 +158,15 @@ export default React.memo(function FeedDealCard({
     const isExpiredByTime = expires.getTime() - now.getTime() <= 0;
 
     if (status === 'expired' || isExpiredByTime) {
-      return { badge: '⏰ Expired', isInactive: true, color: '#FF9800' };
+      return { badge: 'Expired', icon: 'clock', isInactive: true, color: '#FF9800' };
     }
 
     // Check if deal is sold out
     if (status === 'sold_out') {
-      return { badge: '📦 Sold Out', isInactive: true, color: '#9C27B0' };
+      return { badge: 'Sold Out', icon: 'package', isInactive: true, color: '#9C27B0' };
     }
 
-    return { badge: null, isInactive: false, color: null };
+    return { badge: null, icon: null, isInactive: false, color: null };
   };
 
   const statusInfo = getStatusInfo();
@@ -197,14 +198,20 @@ export default React.memo(function FeedDealCard({
             activeOpacity={0.8}
             disabled={isProcessing}
           >
-            <Text style={styles.wishlistIcon}>{isBookmarked ? '❤️' : '🤍'}</Text>
+            <Icon
+              name="heart"
+              size={18}
+              color={isBookmarked ? COLORS.error : COLORS.gray400}
+              style={isBookmarked ? 'solid' : 'line'}
+            />
           </TouchableOpacity>
 
           {/* Distance Badge - Only show if distance exists and showDistance is true */}
           {showDistance && ((deal as any).distance != null || deal.distance_km != null) && (
             <View style={styles.distanceBadge}>
+              <Icon name="marker" size={12} color={COLORS.white} style="solid" />
               <Text style={styles.distanceText}>
-                📍 {(((deal as any).distance ?? deal.distance_km) as number).toFixed(1)} km away
+                {(((deal as any).distance ?? deal.distance_km) as number).toFixed(1)} km away
               </Text>
             </View>
           )}
@@ -243,7 +250,8 @@ export default React.memo(function FeedDealCard({
           {/* Discount Badge and Timer / Status Badge */}
           <View style={styles.discountRow}>
             {statusInfo.isInactive ? (
-              <View style={[styles.statusBadge, { backgroundColor: statusInfo.color }]}>
+              <View style={[styles.statusBadge, statusInfo.color ? { backgroundColor: statusInfo.color } : null]}>
+                <Icon name={statusInfo.icon as any} size={13} color={COLORS.white} style="solid" />
                 <Text style={styles.statusText}>{statusInfo.badge}</Text>
               </View>
             ) : (
@@ -252,7 +260,7 @@ export default React.memo(function FeedDealCard({
                   <Text style={styles.discountText}>{getDiscountText()}</Text>
                 </View>
                 <View style={styles.timer}>
-                  <Text style={styles.timerIcon}>⏰</Text>
+                  <Icon name="clock" size={16} color="#ff5252" style="line" />
                   <Text style={styles.timerText}>{timeRemaining}</Text>
                 </View>
               </>
@@ -297,9 +305,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
-  },
-  wishlistIcon: {
-    fontSize: 18,
   },
   productInfo: {
     padding: 8,
@@ -366,9 +371,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
   },
-  timerIcon: {
-    fontSize: 16,
-  },
   timerText: {
     fontSize: 12,
     color: '#ff5252',
@@ -382,6 +384,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
     borderRadius: STATIC_RADIUS.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   distanceText: {
     color: COLORS.white,
@@ -389,6 +394,9 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
   statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,

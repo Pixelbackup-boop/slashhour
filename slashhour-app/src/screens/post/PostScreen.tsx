@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { trackScreenView } from '../../services/analytics';
 import { useMyBusinesses } from '../../hooks/useMyBusinesses';
+import { Icon } from '../../components/icons';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../../theme';
 
 export default function PostScreen({ navigation }: any) {
@@ -103,7 +104,7 @@ export default function PostScreen({ navigation }: any) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.emptyState}>
-        <Text style={styles.emptyStateIcon}>🏪</Text>
+        <Icon name="building" size={64} color={COLORS.textSecondary} style="line" />
         <Text style={styles.emptyStateTitle}>Share Your Deals</Text>
         <Text style={styles.emptyStateText}>
           Are you a business owner? Register your business to start posting deals and
@@ -148,10 +149,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: SPACING.xxl,
-  },
-  emptyStateIcon: {
-    fontSize: 80,
-    marginBottom: SPACING.lg,
   },
   emptyStateTitle: {
     ...TYPOGRAPHY.styles.h1,

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
+import { Icon, IconName } from './icons';
 import { UserRedemption } from '../types/models';
 import { getCategoryImage } from '../utils/categoryImages';
 
@@ -30,18 +31,18 @@ export default React.memo(function RedemptionCard({ redemption, onPress }: Redem
     return `$${amount.toFixed(2)}`;
   };
 
-  const getCategoryIcon = (category: string) => {
-    const icons: { [key: string]: string } = {
-      restaurant: '🍕',
-      grocery: '🛒',
-      fashion: '👗',
-      shoes: '👟',
-      electronics: '📱',
-      home_living: '🏠',
-      beauty: '💄',
-      health: '⚕️',
+  const getCategoryIcon = (category: string): IconName => {
+    const icons: { [key: string]: IconName } = {
+      restaurant: 'building',
+      grocery: 'cart',
+      fashion: 'shopping-bag',
+      shoes: 'shopping-bag',
+      electronics: 'lightning',
+      home_living: 'home-simple',
+      beauty: 'star',
+      health: 'shield',
     };
-    return icons[category] || '🎉';
+    return icons[category] || 'award';
   };
 
   return (
@@ -74,7 +75,7 @@ export default React.memo(function RedemptionCard({ redemption, onPress }: Redem
         {/* Category & Date */}
         <View style={styles.metaRow}>
           <View style={styles.categoryBadge}>
-            <Text style={styles.categoryIcon}>{getCategoryIcon(redemption.dealCategory)}</Text>
+            <Icon name={getCategoryIcon(redemption.dealCategory)} size={14} color="#666" style="line" />
             <Text style={styles.categoryText}>{redemption.dealCategory}</Text>
           </View>
           <Text style={styles.dateText}>{formatDate(redemption.redeemedAt)}</Text>
@@ -143,10 +144,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
-  },
-  categoryIcon: {
-    fontSize: 14,
-    marginRight: 4,
   },
   categoryText: {
     fontSize: 12,

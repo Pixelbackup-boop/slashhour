@@ -11,10 +11,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { GiftedChat, IMessage, InputToolbar, Bubble, Send, Composer } from 'react-native-gifted-chat';
+import { FontAwesome } from '@expo/vector-icons';
 import { useUser } from '../../stores/useAuthStore';
 import { useSocket } from '../../hooks/useSocket';
 import { useChat } from '../../hooks/useChat';
 import { trackScreenView } from '../../services/analytics';
+import { Icon } from '../../components/icons';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, LAYOUT } from '../../theme';
 import { Message } from '../../types/models';
 
@@ -207,7 +209,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
     return (
       <Send {...props} containerStyle={styles.sendContainer}>
         <View style={styles.sendButton}>
-          <Text style={styles.sendButtonText}>➤</Text>
+          <FontAwesome name="send" size={20} color={COLORS.white} />
         </View>
       </Send>
     );
@@ -282,7 +284,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
         </View>
 
         <View style={styles.errorContainer}>
-          <Text style={styles.errorIcon}>⚠️</Text>
+          <Icon name="alert" size={48} color={COLORS.error} style="line" />
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={() => navigation.goBack()}>
             <Text style={styles.retryButtonText}>Go Back</Text>
@@ -491,7 +493,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingLeft: SPACING.xs,
   },
-  // Modern send button design - circular with emoji
+  // Modern send button design - circular with FontAwesome icon
   sendButton: {
     backgroundColor: COLORS.primary,
     borderRadius: 28, // Circular
@@ -504,11 +506,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 4,
-  },
-  sendButtonText: {
-    color: COLORS.white,
-    fontSize: 24, // Larger for emoji
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
   },
   // Message bubble styles
   bubbleLeft: {
@@ -583,10 +580,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: SPACING.xxl,
-  },
-  errorIcon: {
-    fontSize: 64,
-    marginBottom: SPACING.md,
   },
   errorText: {
     fontSize: TYPOGRAPHY.fontSize.md,

@@ -11,13 +11,14 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
+import { Icon, IconName } from './icons';
 import { TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const DRAWER_WIDTH = SCREEN_WIDTH * 0.75; // 75% of screen width
 
 interface MenuItem {
-  icon: string;
+  icon: IconName;
   label: string;
   onPress: () => void;
 }
@@ -122,7 +123,9 @@ export default function RightDrawer({ visible, onClose, menuItems }: RightDrawer
                 }}
                 activeOpacity={0.7}
               >
-                <Text style={styles.menuIcon}>{item.icon}</Text>
+                <View style={styles.menuIconContainer}>
+                  <Icon name={item.icon} size={24} color={colors.textPrimary} style="line" />
+                </View>
                 <Text style={[styles.menuLabel, { color: colors.textPrimary }]}>
                   {item.label}
                 </Text>
@@ -172,10 +175,11 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.lg,
     paddingHorizontal: SPACING.md,
   },
-  menuIcon: {
-    fontSize: 24,
-    marginRight: SPACING.md,
+  menuIconContainer: {
     width: 32,
+    marginRight: SPACING.md,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   menuLabel: {
     flex: 1,

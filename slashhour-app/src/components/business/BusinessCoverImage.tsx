@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
+import { Icon } from '../icons';
 import { COLORS, SPACING, RADIUS } from '../../theme';
 
 interface BusinessCoverImageProps {
@@ -31,7 +32,7 @@ function BusinessCoverImage({ coverUrl, isOwner, isUploading, onPress }: Busines
               {isUploading ? (
                 <ActivityIndicator size="small" color={COLORS.white} />
               ) : (
-                <Text style={styles.editBadgeText}>✏️</Text>
+                <Icon name="edit" size={16} color={COLORS.white} style="line" />
               )}
             </View>
           )}
@@ -43,7 +44,10 @@ function BusinessCoverImage({ coverUrl, isOwner, isUploading, onPress }: Busines
               {isUploading ? (
                 <ActivityIndicator size="small" color={COLORS.white} />
               ) : (
-                <Text style={styles.editBadgeText}>📷 Add Cover</Text>
+                <View style={styles.editBadgeContent}>
+                  <Icon name="camera" size={16} color={COLORS.white} style="line" />
+                  <Text style={styles.editBadgeText}>Add Cover</Text>
+                </View>
               )}
             </View>
           )}
@@ -79,6 +83,11 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.round,
     padding: SPACING.sm,
     paddingHorizontal: SPACING.md,
+  },
+  editBadgeContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
   },
   editBadgeText: {
     color: COLORS.white,

@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { useBusinessFollowers } from '../../hooks/useBusinessFollowers';
 import { trackScreenView } from '../../services/analytics';
+import { Icon } from '../../components/icons';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../../theme';
 
 export default function FollowersListScreen({ route, navigation }: any) {
@@ -64,7 +65,7 @@ export default function FollowersListScreen({ route, navigation }: any) {
     if (error) {
       return (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyStateIcon}>⚠️</Text>
+          <Icon name="alert" size={64} color={COLORS.error} style="line" />
           <Text style={styles.emptyStateTitle}>Error Loading</Text>
           <Text style={styles.emptyStateText}>{error}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={refresh}>
@@ -76,7 +77,7 @@ export default function FollowersListScreen({ route, navigation }: any) {
 
     return (
       <View style={styles.emptyState}>
-        <Text style={styles.emptyStateIcon}>👥</Text>
+        <Icon name="users" size={64} color={COLORS.textSecondary} style="line" />
         <Text style={styles.emptyStateTitle}>No Followers Yet</Text>
         <Text style={styles.emptyStateText}>
           When users follow this business, they'll appear here
@@ -220,10 +221,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: SPACING.xl,
-  },
-  emptyStateIcon: {
-    fontSize: 64,
-    marginBottom: SPACING.md,
   },
   emptyStateTitle: {
     fontSize: TYPOGRAPHY.fontSize.xl,

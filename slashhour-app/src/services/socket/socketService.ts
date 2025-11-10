@@ -105,10 +105,14 @@ class SocketService {
       });
 
       this.socket.on('connect_error', (error) => {
-        if (__DEV__) {
+        // Only log if it's not a transient websocket upgrade error
+        if (__DEV__ && error.message !== 'websocket error') {
           console.error('❌ Socket connection error:', error.message);
         }
-        this.emitToListeners('connect_error', error);
+        // Don't emit transient errors to listeners (socket.io will retry automatically)
+        if (error.message !== 'websocket error') {
+          this.emitToListeners('connect_error', error);
+        }
       });
 
       // Setup message event handlers

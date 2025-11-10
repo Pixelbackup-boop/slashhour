@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFollowedBusinesses } from '../../hooks/useFollowedBusinesses';
 import { trackScreenView } from '../../services/analytics';
+import { Icon } from '../../components/icons';
 import BusinessCard from '../../components/BusinessCard';
 
 export default function FollowingListScreen({ navigation }: any) {
@@ -33,7 +34,7 @@ export default function FollowingListScreen({ navigation }: any) {
     if (error) {
       return (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyStateIcon}>⚠️</Text>
+          <Icon name="alert" size={64} color="#F38181" style="line" />
           <Text style={styles.emptyStateTitle}>Error Loading</Text>
           <Text style={styles.emptyStateText}>{error}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={refresh}>
@@ -45,7 +46,7 @@ export default function FollowingListScreen({ navigation }: any) {
 
     return (
       <View style={styles.emptyState}>
-        <Text style={styles.emptyStateIcon}>📋</Text>
+        <Icon name="clipboard" size={64} color="#999" style="line" />
         <Text style={styles.emptyStateTitle}>No Businesses Yet</Text>
         <Text style={styles.emptyStateText}>
           Follow businesses to see their latest deals in your feed
@@ -147,10 +148,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 40,
-  },
-  emptyStateIcon: {
-    fontSize: 64,
-    marginBottom: 16,
   },
   emptyStateTitle: {
     fontSize: 20,

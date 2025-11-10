@@ -14,6 +14,7 @@ import {
   Animated,
 } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
+import { Icon } from '../icons';
 import { TYPOGRAPHY, SPACING, RADIUS } from '../../theme';
 import { Review } from '../../types/models';
 import { reviewService } from '../../services/api/reviewService';
@@ -124,7 +125,12 @@ export default function ReviewForm({
       <View style={styles.starsContainer}>
         {[1, 2, 3, 4, 5].map((star) => (
           <TouchableOpacity key={star} onPress={() => setRating(star)} disabled={isSubmitting}>
-            <Text style={styles.star}>{star <= rating ? '⭐' : '☆'}</Text>
+            <Icon
+              name="star"
+              size={40}
+              color={star <= rating ? colors.warning : colors.gray300}
+              style={star <= rating ? 'solid' : 'line'}
+            />
           </TouchableOpacity>
         ))}
       </View>
@@ -190,11 +196,8 @@ export default function ReviewForm({
     starsContainer: {
       flexDirection: 'row',
       justifyContent: 'center',
+      gap: SPACING.xs,
       marginVertical: SPACING.sm,
-    },
-    star: {
-      fontSize: 40,
-      marginHorizontal: SPACING.xs,
     },
     ratingText: {
       fontSize: TYPOGRAPHY.fontSize.sm,

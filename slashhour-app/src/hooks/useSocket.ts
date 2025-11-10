@@ -60,6 +60,11 @@ export const useSocket = (autoConnect: boolean = false, userId?: string): UseSoc
     };
 
     const handleConnectError = (err: Error) => {
+      // Filter out transient websocket upgrade errors (socket.io retries automatically)
+      if (err.message === 'websocket error') {
+        return; // Ignore - socket.io will retry with polling transport
+      }
+
       if (__DEV__) {
         console.error('❌ useSocket: Connection error', err);
       }

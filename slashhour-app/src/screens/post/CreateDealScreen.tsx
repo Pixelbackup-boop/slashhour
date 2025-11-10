@@ -18,6 +18,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useCreateDeal } from '../../hooks/useCreateDeal';
 import { useBusinessProfile } from '../../hooks/useBusinessProfile';
 import { trackScreenView } from '../../services/analytics';
+import { Icon } from '../../components/icons';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../../theme';
 import { DEAL_CATEGORIES, formatDealDate } from '../../utils/dealUtils';
 
@@ -139,7 +140,7 @@ export default function CreateDealScreen({ route, navigation }: CreateDealScreen
         {/* Error Message */}
         {error && (
           <View style={styles.errorContainer}>
-            <Text style={styles.errorIcon}>⚠️</Text>
+            <Icon name="alert" size={24} color={COLORS.white} style="line" />
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
@@ -151,7 +152,10 @@ export default function CreateDealScreen({ route, navigation }: CreateDealScreen
 
         {/* Basic Information */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { marginBottom: SPACING.md }]}>📝 Basic Information</Text>
+          <View style={[styles.sectionTitleRow, { marginBottom: SPACING.md }]}>
+            <Icon name="document-text" size={20} color={COLORS.textPrimary} style="line" />
+            <Text style={styles.sectionTitle}>Basic Information</Text>
+          </View>
           <View style={styles.card}>
             <View style={styles.inputGroup}>
               <Text style={styles.label}>
@@ -210,7 +214,10 @@ export default function CreateDealScreen({ route, navigation }: CreateDealScreen
 
         {/* Pricing */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { marginBottom: SPACING.md }]}>💰 Pricing</Text>
+          <View style={[styles.sectionTitleRow, { marginBottom: SPACING.md }]}>
+            <Icon name="dollar" size={20} color={COLORS.textPrimary} style="line" />
+            <Text style={styles.sectionTitle}>Pricing</Text>
+          </View>
           <View style={styles.card}>
             <View style={styles.inputGroup}>
               <Text style={styles.label}>
@@ -257,7 +264,10 @@ export default function CreateDealScreen({ route, navigation }: CreateDealScreen
         {/* Images */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>📸 Images</Text>
+            <View style={styles.sectionTitleRow}>
+              <Icon name="image" size={20} color={COLORS.textPrimary} style="line" />
+              <Text style={styles.sectionTitle}>Images</Text>
+            </View>
             <Text style={styles.imageCount}>
               {formData.images.length} / {maxImages}
               {business?.is_verified && <Text style={styles.verifiedBadge}> ✓ Verified</Text>}
@@ -295,7 +305,10 @@ export default function CreateDealScreen({ route, navigation }: CreateDealScreen
 
         {/* Availability */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { marginBottom: SPACING.md }]}>📅 Availability</Text>
+          <View style={[styles.sectionTitleRow, { marginBottom: SPACING.md }]}>
+            <Icon name="calendar" size={20} color={COLORS.textPrimary} style="line" />
+            <Text style={styles.sectionTitle}>Availability</Text>
+          </View>
           <View style={styles.card}>
             <View style={styles.inputGroup}>
               <Text style={styles.label}>
@@ -405,10 +418,7 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     margin: SPACING.md,
     borderRadius: RADIUS.md,
-  },
-  errorIcon: {
-    fontSize: 20,
-    marginRight: SPACING.sm,
+    gap: SPACING.sm,
   },
   errorText: {
     flex: 1,
@@ -430,6 +440,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: SPACING.md,
+  },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
   },
   sectionTitle: {
     ...TYPOGRAPHY.styles.h3,

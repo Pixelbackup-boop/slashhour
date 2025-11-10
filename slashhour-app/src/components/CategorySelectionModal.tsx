@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme';
 import { CATEGORIES, getAllCategoryIds } from '../constants/categories';
+import { Icon } from './icons';
 
 interface CategorySelectionModalProps {
   visible: boolean;
@@ -242,7 +243,7 @@ export default function CategorySelectionModal({
                   activeOpacity={0.7}
                 >
                   <View style={styles.categoryLeft}>
-                    <Text style={styles.categoryIcon}>{category.icon}</Text>
+                    <Icon name={category.icon} size={24} color={colors.textPrimary} style="line" />
                     <View style={styles.categoryInfo}>
                       <Text style={[styles.categoryLabel, dynamicStyles.categoryLabel]}>
                         {category.label}
@@ -362,11 +363,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-  },
-  categoryIcon: {
-    fontSize: 24,
-    marginRight: SPACING.md,
-    width: 32,
+    gap: SPACING.md,
   },
   categoryInfo: {
     flex: 1,
