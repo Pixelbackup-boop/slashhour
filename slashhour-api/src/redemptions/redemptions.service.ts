@@ -1,5 +1,7 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { RedemptionStatus } from './dto/validate-redemption.dto';
+import { BusinessRedemptionQueryDto } from './dto/business-redemption.dto';
 
 @Injectable()
 export class RedemptionsService {
@@ -158,5 +160,193 @@ export class RedemptionsService {
     }
 
     return redemption;
+  }
+
+  /**
+   * Validate a redemption (for business owners)
+   * Verifies business ownership and updates redemption status
+   */
+  async validateRedemption(
+    redemptionId: string,
+    validatorId: string,
+    status?: RedemptionStatus,
+  ) {
+    // Get the redemption with business info
+    const redemption = await this.prisma.user_redemptions.findUnique({
+      where: { id: redemptionId },
+      include: {
+        businesses: true,
+        deals: true,
+        users: true,
+      },
+    });
+
+    if (!redemption) {
+      throw new NotFoundException('Redemption not found');
+    }
+
+    // Verify that the validator owns the business
+    if (redemption.businesses.owner_id !== validatorId) {
+      throw new ForbiddenException('You do not have permission to validate this redemption');
+    }
+
+    // Check if already validated
+    if (redemption.status === 'validated') {
+      throw new BadRequestException('Redemption has already been validated');
+    }
+
+    // Default status to 'validated' if not provided
+    const newStatus = status || RedemptionStatus.VALIDATED;
+
+    // Update redemption with validation info
+    const updatedRedemption = await this.prisma.user_redemptions.update({
+      where: { id: redemptionId },
+      data: {
+        status: newStatus,
+        validated_at: new Date(),
+        validated_by: validatorId,
+      },
+    });
+
+    return {
+      success: true,
+      message: `Redemption ${newStatus} successfully`,
+      redemption: {
+        id: updatedRedemption.id,
+        status: updatedRedemption.status,
+        validated_at: updatedRedemption.validated_at,
+        validated_by: updatedRedemption.validated_by,
+      },
+    };
+  }
+
+  /**
+   * Get all redemptions for a business
+   * With optional status filtering and pagination
+   */
+  async getBusinessRedemptions(
+    businessId: string,
+    userId: string,
+    query: BusinessRedemptionQueryDto,
+  ) {
+    // Verify business ownership
+    const business = await this.prisma.businesses.findUnique({
+      where: { id: businessId },
+    });
+
+    if (!business) {
+      throw new NotFoundException('Business not found');
+    }
+
+    if (business.owner_id !== userId) {
+      throw new ForbiddenException('You do not have permission to view these redemptions');
+    }
+
+    const { status, page = 1, limit = 20 } = query;
+    const skip = (page - 1) * limit;
+
+    // Build where clause
+    const whereClause: any = {
+      business_id: businessId,
+    };
+
+    if (status) {
+      whereClause.status = status;
+    }
+
+    // Execute queries in parallel
+    const [redemptions, total, statusCounts] = await Promise.all([
+      // Get paginated redemptions
+      this.prisma.user_redemptions.findMany({
+        where: whereClause,
+        include: {
+          deals: true,
+          users: {
+            select: {
+              id: true,
+              username: true,
+              email: true,
+            },
+          },
+        },
+        orderBy: { redeemed_at: 'desc' },
+        skip,
+        take: limit,
+      }),
+
+      // Get total count
+      this.prisma.user_redemptions.count({
+        where: whereClause,
+      }),
+
+      // Get status counts for summary
+      this.prisma.user_redemptions.groupBy({
+        by: ['status'],
+        where: { business_id: businessId },
+        _count: true,
+      }),
+    ]);
+
+    // Transform redemptions to response format
+    const transformedRedemptions = redemptions.map(r => ({
+      id: r.id,
+      status: r.status,
+      original_price: parseFloat(r.original_price.toString()),
+      paid_price: parseFloat(r.paid_price.toString()),
+      savings_amount: parseFloat(r.savings_amount.toString()),
+      redeemed_at: r.redeemed_at,
+      validated_at: r.validated_at,
+      validated_by: r.validated_by,
+      deal: r.deals ? {
+        id: r.deals.id,
+        title: r.deals.title,
+        description: r.deals.description,
+        images: r.deals.images || [],
+      } : null,
+      user: r.users ? {
+        id: r.users.id,
+        username: r.users.username,
+        email: r.users.email,
+      } : null,
+    }));
+
+    // Build summary from status counts
+    const summary = {
+      total_redemptions: total,
+      pending_count: 0,
+      validated_count: 0,
+      expired_count: 0,
+      cancelled_count: 0,
+    };
+
+    statusCounts.forEach(item => {
+      const count = item._count;
+      switch (item.status) {
+        case 'pending':
+          summary.pending_count = count;
+          break;
+        case 'validated':
+          summary.validated_count = count;
+          break;
+        case 'expired':
+          summary.expired_count = count;
+          break;
+        case 'cancelled':
+          summary.cancelled_count = count;
+          break;
+      }
+    });
+
+    return {
+      redemptions: transformedRedemptions,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasMore: page * limit < total,
+      },
+      summary,
+    };
   }
 }

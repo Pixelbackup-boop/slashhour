@@ -42,12 +42,12 @@ model businesses {
   created_at               DateTime                          @default(now()) @db.Timestamp(6)
   updated_at               DateTime                          @default(now()) @db.Timestamp(6)
   category_last_changed_at DateTime?                         @db.Timestamp(6)
+  business_reviews         business_reviews[]
   users                    users                             @relation(fields: [owner_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_8881b96819252080592fe1592ea")
   conversations            conversations[]
   deals                    deals[]
   follows                  follows[]
   user_redemptions         user_redemptions[]
-  business_reviews         business_reviews[]
 
   @@index([owner_id], map: "idx_businesses_owner_id")
   @@index([category], map: "idx_businesses_category")
@@ -102,9 +102,9 @@ model deals {
   status               deals_status_enum  @default(active)
   created_at           DateTime           @default(now()) @db.Timestamp(6)
   updated_at           DateTime           @default(now()) @db.Timestamp(6)
+  bookmarks            bookmarks[]
   businesses           businesses         @relation(fields: [business_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_c90e9d39a174936dcf03351e146")
   user_redemptions     user_redemptions[]
-  bookmarks            bookmarks[]
 
   @@index([business_id], map: "idx_deals_business_id")
   @@index([status], map: "idx_deals_status")
@@ -171,6 +171,9 @@ model user_redemptions {
   savings_amount Decimal    @db.Decimal(10, 2)
   deal_category  String     @db.VarChar(50)
   redeemed_at    DateTime   @default(now()) @db.Timestamp(6)
+  status         String     @default("pending") @db.VarChar(20)
+  validated_at   DateTime?  @db.Timestamp(6)
+  validated_by   String?    @db.VarChar(255)
   businesses     businesses @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   deals          deals      @relation(fields: [deal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   users          users      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -180,42 +183,44 @@ model user_redemptions {
   @@index([business_id], map: "idx_redemptions_business_id")
   @@index([redeemed_at(sort: Desc)], map: "idx_redemptions_redeemed_at")
   @@index([user_id, redeemed_at(sort: Desc)], map: "idx_redemptions_user_date")
+  @@index([business_id, status], map: "idx_user_redemptions_business_status")
+  @@index([redeemed_at(sort: Desc)], map: "idx_user_redemptions_redeemed_at")
 }
 
 model users {
-  id                       String             @id(map: "PK_a3ffb1c0c8416b9fc6f907b7433") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  phone                    String?            @unique(map: "UQ_a000cca60bcf04454e727699490") @db.VarChar(20)
-  email                    String?            @unique(map: "UQ_97672ac88f789774dd47f7c8be3") @db.VarChar(255)
-  username                 String             @unique(map: "UQ_fe0bb3f6520ee0469504521e710") @db.VarChar(30)
-  password                 String?            @db.VarChar(255)
-  name                     String?            @db.VarChar(100)
+  id                       String               @id(map: "PK_a3ffb1c0c8416b9fc6f907b7433") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  phone                    String?              @unique(map: "UQ_a000cca60bcf04454e727699490") @db.VarChar(20)
+  email                    String?              @unique(map: "UQ_97672ac88f789774dd47f7c8be3") @db.VarChar(255)
+  username                 String               @unique(map: "UQ_fe0bb3f6520ee0469504521e710") @db.VarChar(30)
+  password                 String?              @db.VarChar(255)
+  name                     String?              @db.VarChar(100)
   avatar_url               String?
   default_location         Json?
-  default_radius_km        Int                @default(5)
-  notify_nearby_deals      Boolean            @default(false)
-  preferred_categories     String[]           @default([])
-  language                 String             @default("en") @db.VarChar(10)
-  currency                 String             @default("USD") @db.VarChar(3)
-  timezone                 String             @default("America/New_York") @db.VarChar(50)
-  monthly_savings_goal     Decimal?           @db.Decimal(10, 2)
-  inflation_rate_reference Decimal            @default(7.5) @db.Decimal(5, 2)
-  status                   String             @default("active") @db.VarChar(20)
-  email_verified           Boolean            @default(false)
-  phone_verified           Boolean            @default(false)
-  scheduled_deletion_date  DateTime?          @db.Timestamp(6)
-  created_at               DateTime           @default(now()) @db.Timestamp(6)
-  updated_at               DateTime           @default(now()) @db.Timestamp(6)
-  last_active_at           DateTime           @default(now()) @db.Timestamp(6)
-  user_type                String             @default("consumer") @db.VarChar(20)
+  default_radius_km        Int                  @default(5)
+  preferred_categories     String[]             @default([])
+  language                 String               @default("en") @db.VarChar(10)
+  currency                 String               @default("USD") @db.VarChar(3)
+  timezone                 String               @default("America/New_York") @db.VarChar(50)
+  monthly_savings_goal     Decimal?             @db.Decimal(10, 2)
+  inflation_rate_reference Decimal              @default(7.5) @db.Decimal(5, 2)
+  status                   String               @default("active") @db.VarChar(20)
+  email_verified           Boolean              @default(false)
+  phone_verified           Boolean              @default(false)
+  created_at               DateTime             @default(now()) @db.Timestamp(6)
+  updated_at               DateTime             @default(now()) @db.Timestamp(6)
+  last_active_at           DateTime             @default(now()) @db.Timestamp(6)
+  user_type                String               @default("consumer") @db.VarChar(20)
+  notify_nearby_deals      Boolean              @default(false)
+  scheduled_deletion_date  DateTime?            @db.Timestamp(6)
+  bookmarks                bookmarks[]
+  business_reviews         business_reviews[]
   businesses               businesses[]
   conversations            conversations[]
+  device_tokens            device_tokens[]
   follows                  follows[]
   messages                 messages[]
-  user_redemptions         user_redemptions[]
-  device_tokens            device_tokens[]
   notifications            notifications[]
-  business_reviews         business_reviews[]
-  bookmarks                bookmarks[]
+  user_redemptions         user_redemptions[]
   verification_codes       verification_codes[]
 }
 
@@ -230,48 +235,6 @@ model verification_codes {
 
   @@index([user_id, type])
   @@index([expires_at])
-}
-
-enum businesses_category_enum {
-  restaurant
-  grocery
-  fashion
-  shoes
-  electronics
-  home_living
-  beauty
-  health
-}
-
-enum businesses_subscription_tier_enum {
-  free
-  essential
-  champion
-  anchor
-}
-
-enum deals_status_enum {
-  active
-  paused
-  expired
-  sold_out
-  deleted
-}
-
-enum follows_status_enum {
-  active
-  muted
-  unfollowed
-}
-
-enum notification_type_enum {
-  new_deal
-  flash_deal
-  deal_expiring_soon
-  new_follower
-  new_message
-  deal_redeemed
-  system
 }
 
 model device_tokens {
@@ -314,10 +277,10 @@ model business_reviews {
   id                String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   business_id       String     @db.Uuid
   user_id           String     @db.Uuid
-  rating            Int        // 1-5 stars
-  review_text       String?    // Optional text review
+  rating            Int
+  review_text       String?
   is_verified_buyer Boolean    @default(true)
-  status            String     @default("active") @db.VarChar(20) // active, reported, hidden
+  status            String     @default("active") @db.VarChar(20)
   created_at        DateTime   @default(now()) @db.Timestamp(6)
   updated_at        DateTime   @default(now()) @db.Timestamp(6)
   businesses        businesses @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -333,11 +296,53 @@ model bookmarks {
   user_id    String   @db.Uuid
   deal_id    String   @db.Uuid
   created_at DateTime @default(now()) @db.Timestamp(6)
-  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   deals      deals    @relation(fields: [deal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([user_id, deal_id])
   @@index([user_id])
   @@index([deal_id])
   @@index([created_at(sort: Desc)])
+}
+
+enum businesses_category_enum {
+  restaurant
+  grocery
+  fashion
+  shoes
+  electronics
+  home_living
+  beauty
+  health
+}
+
+enum businesses_subscription_tier_enum {
+  free
+  essential
+  champion
+  anchor
+}
+
+enum deals_status_enum {
+  active
+  paused
+  expired
+  sold_out
+  deleted
+}
+
+enum follows_status_enum {
+  active
+  muted
+  unfollowed
+}
+
+enum notification_type_enum {
+  new_deal
+  flash_deal
+  deal_expiring_soon
+  new_follower
+  new_message
+  deal_redeemed
+  system
 }
