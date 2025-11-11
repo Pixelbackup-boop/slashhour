@@ -4,6 +4,7 @@ import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { AntDesign } from '@expo/vector-icons';
 import { useUser, useIsAuthenticated } from '../stores/useAuthStore';
 import { useTheme } from '../context/ThemeContext';
 import { SHADOWS, SPACING } from '../theme';
@@ -18,6 +19,7 @@ import SearchScreen from '../screens/search/SearchScreen';
 import ConversationsListScreen from '../screens/inbox/ConversationsListScreen';
 import ChatScreen from '../screens/inbox/ChatScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
+import MyShopScreen from '../screens/business/MyShopScreen';
 import DealDetailScreen from '../screens/deal/DealDetailScreen';
 import RedemptionHistoryScreen from '../screens/redemption/RedemptionHistoryScreen';
 import BusinessRedemptionsScreen from '../screens/redemption/BusinessRedemptionsScreen';
@@ -69,9 +71,9 @@ type RootStackParamList = {
 
 type TabParamList = {
   Home: undefined;
-  Search: undefined;
-  Notifications: undefined;
   Inbox: undefined;
+  Shop: undefined;
+  Notifications: undefined;
   Profile: undefined;
 };
 
@@ -148,6 +150,7 @@ function HomeStackNavigator() {
       }}
     >
       <HomeStack.Screen name="HomeScreen" component={HomeScreen} />
+      <HomeStack.Screen name="Search" component={SearchScreen} />
       {createCommonStackScreens(HomeStack)}
     </HomeStack.Navigator>
   );
@@ -202,6 +205,54 @@ function InboxStackNavigator() {
         options={{ headerShown: false }}
       />
     </InboxStack.Navigator>
+  );
+}
+
+// Stack Navigator for Shop Tab
+const ShopStack = createNativeStackNavigator();
+function ShopStackNavigator() {
+  return (
+    <ShopStack.Navigator
+      screenOptions={{
+        headerShown: false,
+        gestureEnabled: true,
+      }}
+    >
+      <ShopStack.Screen name="MyShopScreen" component={MyShopScreen} />
+      {createCommonStackScreens(ShopStack)}
+
+      {/* Shop-specific screens */}
+      <ShopStack.Screen
+        name="RegisterBusiness"
+        component={RegisterBusinessScreen}
+        options={HEADER_WITH_BACK_BUTTON}
+      />
+      <ShopStack.Screen
+        name="EditBusinessProfile"
+        component={EditBusinessProfileScreen}
+        options={HEADER_WITH_BACK_BUTTON}
+      />
+      <ShopStack.Screen
+        name="CreateDeal"
+        component={CreateDealScreen}
+        options={HEADER_WITH_BACK_FADE}
+      />
+      <ShopStack.Screen
+        name="EditDeal"
+        component={EditDealScreen}
+        options={HEADER_WITH_BACK_FADE}
+      />
+      <ShopStack.Screen
+        name="BusinessRedemptions"
+        component={BusinessRedemptionsScreen}
+        options={HEADER_WITH_BACK_BUTTON}
+      />
+      <ShopStack.Screen
+        name="QRScanner"
+        component={QRScannerScreen}
+        options={{ headerShown: false }}
+      />
+    </ShopStack.Navigator>
   );
 }
 
@@ -381,25 +432,15 @@ function MainTabNavigator() {
         }}
       />
       <Tab.Screen
-        name="Search"
-        component={SearchStackNavigator}
+        name="Inbox"
+        component={InboxStackNavigator}
         options={{
-          tabBarLabel: 'Search',
+          tabBarLabel: 'Inbox',
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon iconName="search" color={color} focused={focused} />
+            <TabIcon iconName="mail" color={color} focused={focused} />
           ),
-        }}
-      />
-      <Tab.Screen
-        name="Notifications"
-        component={NotificationsStackNavigator}
-        options={{
-          tabBarLabel: 'Alerts',
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon iconName="bell" color={color} focused={focused} />
-          ),
-          // Show unread notification count badge
-          tabBarBadge: unreadNotificationCount > 0 ? (unreadNotificationCount > 99 ? '99+' : unreadNotificationCount) : undefined,
+          // Show unread message count badge
+          tabBarBadge: totalUnreadCount > 0 ? (totalUnreadCount > 99 ? '99+' : totalUnreadCount) : undefined,
           tabBarBadgeStyle: {
             backgroundColor: colors.error,
             color: colors.white,
@@ -414,15 +455,25 @@ function MainTabNavigator() {
         }}
       />
       <Tab.Screen
-        name="Inbox"
-        component={InboxStackNavigator}
+        name="Shop"
+        component={ShopStackNavigator}
         options={{
-          tabBarLabel: 'Inbox',
+          tabBarLabel: 'My Shop',
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon iconName="mail" color={color} focused={focused} />
+            <AntDesign name="shop" size={focused ? 26 : 24} color={color} />
           ),
-          // Show unread message count badge
-          tabBarBadge: totalUnreadCount > 0 ? (totalUnreadCount > 99 ? '99+' : totalUnreadCount) : undefined,
+        }}
+      />
+      <Tab.Screen
+        name="Notifications"
+        component={NotificationsStackNavigator}
+        options={{
+          tabBarLabel: 'Alerts',
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon iconName="bell" color={color} focused={focused} />
+          ),
+          // Show unread notification count badge
+          tabBarBadge: unreadNotificationCount > 0 ? (unreadNotificationCount > 99 ? '99+' : unreadNotificationCount) : undefined,
           tabBarBadgeStyle: {
             backgroundColor: colors.error,
             color: colors.white,

@@ -1,11 +1,13 @@
 import React, { useState, useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FeedScreen from './FeedScreen';
 import NearYouScreen from './NearYouScreen';
 import TabBar, { Tab } from '../../components/TabBar';
 import LogoHeader from '../../components/LogoHeader';
-import { COLORS } from '../../theme';
+import { Icon } from '../../components/icons';
+import { useTheme } from '../../context/ThemeContext';
+import { COLORS, SPACING, RADIUS } from '../../theme';
 
 const tabs: Tab[] = [
   { id: 'following', label: 'You Follow' },
@@ -15,6 +17,7 @@ const tabs: Tab[] = [
 export default function HomeScreen({ navigation }: any) {
   const [activeTab, setActiveTab] = useState<'following' | 'nearby'>('following');
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
 
   // Memoize container style to prevent recreating on every render
   const containerStyle = useMemo(() => [
@@ -28,7 +31,17 @@ export default function HomeScreen({ navigation }: any) {
 
   return (
     <View style={containerStyle}>
-      <LogoHeader />
+      <LogoHeader
+        rightButton={
+          <TouchableOpacity
+            style={styles.searchButton}
+            onPress={() => navigation.navigate('Search')}
+            activeOpacity={0.7}
+          >
+            <Icon name="search" size={24} color={colors.textPrimary} style="line" />
+          </TouchableOpacity>
+        }
+      />
 
       <TabBar
         tabs={tabs}
@@ -45,5 +58,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
+  },
+  searchButton: {
+    padding: SPACING.sm,
+    borderRadius: RADIUS.md,
   },
 });

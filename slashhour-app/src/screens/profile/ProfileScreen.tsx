@@ -15,7 +15,6 @@ import { useAuthStore } from '../../stores/useAuthStore';
 import { authService } from '../../services/api/authService';
 import { trackScreenView } from '../../services/analytics';
 import { useUserProfile } from '../../hooks/useUserProfile';
-import { useMyBusinesses } from '../../hooks/useMyBusinesses';
 import { useProfileEdit } from '../../hooks/useProfileEdit';
 import { useTheme } from '../../context/ThemeContext';
 import StatCard from '../../components/StatCard';
@@ -30,7 +29,6 @@ export default function ProfileScreen({ navigation }: any) {
   const { colors } = useTheme();
   const { user, updateUser, logout } = useAuthStore();
   const { stats, isLoading, error } = useUserProfile();
-  const { businesses, isLoading: businessesLoading } = useMyBusinesses();
   const { isUpdating, error: updateError, updateName, pickAndUploadAvatar } = useProfileEdit();
 
   // Local state for inline editing
@@ -111,10 +109,6 @@ export default function ProfileScreen({ navigation }: any) {
     return `$${amount.toFixed(2)}`;
   };
 
-  const handleBusinessPress = (businessId: string, businessName: string) => {
-    navigation.navigate('BusinessProfile', { businessId, businessName });
-  };
-
   // Drawer menu items
   const menuItems = [
     {
@@ -189,23 +183,8 @@ export default function ProfileScreen({ navigation }: any) {
     infoCard: {
       backgroundColor: colors.white,
     },
-    businessName: {
-      color: colors.textPrimary,
-    },
-    businessCategory: {
-      color: colors.textSecondary,
-    },
     actionArrow: {
       color: colors.textTertiary,
-    },
-    createShopCard: {
-      backgroundColor: colors.white,
-    },
-    createShopTitle: {
-      color: colors.textPrimary,
-    },
-    createShopDescription: {
-      color: colors.textSecondary,
     },
     actionButton: {
       backgroundColor: colors.white,
@@ -319,64 +298,6 @@ export default function ProfileScreen({ navigation }: any) {
             <Text style={[styles.actionArrow, dynamicStyles.actionArrow]}>›</Text>
           </TouchableOpacity>
         </View>
-
-        {/* My Shop or Create Your Shop */}
-        {!businessesLoading && (
-          <View style={styles.section}>
-            {businesses.length > 0 ? (
-              <>
-                <View style={styles.sectionTitleRow}>
-                  <Icon name="building" size={20} color={colors.textPrimary} style="line" />
-                  <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>My Shop</Text>
-                </View>
-                <View style={[styles.infoCard, dynamicStyles.infoCard]}>
-                  {businesses.map((business, index) => (
-                    <View key={business.id}>
-                      {index > 0 && <View style={styles.divider} />}
-                      <TouchableOpacity
-                        style={styles.businessRow}
-                        onPress={() => handleBusinessPress(business.id, business.business_name)}
-                      >
-                        <View style={styles.businessLeft}>
-                          <View style={styles.businessIcon}>
-                            <Icon name="building" size={24} color={COLORS.white} style="line" />
-                          </View>
-                          <View style={styles.businessInfo}>
-                            <Text style={[styles.businessName, dynamicStyles.businessName]}>{business.business_name}</Text>
-                            <Text style={[styles.businessCategory, dynamicStyles.businessCategory]}>{business.category}</Text>
-                          </View>
-                        </View>
-                        <Text style={[styles.actionArrow, dynamicStyles.actionArrow]}>›</Text>
-                      </TouchableOpacity>
-                    </View>
-                  ))}
-                </View>
-              </>
-            ) : (
-              <>
-                <View style={styles.sectionTitleRow}>
-                  <Icon name="building" size={20} color={colors.textPrimary} style="line" />
-                  <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>Business</Text>
-                </View>
-                <View style={[styles.createShopCard, dynamicStyles.createShopCard]}>
-                  <View style={styles.createShopIcon}>
-                    <Icon name="building" size={40} color={colors.textPrimary} style="line" />
-                  </View>
-                  <Text style={[styles.createShopTitle, dynamicStyles.createShopTitle]}>Own a Business?</Text>
-                  <Text style={[styles.createShopDescription, dynamicStyles.createShopDescription]}>
-                    Register your shop and start posting deals to reach thousands of local customers
-                  </Text>
-                  <TouchableOpacity
-                    style={styles.createShopButton}
-                    onPress={() => navigation.navigate('RegisterBusiness')}
-                  >
-                    <Text style={styles.createShopButtonText}>Create Your Shop</Text>
-                  </TouchableOpacity>
-                </View>
-              </>
-            )}
-          </View>
-        )}
 
         {/* Statistics Section */}
         {isLoading ? (

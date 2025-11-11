@@ -5,7 +5,7 @@
  */
 
 import { LinkingOptions } from '@react-navigation/native';
-import * as Linking from 'expo-linking';
+import { Linking } from 'react-native';
 
 /**
  * Extract deal ID from SEO-friendly URL
@@ -52,7 +52,6 @@ function extractBusinessIdFromSlug(slug: string): string | null {
  */
 export const linking: LinkingOptions<any> = {
   prefixes: [
-    Linking.createURL('/'),
     'slashhour://',
     'https://slashhour.com',
     'https://www.slashhour.com',
