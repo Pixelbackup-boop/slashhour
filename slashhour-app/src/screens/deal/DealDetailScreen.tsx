@@ -324,11 +324,17 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
     section: {
       marginBottom: SPACING.lg,
     },
+    sectionTitleRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: SPACING.md,
+    },
     sectionTitle: {
       fontSize: TYPOGRAPHY.fontSize.lg,
       fontWeight: TYPOGRAPHY.fontWeight.bold,
       color: COLORS.textPrimary,
-      marginBottom: SPACING.md,
+      marginBottom: 0,
     },
     description: {
       fontSize: TYPOGRAPHY.fontSize.md,
@@ -427,22 +433,8 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
             contentFit="contain"
           />
 
-          {/* Action Buttons Overlay */}
+          {/* Bookmark Button Overlay */}
           <View style={styles.actionButtonsContainer}>
-            {/* Share Button */}
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={handleSharePress}
-              activeOpacity={0.8}
-            >
-              <Icon
-                name="arrow-up-from-bracket"
-                size={18}
-                color={COLORS.gray400}
-                style="line"
-              />
-            </TouchableOpacity>
-
             {/* Bookmark Button */}
             <TouchableOpacity
               style={styles.actionButton}
@@ -540,7 +532,21 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
           {/* Description */}
           {deal.description && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Description</Text>
+              <View style={styles.sectionTitleRow}>
+                <Text style={styles.sectionTitle}>Description</Text>
+                <TouchableOpacity
+                  onPress={handleSharePress}
+                  activeOpacity={0.7}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Icon
+                    name="arrow-up-from-bracket"
+                    size={20}
+                    color={COLORS.gray400}
+                    style="line"
+                  />
+                </TouchableOpacity>
+              </View>
               <Text style={styles.description}>{deal.description}</Text>
             </View>
           )}
