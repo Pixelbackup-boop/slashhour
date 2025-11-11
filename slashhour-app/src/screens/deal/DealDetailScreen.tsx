@@ -22,6 +22,7 @@ import { useDeal } from '../../hooks/queries/useDealsQuery';
 import { useBookmark } from '../../hooks/useBookmarks';
 import { useUser } from '../../stores/useAuthStore';
 import { haptics } from '../../utils/haptics';
+import { shareDeal } from '../../utils/sharing';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../../theme';
 
 interface DealDetailScreenProps {
@@ -175,6 +176,15 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
       await toggleBookmark();
     } catch (error) {
       console.error('Failed to toggle bookmark:', error);
+    }
+  };
+
+  const handleSharePress = async () => {
+    haptics.medium();
+    try {
+      await shareDeal(deal);
+    } catch (error) {
+      console.error('Failed to share deal:', error);
     }
   };
 
@@ -378,11 +388,16 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
     redeemButtonTextDisabled: {
       color: '#666666', // Dark grey text for disabled state
     },
-    // Bookmark Button
-    bookmarkButton: {
+    // Action Buttons Container (Share & Bookmark)
+    actionButtonsContainer: {
       position: 'absolute',
       top: 16,
       right: 16,
+      flexDirection: 'row',
+      gap: 8,
+      zIndex: 10,
+    },
+    actionButton: {
       width: 34,
       height: 34,
       backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -394,7 +409,6 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
       shadowOpacity: 0.1,
       shadowRadius: 8,
       elevation: 3,
-      zIndex: 10,
     },
   });
 
@@ -413,20 +427,37 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
             contentFit="contain"
           />
 
-          {/* Bookmark Button */}
-          <TouchableOpacity
-            style={styles.bookmarkButton}
-            onPress={handleBookmarkPress}
-            activeOpacity={0.8}
-            disabled={isProcessing}
-          >
-            <Icon
-              name="heart"
-              size={18}
-              color={isBookmarked ? COLORS.error : COLORS.gray400}
-              style={isBookmarked ? 'solid' : 'line'}
-            />
-          </TouchableOpacity>
+          {/* Action Buttons Overlay */}
+          <View style={styles.actionButtonsContainer}>
+            {/* Share Button */}
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={handleSharePress}
+              activeOpacity={0.8}
+            >
+              <Icon
+                name="arrow-up-from-bracket"
+                size={18}
+                color={COLORS.gray400}
+                style="line"
+              />
+            </TouchableOpacity>
+
+            {/* Bookmark Button */}
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={handleBookmarkPress}
+              activeOpacity={0.8}
+              disabled={isProcessing}
+            >
+              <Icon
+                name="heart"
+                size={18}
+                color={isBookmarked ? COLORS.error : COLORS.gray400}
+                style={isBookmarked ? 'solid' : 'line'}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.content}>
