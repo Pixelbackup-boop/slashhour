@@ -397,7 +397,7 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
     // Action Buttons Container (Share & Bookmark)
     actionButtonsContainer: {
       position: 'absolute',
-      top: 26,
+      top: 31,
       right: 16,
       flexDirection: 'row',
       gap: 8,
