@@ -140,7 +140,8 @@ function BusinessHeader({
         <Text style={styles.businessName}>{businessName}</Text>
         {isOwner && (
           <TouchableOpacity onPress={onEditPress} style={styles.editButton}>
-            <Icon name="edit" size={14} color={COLORS.white} style="line" />
+            <Icon name="edit" size={16} color={COLORS.white} style="line" />
+            <Text style={styles.editButtonText}>Edit Shop</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -216,19 +217,23 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
   },
   editButton: {
-    backgroundColor: COLORS.primary,
-    borderRadius: RADIUS.round,
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: COLORS.white,
+    gap: SPACING.xs,
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIUS.md,
+    paddingVertical: SPACING.xs,
+    paddingHorizontal: SPACING.sm,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  editButtonText: {
+    color: COLORS.white,
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
   statsRow: {
     flexDirection: 'row',
