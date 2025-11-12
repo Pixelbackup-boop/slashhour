@@ -145,7 +145,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#FF6B6B',
   },
   followingButton: {
-    backgroundColor: '#FF6B6B',
+    backgroundColor: '#F5F5F5',
+    borderWidth: 2,
+    borderColor: '#FF6B6B',
   },
   outlineButton: {
     backgroundColor: 'transparent',
@@ -179,7 +181,7 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   followingText: {
-    color: '#fff',
+    color: '#FF6B6B',
   },
   outlineFollowText: {
     color: '#FF6B6B',
