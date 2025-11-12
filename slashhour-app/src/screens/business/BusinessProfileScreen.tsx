@@ -434,7 +434,7 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
+      <SafeAreaView style={styles.container} edges={['left', 'right']}>
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           <BusinessProfileSkeleton />
           <View style={styles.dealsGridSkeleton}>
@@ -454,7 +454,7 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
 
   if (error || !business) {
     return (
-      <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
+      <SafeAreaView style={styles.container} edges={['left', 'right']}>
         <View style={styles.centerContainer}>
           <Icon name="alert" size={64} color={colors.error} style="line" />
           <Text style={styles.errorMessage}>{error || 'Business not found'}</Text>
@@ -467,7 +467,7 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
+    <SafeAreaView style={styles.container} edges={['left', 'right']}>
       {/* Main Content */}
       {activeBottomTab === 'deals' ? (
         deals.length === 0 ? (
