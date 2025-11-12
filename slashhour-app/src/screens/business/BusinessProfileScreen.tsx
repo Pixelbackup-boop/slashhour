@@ -244,20 +244,6 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
       fontSize: TYPOGRAPHY.fontSize.sm,
       fontWeight: TYPOGRAPHY.fontWeight.semibold,
     },
-    manageRedemptionsButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginTop: SPACING.md,
-      marginHorizontal: SPACING.md,
-      paddingVertical: SPACING.md,
-      borderRadius: RADIUS.md,
-    },
-    manageRedemptionsText: {
-      fontSize: TYPOGRAPHY.fontSize.md,
-      fontWeight: TYPOGRAPHY.fontWeight.semibold,
-      marginLeft: SPACING.sm,
-    },
     scrollView: {
       flex: 1,
     },
@@ -392,22 +378,6 @@ export default function BusinessProfileScreen({ route, navigation }: BusinessPro
         />
 
         <BusinessTabs business={business!} isOwner={isOwner} />
-
-        {/* Manage Redemptions Button (Owner Only) */}
-        {isOwner && (
-          <TouchableOpacity
-            style={[styles.manageRedemptionsButton, { backgroundColor: colors.primary }]}
-            onPress={() => navigation.navigate('BusinessRedemptions', {
-              businessId: business!.id,
-              businessName: business!.business_name,
-            })}
-          >
-            <Icon name="ticket" size={20} color={colors.white} style="solid" />
-            <Text style={[styles.manageRedemptionsText, { color: colors.white }]}>
-              Manage Redemptions
-            </Text>
-          </TouchableOpacity>
-        )}
       </View>
 
       {/* Deals & Reviews Section */}

@@ -28,6 +28,10 @@ export default function MyShopScreen({ navigation }: any) {
     navigation.navigate('BusinessProfile', { businessId, businessName });
   };
 
+  const handleManageRedemptions = (businessId: string, businessName: string) => {
+    navigation.navigate('BusinessRedemptions', { businessId, businessName });
+  };
+
   // Dynamic styles based on theme
   const dynamicStyles = useMemo(() => ({
     container: {
@@ -116,6 +120,19 @@ export default function MyShopScreen({ navigation }: any) {
                     </View>
                   ))}
                 </View>
+
+                {/* Manage Redemptions Button */}
+                {businesses.length > 0 && (
+                  <TouchableOpacity
+                    style={styles.manageRedemptionsButton}
+                    onPress={() => handleManageRedemptions(businesses[0].id, businesses[0].business_name)}
+                  >
+                    <Icon name="ticket" size={20} color={COLORS.white} style="solid" />
+                    <Text style={styles.manageRedemptionsText}>
+                      Manage Redemptions
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </>
             ) : (
               <>
@@ -273,5 +290,22 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.bold,
+  },
+  manageRedemptionsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: SPACING.lg,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.xl,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.primary,
+    ...SHADOWS.md,
+  },
+  manageRedemptionsText: {
+    color: COLORS.white,
+    fontSize: TYPOGRAPHY.fontSize.md,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+    marginLeft: SPACING.sm,
   },
 });
