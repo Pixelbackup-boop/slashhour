@@ -45,6 +45,18 @@ export default React.memo(function RedemptionCard({ redemption, onPress }: Redem
     return icons[category] || 'award';
   };
 
+  // Get the deal image - use actual deal image if available, otherwise fall back to category image
+  const getImageSource = () => {
+    if (redemption.deal?.images && redemption.deal.images.length > 0) {
+      // Deal images can be either DealImage objects with url property or strings
+      const firstImage = redemption.deal.images[0];
+      const imageUrl = typeof firstImage === 'string' ? firstImage : firstImage.url;
+      return { uri: imageUrl };
+    }
+    // Fall back to category image (which is a require() object)
+    return getCategoryImage(redemption.dealCategory);
+  };
+
   return (
     <TouchableOpacity
       style={styles.card}
@@ -53,7 +65,7 @@ export default React.memo(function RedemptionCard({ redemption, onPress }: Redem
     >
       {/* Deal Image */}
       <Image
-        source={getCategoryImage(redemption.dealCategory)}
+        source={getImageSource()}
         style={styles.image}
         contentFit="cover"
         cachePolicy="memory-disk"
