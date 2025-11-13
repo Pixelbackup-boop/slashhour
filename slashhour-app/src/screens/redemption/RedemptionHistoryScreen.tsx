@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -11,8 +11,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRedemptionHistory } from '../../hooks/useRedemptionHistory';
 import RedemptionCard from '../../components/RedemptionCard';
+import RedemptionModal from '../../components/RedemptionModal';
 import { trackScreenView } from '../../services/analytics';
 import { Icon } from '../../components/icons';
+import { UserRedemption } from '../../types/models';
+import { COLORS } from '../../theme';
 
 export default function RedemptionHistoryScreen({ navigation }: any) {
   const {
@@ -26,9 +29,22 @@ export default function RedemptionHistoryScreen({ navigation }: any) {
     isRefreshing,
   } = useRedemptionHistory();
 
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [selectedRedemption, setSelectedRedemption] = useState<UserRedemption | null>(null);
+
   useEffect(() => {
     trackScreenView('RedemptionHistoryScreen');
   }, []);
+
+  const handleViewQR = (redemption: UserRedemption) => {
+    setSelectedRedemption(redemption);
+    setShowQRModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowQRModal(false);
+    setSelectedRedemption(null);
+  };
 
   const renderHeader = () => (
     <View style={styles.headerSection}>
@@ -133,6 +149,7 @@ export default function RedemptionHistoryScreen({ navigation }: any) {
                   navigation.navigate('DealDetail', { dealId: item.deal.id });
                 }
               }}
+              onViewQR={() => handleViewQR(item)}
             />
           )}
           ListHeaderComponent={renderHeader}
@@ -153,6 +170,23 @@ export default function RedemptionHistoryScreen({ navigation }: any) {
           onEndReached={loadMore}
           onEndReachedThreshold={0.5}
           showsVerticalScrollIndicator={false}
+        />
+      )}
+
+      {/* QR Code Modal */}
+      {selectedRedemption && (
+        <RedemptionModal
+          visible={showQRModal}
+          redemptionCode={selectedRedemption.id}
+          dealTitle={selectedRedemption.deal?.title || 'Deal'}
+          businessName={selectedRedemption.business?.businessName || 'Business'}
+          savings={selectedRedemption.savingsAmount.toFixed(2)}
+          originalPrice={selectedRedemption.originalPrice}
+          discountedPrice={selectedRedemption.paidPrice}
+          businessAddress={selectedRedemption.business?.address}
+          businessPhone={undefined}
+          expiresAt={new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()}
+          onClose={handleCloseModal}
         />
       )}
     </SafeAreaView>

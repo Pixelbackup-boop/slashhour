@@ -8,9 +8,10 @@ import { getCategoryImage } from '../utils/categoryImages';
 interface RedemptionCardProps {
   redemption: UserRedemption;
   onPress?: () => void;
+  onViewQR?: () => void;
 }
 
-export default React.memo(function RedemptionCard({ redemption, onPress }: RedemptionCardProps) {
+export default React.memo(function RedemptionCard({ redemption, onPress, onViewQR }: RedemptionCardProps) {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -106,6 +107,21 @@ export default React.memo(function RedemptionCard({ redemption, onPress }: Redem
             </Text>
           </View>
         </View>
+
+        {/* View QR Code Button */}
+        {onViewQR && (
+          <TouchableOpacity
+            style={styles.viewQRButton}
+            onPress={(e) => {
+              e.stopPropagation();
+              onViewQR();
+            }}
+            activeOpacity={0.7}
+          >
+            <Icon name="qrcode" size={18} color="#fff" style="line" />
+            <Text style={styles.viewQRButtonText}>View QR Code</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -200,5 +216,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#6BCB77',
+  },
+  viewQRButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#FF6B6B',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    marginTop: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  viewQRButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
   },
 });
