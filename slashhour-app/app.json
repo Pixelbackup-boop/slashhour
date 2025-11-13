@@ -50,6 +50,14 @@
           "cameraPermission": "Allow Slashhour to access your camera to scan QR codes for redemptions.",
           "microphonePermission": false
         }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow Slashhour to save redemption QR codes to your photo gallery.",
+          "savePhotosPermission": "Allow Slashhour to save redemption QR codes to your photo gallery.",
+          "isAccessMediaLocationEnabled": true
+        }
       ]
     ],
     "ios": {

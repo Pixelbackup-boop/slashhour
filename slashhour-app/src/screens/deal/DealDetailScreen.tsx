@@ -623,6 +623,11 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
         dealTitle={deal.title}
         businessName={deal.business?.business_name || ''}
         savings={savings.savings}
+        originalPrice={deal.original_price}
+        discountedPrice={deal.discounted_price}
+        businessAddress={deal.business?.address}
+        businessPhone={deal.business?.phone}
+        expiresAt={deal.expires_at}
         onClose={closeRedemptionModal}
       />
     </SafeAreaView>
