@@ -10,6 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../../context/ThemeContext';
 import { Icon } from '../../components/icons';
 import { TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../../theme';
@@ -53,8 +54,14 @@ export default function BusinessRedemptionsScreen({ route, navigation }: Busines
 
   useEffect(() => {
     trackScreenView('BusinessRedemptionsScreen');
-    loadRedemptions();
-  }, [selectedFilter]);
+  }, []);
+
+  // Auto-refresh when screen comes into focus (e.g., after QR code validation)
+  useFocusEffect(
+    useCallback(() => {
+      loadRedemptions();
+    }, [selectedFilter, businessId])
+  );
 
   const loadRedemptions = async () => {
     try {

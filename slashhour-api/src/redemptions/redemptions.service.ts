@@ -171,6 +171,8 @@ export class RedemptionsService {
     validatorId: string,
     status?: RedemptionStatus,
   ) {
+    console.log('🔍 Validating redemption:', { redemptionId, validatorId, status });
+
     // Get the redemption with business info
     const redemption = await this.prisma.user_redemptions.findUnique({
       where: { id: redemptionId },
@@ -181,11 +183,30 @@ export class RedemptionsService {
       },
     });
 
+    console.log('🔍 Redemption found:', {
+      exists: !!redemption,
+      hasBusiness: !!redemption?.businesses,
+      businessId: redemption?.business_id,
+      businessOwnerId: redemption?.businesses?.owner_id,
+    });
+
     if (!redemption) {
-      throw new NotFoundException('Redemption not found');
+      throw new NotFoundException('This is not a valid SlashHour redemption code');
+    }
+
+    // Check if business relationship exists
+    if (!redemption.businesses) {
+      console.error('❌ Business relationship not found for redemption:', redemptionId);
+      throw new NotFoundException('Business not found for this redemption');
     }
 
     // Verify that the validator owns the business
+    console.log('🔍 Checking ownership:', {
+      businessOwnerId: redemption.businesses.owner_id,
+      validatorId,
+      matches: redemption.businesses.owner_id === validatorId,
+    });
+
     if (redemption.businesses.owner_id !== validatorId) {
       throw new ForbiddenException('You do not have permission to validate this redemption');
     }

@@ -61,10 +61,41 @@ export default function QRScannerScreen({ route, navigation }: QRScannerScreenPr
     );
   };
 
+  const isValidUUID = (str: string): boolean => {
+    // UUID v4 format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(str);
+  };
+
   const validateRedemption = async (redemptionId: string) => {
+    console.log('🔍 [QR Scanner] Starting validation for redemption ID:', redemptionId);
+
+    // Validate UUID format first
+    if (!isValidUUID(redemptionId)) {
+      console.log('❌ [QR Scanner] Invalid UUID format:', redemptionId);
+      Alert.alert(
+        'Invalid QR Code',
+        'This is not a valid SlashHour redemption code. Please scan a valid SlashHour QR code.',
+        [
+          {
+            text: 'Try Again',
+            onPress: () => setScanned(false),
+          },
+          {
+            text: 'Cancel',
+            style: 'cancel',
+            onPress: () => navigation.goBack(),
+          },
+        ]
+      );
+      return;
+    }
+
     try {
       setIsValidating(true);
+      console.log('🌐 [QR Scanner] Calling redemptionService.validateRedemption...');
       const response = await redemptionService.validateRedemption(redemptionId);
+      console.log('✅ [QR Scanner] Validation successful:', response);
 
       Alert.alert(
         'Success',
@@ -81,9 +112,34 @@ export default function QRScannerScreen({ route, navigation }: QRScannerScreenPr
         ]
       );
     } catch (err: any) {
+      console.error('❌ [QR Scanner] Validation error:', err);
+      console.error('❌ [QR Scanner] Error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
+
+      // Determine user-friendly error message
+      let errorTitle = 'Validation Failed';
+      let errorMessage = 'Failed to validate redemption. Please try again.';
+
+      if (err.response?.status === 404) {
+        errorTitle = 'Invalid Code';
+        errorMessage = 'This is not a valid SlashHour redemption code. Please scan a valid SlashHour QR code.';
+      } else if (err.response?.status === 403) {
+        errorTitle = 'Permission Denied';
+        errorMessage = 'You do not have permission to validate this redemption.';
+      } else if (err.response?.status === 400) {
+        errorMessage = err.response?.data?.message || 'This redemption cannot be validated.';
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
       Alert.alert(
-        'Validation Failed',
-        err.message || 'Failed to validate redemption. Please try again.',
+        errorTitle,
+        errorMessage,
         [
           {
             text: 'Try Again',

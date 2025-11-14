@@ -9,11 +9,7 @@ import { BusinessRedemptionQueryDto } from './dto/business-redemption.dto';
 export class RedemptionsController {
   constructor(private readonly redemptionsService: RedemptionsService) {}
 
-  @Post(':dealId')
-  async redeemDeal(@Req() req, @Param('dealId') dealId: string) {
-    const userId = req.user.id;
-    return this.redemptionsService.redeemDeal(userId, dealId);
-  }
+  // Specific routes MUST come before generic param routes
 
   @Get()
   async getUserRedemptions(
@@ -58,6 +54,12 @@ export class RedemptionsController {
       userId,
       query,
     );
+  }
+
+  @Post(':dealId')
+  async redeemDeal(@Req() req, @Param('dealId') dealId: string) {
+    const userId = req.user.id;
+    return this.redemptionsService.redeemDeal(userId, dealId);
   }
 
   @Get(':redemptionId')
