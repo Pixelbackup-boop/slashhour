@@ -6,6 +6,7 @@
 
 import { Share, Platform } from 'react-native';
 import { Deal } from '../types/models';
+import { dealService } from '../services/api/dealService';
 
 /**
  * Convert a string to a URL-safe slug
@@ -64,14 +65,50 @@ export function getDealDeepLink(dealId: string): string {
  */
 export async function shareDeal(deal: Deal): Promise<void> {
   try {
+    // 🔍 DEBUGGING: Log the full deal object
+    console.log('🔍 [shareDeal] Full deal object:', {
+      id: deal.id,
+      title: deal.title,
+      original_price: deal.original_price,
+      discounted_price: deal.discounted_price,
+      savings_amount: deal.savings_amount,
+      discount_percentage: deal.discount_percentage,
+    });
+
     const businessName = deal.businesses?.business_name || deal.business?.business_name || 'a local business';
     const webUrl = getDealWebUrl(deal);
 
+    // Calculate savings amount if not provided (defensive coding with type conversion)
+    // 2025 Best Practice: Always convert to numbers to handle string values from API
+    const originalPrice = parseFloat(deal.original_price as any) || 0;
+    const discountedPrice = parseFloat(deal.discounted_price as any) || 0;
+    const calculatedSavings = originalPrice - discountedPrice;
+    console.log('🔍 [shareDeal] Calculated savings:', calculatedSavings);
+
+    const savingsFromDeal = parseFloat(deal.savings_amount as any) || 0;
+    const savingsAmount = savingsFromDeal > 0 ? savingsFromDeal : calculatedSavings;
+    console.log('🔍 [shareDeal] Savings amount:', savingsAmount, 'Type:', typeof savingsAmount);
+
+    // 2025 Best Practice: Guarantee it's a number with parseFloat + fallback to 0
+    const safeSavingsAmount = parseFloat(String(savingsAmount)) || 0;
+    console.log('🔍 [shareDeal] Safe savings amount:', safeSavingsAmount);
+
+    // Calculate discount percentage if not provided
+    // 2025 Best Practice: Calculate from prices if missing
+    const discountFromDeal = parseFloat(deal.discount_percentage as any) || 0;
+    const calculatedDiscount = originalPrice > 0 ? Math.round((calculatedSavings / originalPrice) * 100) : 0;
+    const discountPercentage = discountFromDeal > 0 ? discountFromDeal : calculatedDiscount;
+    console.log('🔍 [shareDeal] Discount percentage:', discountPercentage);
+
+    // Format savings as string to avoid toFixed errors
+    const savingsText = safeSavingsAmount.toFixed(2);
+    console.log('🔍 [shareDeal] Savings text:', savingsText);
+
     // Create a compelling share message
     const message = Platform.select({
-      ios: `Check out this deal: ${deal.title} - ${deal.discount_percentage}% off at ${businessName}!\n\n${webUrl}`,
-      android: `🔥 ${deal.title}\n\n${deal.discount_percentage}% OFF at ${businessName}!\n💰 Save $${deal.savings_amount.toFixed(2)}\n\n${webUrl}`,
-      default: `${deal.title} - ${deal.discount_percentage}% off at ${businessName}!\n\n${webUrl}`,
+      ios: `Check out this deal: ${deal.title} - ${discountPercentage}% off at ${businessName}!\n\n${webUrl}`,
+      android: `🔥 ${deal.title}\n\n${discountPercentage}% OFF at ${businessName}!\n💰 Save $${savingsText}\n\n${webUrl}`,
+      default: `${deal.title} - ${discountPercentage}% off at ${businessName}!\n\n${webUrl}`,
     });
 
     const result = await Share.share(
@@ -98,8 +135,8 @@ export async function shareDeal(deal: Deal): Promise<void> {
         console.log('Deal shared successfully');
       }
 
-      // TODO: Track share event in analytics
-      // trackEvent('deal_shared', { dealId: deal.id, platform: Platform.OS });
+      // Track share event in analytics
+      await dealService.trackShare(deal.id);
 
       return;
     } else if (result.action === Share.dismissedAction) {

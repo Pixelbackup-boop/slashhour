@@ -134,18 +134,16 @@ export default React.memo(function DealCard({ deal, onPress, onBusinessPress }: 
   const statusInfo = getStatusInfo();
 
   return (
-    <Animated.View
-      entering={FadeInDown.duration(400).springify()}
-      style={[styles.card, animatedStyle]}
-    >
-      <Animated.View
-        style={styles.pressableContent}
-        onTouchStart={handlePressIn}
-        onTouchEnd={() => {
-          handlePressOut();
-          onPress?.();
-        }}
-      >
+    <Animated.View entering={FadeInDown.duration(400).springify()}>
+      <Animated.View style={[styles.card, animatedStyle]}>
+        <Animated.View
+          style={styles.pressableContent}
+          onTouchStart={handlePressIn}
+          onTouchEnd={() => {
+            handlePressOut();
+            onPress?.();
+          }}
+        >
         <View style={styles.imageContainer}>
         <ImageCarousel
           images={deal.images || []}
@@ -194,6 +192,7 @@ export default React.memo(function DealCard({ deal, onPress, onBusinessPress }: 
             </Text>
           </View>
         )}
+        </Animated.View>
       </Animated.View>
     </Animated.View>
   );

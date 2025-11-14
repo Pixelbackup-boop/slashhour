@@ -23,6 +23,7 @@ import { useBookmark } from '../../hooks/useBookmarks';
 import { useUser } from '../../stores/useAuthStore';
 import { haptics } from '../../utils/haptics';
 import { shareDeal } from '../../utils/sharing';
+import { dealService } from '../../services/api/dealService';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../../theme';
 
 interface DealDetailScreenProps {
@@ -99,6 +100,24 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
       }
     }
   }, [deal?.id, deal?.isBookmarked, deal?.isWishlisted]);
+
+  // Track view for analytics when deal loads
+  useEffect(() => {
+    if (deal?.id) {
+      // Determine if user is following this business
+      const isFollower = deal.business?.isFollowing || deal.businesses?.isFollowing || false;
+
+      // Track the view (silent fail on error)
+      dealService.trackView(deal.id, isFollower);
+
+      if (__DEV__) {
+        console.log('👁️ [DealDetailScreen] Tracking view:', {
+          dealId: deal.id,
+          isFollower,
+        });
+      }
+    }
+  }, [deal?.id]);
 
   // Show loading state while fetching deal
   if (dealId && isFetchingDeal) {
@@ -324,17 +343,11 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
     section: {
       marginBottom: SPACING.lg,
     },
-    sectionTitleRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: SPACING.md,
-    },
     sectionTitle: {
       fontSize: TYPOGRAPHY.fontSize.lg,
       fontWeight: TYPOGRAPHY.fontWeight.bold,
       color: COLORS.textPrimary,
-      marginBottom: 0,
+      marginBottom: SPACING.md,
     },
     description: {
       fontSize: TYPOGRAPHY.fontSize.md,
@@ -433,8 +446,22 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
             contentFit="contain"
           />
 
-          {/* Bookmark Button Overlay */}
+          {/* Action Buttons Overlay: Share & Bookmark */}
           <View style={styles.actionButtonsContainer}>
+            {/* Share Button */}
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={handleSharePress}
+              activeOpacity={0.8}
+            >
+              <Icon
+                name="share"
+                size={18}
+                color={COLORS.gray400}
+                style="line"
+              />
+            </TouchableOpacity>
+
             {/* Bookmark Button */}
             <TouchableOpacity
               style={styles.actionButton}
@@ -532,21 +559,7 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
           {/* Description */}
           {deal.description && (
             <View style={styles.section}>
-              <View style={styles.sectionTitleRow}>
-                <Text style={styles.sectionTitle}>Description</Text>
-                <TouchableOpacity
-                  onPress={handleSharePress}
-                  activeOpacity={0.7}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <Icon
-                    name="share"
-                    size={20}
-                    color={COLORS.gray400}
-                    style="line"
-                  />
-                </TouchableOpacity>
-              </View>
+              <Text style={styles.sectionTitle}>Description</Text>
               <Text style={styles.description}>{deal.description}</Text>
             </View>
           )}

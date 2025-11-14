@@ -172,16 +172,14 @@ export default React.memo(function FeedDealCard({
   const statusInfo = getStatusInfo();
 
   return (
-    <Animated.View
-      entering={FadeInDown.duration(400).springify()}
-      style={[styles.card, animatedStyle]}
-    >
-      <TouchableOpacity
-        activeOpacity={1}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        onPress={onPress}
-      >
+    <Animated.View entering={FadeInDown.duration(400).springify()}>
+      <Animated.View style={[styles.card, animatedStyle]}>
+        <TouchableOpacity
+          activeOpacity={1}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          onPress={onPress}
+        >
         {/* Image Container */}
         <View style={styles.imageContainer}>
           <ImageCarousel
@@ -267,6 +265,7 @@ export default React.memo(function FeedDealCard({
             )}</View>
         </View>
       </TouchableOpacity>
+      </Animated.View>
     </Animated.View>
   );
 });

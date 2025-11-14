@@ -183,13 +183,48 @@ class SocketService {
 
   /**
    * Join specific conversation room
+   * 2025 Best Practice: Wait for socket connection before joining
    */
-  joinConversation(conversationId: string, userId: string): void {
-    if (!this.socket) {
+  async joinConversation(conversationId: string, userId: string): Promise<void> {
+    // Wait for socket to connect first (with timeout)
+    if (!this.socket?.connected) {
       if (__DEV__) {
-        console.warn('⚠️ Socket not connected, cannot join conversation');
+        console.warn('⏳ Waiting for socket connection before joining conversation...');
       }
-      return;
+
+      await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Socket connection timeout - failed to join conversation'));
+        }, 5000); // 5 second timeout
+
+        if (this.socket) {
+          this.socket.once('connect', () => {
+            clearTimeout(timeout);
+            resolve();
+          });
+
+          // If already connected by the time we get here, resolve immediately
+          if (this.socket.connected) {
+            clearTimeout(timeout);
+            resolve();
+          }
+        } else {
+          clearTimeout(timeout);
+          reject(new Error('Socket not initialized'));
+        }
+      }).catch(error => {
+        if (__DEV__) {
+          console.error('❌ Failed to wait for socket connection:', error);
+        }
+        throw error;
+      });
+    }
+
+    if (!this.socket?.connected) {
+      if (__DEV__) {
+        console.warn('⚠️ Socket still not connected after waiting, cannot join conversation');
+      }
+      throw new Error('Socket not connected');
     }
 
     if (__DEV__) {

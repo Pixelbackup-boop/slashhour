@@ -553,4 +553,225 @@ export class DealsService {
       CacheTTL.TWO_MINUTES,
     );
   }
+
+  /**
+   * Track when a user views a deal
+   * Increments view_count_followers or view_count_nearby based on follower status
+   */
+  async trackView(dealId: string, userId: string, isFollower: boolean) {
+    try {
+      // Check if deal exists
+      const deal = await this.prisma.deals.findUnique({
+        where: { id: dealId },
+      });
+
+      if (!deal) {
+        throw new NotFoundException('Deal not found');
+      }
+
+      // Determine which view count to increment
+      const field = isFollower ? 'view_count_followers' : 'view_count_nearby';
+
+      // Increment the appropriate view count
+      await this.prisma.deals.update({
+        where: { id: dealId },
+        data: {
+          [field]: { increment: 1 },
+        },
+      });
+
+      // Invalidate cache for this deal
+      await this.cacheService.invalidateDeal(dealId);
+
+      return {
+        success: true,
+        message: 'View tracked successfully',
+      };
+    } catch (error) {
+      // Silent fail for analytics - don't break user experience
+      this.logger.error(`Failed to track view for deal ${dealId}:`, error);
+      return {
+        success: false,
+        message: 'Failed to track view',
+      };
+    }
+  }
+
+  /**
+   * Track when a user shares a deal
+   * Increments share_count
+   */
+  async trackShare(dealId: string, userId: string) {
+    try {
+      // Check if deal exists
+      const deal = await this.prisma.deals.findUnique({
+        where: { id: dealId },
+      });
+
+      if (!deal) {
+        throw new NotFoundException('Deal not found');
+      }
+
+      // Increment share count
+      await this.prisma.deals.update({
+        where: { id: dealId },
+        data: {
+          share_count: { increment: 1 },
+        },
+      });
+
+      // Invalidate cache for this deal
+      await this.cacheService.invalidateDeal(dealId);
+
+      return {
+        success: true,
+        message: 'Share tracked successfully',
+      };
+    } catch (error) {
+      // Silent fail for analytics - don't break user experience
+      this.logger.error(`Failed to track share for deal ${dealId}:`, error);
+      return {
+        success: false,
+        message: 'Failed to track share',
+      };
+    }
+  }
+
+  /**
+   * Get detailed analytics for a specific deal
+   * Only accessible by the business owner
+   */
+  async getDealAnalytics(dealId: string, userId: string) {
+    // Get deal with business info
+    const deal = await this.prisma.deals.findUnique({
+      where: { id: dealId },
+      include: {
+        businesses: true,
+      },
+    });
+
+    if (!deal) {
+      throw new NotFoundException('Deal not found');
+    }
+
+    // Verify ownership
+    if (deal.businesses.owner_id !== userId) {
+      throw new ForbiddenException('You do not have permission to view analytics for this deal');
+    }
+
+    const now = new Date();
+
+    // Calculate engagement metrics
+    const viewsFromFollowers = deal.view_count_followers || 0;
+    const viewsFromNearby = deal.view_count_nearby || 0;
+    const totalViews = viewsFromFollowers + viewsFromNearby;
+    const shares = deal.share_count || 0;
+    const saves = deal.save_count || 0;
+
+    // Get redemption data
+    const redemptions = await this.prisma.user_redemptions.findMany({
+      where: { deal_id: dealId },
+      select: {
+        id: true,
+        redeemed_at: true,
+        users: {
+          select: {
+            username: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: { redeemed_at: 'desc' },
+    });
+
+    const redemptionCount = redemptions.length;
+
+    // Calculate conversion rate
+    const conversionRate = totalViews > 0 ? (redemptionCount / totalViews) * 100 : 0;
+
+    // Calculate engagement rate (interactions / views)
+    const engagementRate = totalViews > 0 ? ((shares + saves) / totalViews) * 100 : 0;
+
+    // Determine deal status
+    const isActive =
+      deal.status === DealStatus.ACTIVE &&
+      deal.starts_at <= now &&
+      deal.expires_at > now;
+
+    const daysActive = Math.max(
+      0,
+      Math.floor((now.getTime() - deal.starts_at.getTime()) / (1000 * 60 * 60 * 24))
+    );
+
+    const daysRemaining = Math.max(
+      0,
+      Math.ceil((deal.expires_at.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    );
+
+    // Calculate revenue impact (estimated savings provided to customers)
+    const totalSavings = redemptionCount * (deal.original_price - deal.discounted_price);
+
+    // Group redemptions by date for trend data
+    const redemptionsByDate: { [key: string]: number } = {};
+    redemptions.forEach(r => {
+      const date = r.redeemed_at.toISOString().split('T')[0];
+      redemptionsByDate[date] = (redemptionsByDate[date] || 0) + 1;
+    });
+
+    return {
+      dealInfo: {
+        id: deal.id,
+        title: deal.title,
+        description: deal.description,
+        originalPrice: deal.original_price,
+        discountedPrice: deal.discounted_price,
+        discountPercentage: deal.discount_percentage,
+        savingsAmount: deal.original_price - deal.discounted_price,
+        status: deal.status,
+        isActive,
+        startsAt: deal.starts_at,
+        expiresAt: deal.expires_at,
+        createdAt: deal.created_at,
+        daysActive,
+        daysRemaining,
+      },
+      metrics: {
+        views: {
+          total: totalViews,
+          fromFollowers: viewsFromFollowers,
+          fromNearby: viewsFromNearby,
+          followerPercentage: totalViews > 0 ? Math.round((viewsFromFollowers / totalViews) * 100) : 0,
+        },
+        engagement: {
+          shares,
+          saves,
+          total: shares + saves,
+          rate: Math.round(engagementRate * 100) / 100,
+        },
+        redemptions: {
+          count: redemptionCount,
+          rate: Math.round(conversionRate * 100) / 100,
+          totalSavings,
+          averagePerDay: daysActive > 0 ? Math.round((redemptionCount / daysActive) * 100) / 100 : 0,
+        },
+      },
+      performance: {
+        conversionRate: Math.round(conversionRate * 100) / 100,
+        engagementRate: Math.round(engagementRate * 100) / 100,
+        viewsPerDay: daysActive > 0 ? Math.round((totalViews / daysActive) * 100) / 100 : 0,
+        redemptionsPerDay: daysActive > 0 ? Math.round((redemptionCount / daysActive) * 100) / 100 : 0,
+      },
+      trends: {
+        redemptionsByDate,
+      },
+      recentRedemptions: redemptions.slice(0, 10).map(r => ({
+        id: r.id,
+        redeemedAt: r.redeemed_at,
+        customer: {
+          username: r.users.username,
+          email: r.users.email,
+        },
+      })),
+    };
+  }
 }

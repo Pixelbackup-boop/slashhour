@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -8,21 +8,48 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { useMyBusinesses } from '../../hooks/useMyBusinesses';
 import { useTheme } from '../../context/ThemeContext';
 import { trackScreenView } from '../../services/analytics';
 import LogoHeader from '../../components/LogoHeader';
 import { Icon } from '../../components/icons';
 import { TYPOGRAPHY, SPACING, RADIUS, SHADOWS, COLORS, LAYOUT } from '../../theme';
+import apiClient from '../../services/api/ApiClient';
 
 export default function MyShopScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { businesses, isLoading: businessesLoading } = useMyBusinesses();
+  const [stats, setStats] = useState<any>(null);
+  const [statsLoading, setStatsLoading] = useState(false);
 
   useEffect(() => {
     trackScreenView('MyShopScreen');
   }, []);
+
+  // Load stats when screen comes into focus and business exists
+  useFocusEffect(
+    React.useCallback(() => {
+      if (businesses.length > 0) {
+        loadStats();
+      }
+    }, [businesses])
+  );
+
+  const loadStats = async () => {
+    if (businesses.length === 0) return;
+
+    try {
+      setStatsLoading(true);
+      const response = await apiClient.get(`/businesses/${businesses[0].id}/stats`);
+      setStats(response);
+    } catch (error) {
+      console.error('Failed to load stats:', error);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
 
   const handleBusinessPress = (businessId: string, businessName: string) => {
     navigation.navigate('BusinessProfile', { businessId, businessName });
@@ -30,6 +57,10 @@ export default function MyShopScreen({ navigation }: any) {
 
   const handleManageRedemptions = (businessId: string, businessName: string) => {
     navigation.navigate('BusinessRedemptions', { businessId, businessName });
+  };
+
+  const handleViewAnalytics = (businessId: string, businessName: string) => {
+    navigation.navigate('BusinessAnalytics', { businessId, businessName });
   };
 
   // Dynamic styles based on theme
@@ -60,6 +91,15 @@ export default function MyShopScreen({ navigation }: any) {
     },
     createShopDescription: {
       color: colors.textSecondary,
+    },
+    statsCard: {
+      backgroundColor: colors.white,
+    },
+    statLabel: {
+      color: colors.textSecondary,
+    },
+    statValue: {
+      color: colors.textPrimary,
     },
   }), [colors]);
 
@@ -121,17 +161,77 @@ export default function MyShopScreen({ navigation }: any) {
                   ))}
                 </View>
 
-                {/* Manage Redemptions Button */}
+                {/* Quick Stats Section */}
+                {stats && !statsLoading && (
+                  <>
+                    <View style={[styles.sectionTitleRow, { marginTop: SPACING.lg }]}>
+                      <Icon name="chart-simple" size={20} color={colors.textPrimary} style="solid" />
+                      <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>
+                        Quick Stats
+                      </Text>
+                    </View>
+                    <View style={[styles.statsCard, dynamicStyles.statsCard]}>
+                      <View style={styles.statsRow}>
+                        <View style={styles.statItem}>
+                          <Text style={[styles.statValue, dynamicStyles.statValue]}>
+                            {stats.totalMetrics?.totalViews?.toLocaleString() || 0}
+                          </Text>
+                          <Text style={[styles.statLabel, dynamicStyles.statLabel]}>Views</Text>
+                        </View>
+                        <View style={styles.statItem}>
+                          <Text style={[styles.statValue, dynamicStyles.statValue]}>
+                            {stats.totalMetrics?.totalSaves?.toLocaleString() || 0}
+                          </Text>
+                          <Text style={[styles.statLabel, dynamicStyles.statLabel]}>Saves</Text>
+                        </View>
+                        <View style={styles.statItem}>
+                          <Text style={[styles.statValue, dynamicStyles.statValue]}>
+                            {stats.totalMetrics?.totalRedemptions?.toLocaleString() || 0}
+                          </Text>
+                          <Text style={[styles.statLabel, dynamicStyles.statLabel]}>Sales</Text>
+                        </View>
+                      </View>
+                      <View style={styles.conversionRow}>
+                        <Text style={[styles.statLabel, dynamicStyles.statLabel]}>
+                          Conversion Rate
+                        </Text>
+                        <Text style={[styles.conversionValue, { color: colors.primary }]}>
+                          {stats.totalMetrics?.overallConversionRate || 0}%
+                        </Text>
+                      </View>
+                    </View>
+                  </>
+                )}
+
+                {statsLoading && (
+                  <View style={styles.statsLoadingContainer}>
+                    <ActivityIndicator size="small" color={colors.primary} />
+                  </View>
+                )}
+
+                {/* Action Buttons */}
                 {businesses.length > 0 && (
-                  <TouchableOpacity
-                    style={styles.manageRedemptionsButton}
-                    onPress={() => handleManageRedemptions(businesses[0].id, businesses[0].business_name)}
-                  >
-                    <Icon name="ticket" size={20} color={COLORS.white} style="solid" />
-                    <Text style={styles.manageRedemptionsText}>
-                      Manage Redemptions
-                    </Text>
-                  </TouchableOpacity>
+                  <>
+                    <TouchableOpacity
+                      style={styles.manageRedemptionsButton}
+                      onPress={() => handleViewAnalytics(businesses[0].id, businesses[0].business_name)}
+                    >
+                      <Icon name="chart-simple" size={20} color={COLORS.white} style="solid" />
+                      <Text style={styles.manageRedemptionsText}>
+                        View Analytics
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[styles.manageRedemptionsButton, { marginTop: SPACING.sm }]}
+                      onPress={() => handleManageRedemptions(businesses[0].id, businesses[0].business_name)}
+                    >
+                      <Icon name="ticket" size={20} color={COLORS.white} style="solid" />
+                      <Text style={styles.manageRedemptionsText}>
+                        Manage Redemptions
+                      </Text>
+                    </TouchableOpacity>
+                  </>
                 )}
               </>
             ) : (
@@ -307,5 +407,48 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
     marginLeft: SPACING.sm,
+  },
+  statsCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    marginTop: SPACING.md,
+    ...SHADOWS.md,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingBottom: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderLight,
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: TYPOGRAPHY.fontSize.xl,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.xs / 2,
+  },
+  statLabel: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    color: COLORS.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  conversionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: SPACING.md,
+  },
+  conversionValue: {
+    fontSize: TYPOGRAPHY.fontSize.lg,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+  },
+  statsLoadingContainer: {
+    padding: SPACING.md,
+    alignItems: 'center',
   },
 });

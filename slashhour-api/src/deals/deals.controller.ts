@@ -123,4 +123,45 @@ export class DealsController {
   async redeem(@CurrentUser('id') userId: string, @Param('id') id: string) {
     return this.dealsService.redeemDeal(id, userId);
   }
+
+  /**
+   * Track deal view (for analytics)
+   * Called when user views a deal detail page
+   */
+  @Post(':id/track-view')
+  @UseGuards(JwtAuthGuard)
+  async trackView(
+    @CurrentUser('id') userId: string,
+    @Param('id') dealId: string,
+    @Body('isFollower') isFollower: boolean = false,
+  ) {
+    return this.dealsService.trackView(dealId, userId, isFollower);
+  }
+
+  /**
+   * Track deal share (for analytics)
+   * Called when user shares a deal
+   */
+  @Post(':id/track-share')
+  @UseGuards(JwtAuthGuard)
+  async trackShare(
+    @CurrentUser('id') userId: string,
+    @Param('id') dealId: string,
+  ) {
+    return this.dealsService.trackShare(dealId, userId);
+  }
+
+  /**
+   * Get detailed analytics for a specific deal
+   * Includes all metrics and performance data
+   */
+  @Get(':id/analytics')
+  @UseGuards(JwtAuthGuard)
+  @UserType('business')
+  async getDealAnalytics(
+    @CurrentUser('id') userId: string,
+    @Param('id') dealId: string,
+  ) {
+    return this.dealsService.getDealAnalytics(dealId, userId);
+  }
 }

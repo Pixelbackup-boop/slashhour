@@ -30,6 +30,8 @@ import BookmarksScreen from '../screens/bookmarks/BookmarksScreen';
 import BusinessProfileScreen from '../screens/business/BusinessProfileScreen';
 import EditBusinessProfileScreen from '../screens/business/EditBusinessProfileScreen';
 import RegisterBusinessScreen from '../screens/business/RegisterBusinessScreen';
+import BusinessAnalyticsScreen from '../screens/business/BusinessAnalyticsScreen';
+import DealPerformanceScreen from '../screens/business/DealPerformanceScreen';
 import CreateDealScreen from '../screens/post/CreateDealScreen';
 import EditDealScreen from '../screens/post/EditDealScreen';
 import SimpleTestScreen from '../screens/test/SimpleTestScreen';
@@ -60,6 +62,8 @@ type RootStackParamList = {
   RegisterBusiness: undefined;
   CreateDeal: { businessId: string; businessName: string };
   EditDeal: { deal: Deal; businessId: string; businessName: string };
+  BusinessAnalytics: { businessId: string; businessName: string };
+  DealPerformance: { dealId: string; title: string };
   UXTest: undefined;
   Chat: {
     conversationId: string;
@@ -246,6 +250,16 @@ function ShopStackNavigator() {
         name="BusinessRedemptions"
         component={BusinessRedemptionsScreen}
         options={HEADER_WITH_BACK_BUTTON}
+      />
+      <ShopStack.Screen
+        name="BusinessAnalytics"
+        component={BusinessAnalyticsScreen}
+        options={{ headerShown: false }}
+      />
+      <ShopStack.Screen
+        name="DealPerformance"
+        component={DealPerformanceScreen}
+        options={{ headerShown: false }}
       />
       <ShopStack.Screen
         name="QRScanner"

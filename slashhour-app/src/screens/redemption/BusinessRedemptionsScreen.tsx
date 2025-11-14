@@ -8,9 +8,12 @@ import {
   RefreshControl,
   TouchableOpacity,
   Alert,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import { useTheme } from '../../context/ThemeContext';
 import { Icon } from '../../components/icons';
 import { TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../../theme';
@@ -108,6 +111,80 @@ export default function BusinessRedemptionsScreen({ route, navigation }: Busines
 
   const handleScanQR = () => {
     navigation.navigate('QRScanner', { businessId, businessName });
+  };
+
+  const handleExportCSV = async () => {
+    try {
+      if (redemptions.length === 0) {
+        Alert.alert('No Data', 'There are no redemptions to export.');
+        return;
+      }
+
+      // Check if sharing is available
+      const isAvailable = await Sharing.isAvailableAsync();
+      if (!isAvailable) {
+        Alert.alert('Not Available', 'Sharing is not available on this device.');
+        return;
+      }
+
+      // Create CSV content
+      const headers = [
+        'Redemption ID',
+        'Customer Name',
+        'Customer Email',
+        'Deal Title',
+        'Original Price',
+        'Paid Price',
+        'Savings',
+        'Discount %',
+        'Status',
+        'Redeemed Date',
+        'Validated Date',
+      ];
+
+      const csvRows = [headers.join(',')];
+
+      redemptions.forEach((item) => {
+        const row = [
+          item.id,
+          item.user?.username || 'Unknown',
+          item.user?.email || '',
+          `"${item.deal?.title?.replace(/"/g, '""') || 'Unknown Deal'}"`, // Escape quotes in title
+          item.original_price.toFixed(2),
+          item.paid_price.toFixed(2),
+          item.savings_amount.toFixed(2),
+          `${item.discount_percentage}%`,
+          item.status,
+          new Date(item.redeemed_at).toLocaleDateString(),
+          item.validated_at ? new Date(item.validated_at).toLocaleDateString() : 'N/A',
+        ];
+        csvRows.push(row.join(','));
+      });
+
+      const csvContent = csvRows.join('\n');
+
+      // Generate filename with timestamp
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `${businessName.replace(/[^a-z0-9]/gi, '_')}_redemptions_${timestamp}.csv`;
+      const fileUri = `${FileSystem.cacheDirectory}${filename}`;
+
+      // Write file
+      await FileSystem.writeAsStringAsync(fileUri, csvContent, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+
+      // Share file
+      await Sharing.shareAsync(fileUri, {
+        mimeType: 'text/csv',
+        dialogTitle: 'Export Redemptions',
+        UTI: 'public.comma-separated-values-text',
+      });
+
+      Alert.alert('Success', 'Redemptions exported successfully!');
+    } catch (error: any) {
+      console.error('Failed to export redemptions:', error);
+      Alert.alert('Error', 'Failed to export redemptions. Please try again.');
+    }
   };
 
   const renderFilterTab = (filter: typeof STATUS_FILTERS[0]) => {
@@ -290,14 +367,25 @@ export default function BusinessRedemptionsScreen({ route, navigation }: Busines
         />
       </View>
 
-      {/* Scan QR Button */}
-      <TouchableOpacity
-        style={[styles.scanButton, { backgroundColor: colors.primary }]}
-        onPress={handleScanQR}
-      >
-        <Icon name="camera" size={24} color={colors.white} style="solid" />
-        <Text style={[styles.scanButtonText, { color: colors.white }]}>Scan Customer QR Code</Text>
-      </TouchableOpacity>
+      {/* Action Buttons Row */}
+      <View style={styles.actionButtonsRow}>
+        <TouchableOpacity
+          style={[styles.scanButton, { backgroundColor: colors.primary }]}
+          onPress={handleScanQR}
+        >
+          <Icon name="camera" size={20} color={colors.white} style="solid" />
+          <Text style={[styles.scanButtonText, { color: colors.white }]}>Scan QR</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.exportButton, { backgroundColor: colors.secondary, opacity: redemptions.length === 0 ? 0.5 : 1 }]}
+          onPress={handleExportCSV}
+          disabled={redemptions.length === 0}
+        >
+          <Icon name="download" size={20} color={colors.white} style="solid" />
+          <Text style={[styles.exportButtonText, { color: colors.white }]}>Export CSV</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* List */}
       {isLoading ? (
@@ -370,17 +458,36 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
+  actionButtonsRow: {
+    flexDirection: 'row',
+    marginHorizontal: SPACING.md,
+    marginVertical: SPACING.md,
+    gap: SPACING.sm,
+  },
   scanButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: SPACING.md,
-    marginVertical: SPACING.md,
     paddingVertical: SPACING.md,
     borderRadius: RADIUS.md,
     ...SHADOWS.md,
   },
   scanButtonText: {
+    fontSize: TYPOGRAPHY.fontSize.md,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    marginLeft: SPACING.sm,
+  },
+  exportButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.md,
+    ...SHADOWS.md,
+  },
+  exportButtonText: {
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.bold,
     marginLeft: SPACING.sm,

@@ -74,8 +74,10 @@ export type IconName =
   | 'share'
   | 'download'
   | 'arrow-right'
+  | 'arrow-left'
   | 'qrcode'
-  | 'location';
+  | 'location'
+  | 'document-text';
 
 export interface IconProps {
   /**
@@ -169,8 +171,10 @@ const ICON_MAP: Record<IconName, { outline: keyof typeof Ionicons.glyphMap; fill
   share: { outline: 'share-outline', filled: 'share' },
   download: { outline: 'download-outline', filled: 'download' },
   'arrow-right': { outline: 'arrow-forward-outline', filled: 'arrow-forward' },
+  'arrow-left': { outline: 'arrow-back-outline', filled: 'arrow-back' },
   qrcode: { outline: 'qr-code-outline', filled: 'qr-code' },
   location: { outline: 'location-outline', filled: 'location' },
+  'document-text': { outline: 'document-text-outline', filled: 'document-text' },
 };
 
 /**

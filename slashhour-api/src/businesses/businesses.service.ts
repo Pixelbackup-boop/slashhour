@@ -304,10 +304,115 @@ export class BusinessesService {
       },
     });
 
+    // Get all deals with their analytics
+    const deals = await this.prisma.deals.findMany({
+      where: { business_id: businessId },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        discount_percentage: true,
+        view_count_followers: true,
+        view_count_nearby: true,
+        share_count: true,
+        save_count: true,
+        starts_at: true,
+        expires_at: true,
+        created_at: true,
+      },
+      orderBy: { created_at: 'desc' },
+    });
+
+    // Get redemption counts for each deal
+    const dealIds = deals.map(d => d.id);
+    const redemptions = await this.prisma.user_redemptions.groupBy({
+      by: ['deal_id'],
+      where: {
+        deal_id: { in: dealIds },
+      },
+      _count: { id: true },
+    });
+
+    // Create a map of deal_id -> redemption count
+    const redemptionMap = new Map(
+      redemptions.map(r => [r.deal_id, r._count.id])
+    );
+
+    // Build per-deal analytics
+    const dealAnalytics = deals.map(deal => {
+      const totalViews = (deal.view_count_followers || 0) + (deal.view_count_nearby || 0);
+      const redemptionCount = redemptionMap.get(deal.id) || 0;
+      const saveCount = deal.save_count || 0;
+      const shareCount = deal.share_count || 0;
+
+      // Calculate engagement rate (views + shares + saves)
+      const totalEngagement = totalViews + shareCount + saveCount;
+
+      // Calculate conversion rate (redemptions / views)
+      const conversionRate = totalViews > 0 ? (redemptionCount / totalViews) * 100 : 0;
+
+      // Determine if deal is currently active
+      const isActive =
+        deal.status === DealStatus.ACTIVE &&
+        deal.starts_at <= now &&
+        deal.expires_at > now;
+
+      return {
+        dealId: deal.id,
+        title: deal.title,
+        status: deal.status,
+        isActive,
+        discountPercentage: deal.discount_percentage,
+        metrics: {
+          viewsFromFollowers: deal.view_count_followers || 0,
+          viewsFromNearby: deal.view_count_nearby || 0,
+          totalViews,
+          shares: shareCount,
+          saves: saveCount,
+          redemptions: redemptionCount,
+          totalEngagement,
+          conversionRate: Math.round(conversionRate * 100) / 100, // Round to 2 decimals
+        },
+        dates: {
+          startsAt: deal.starts_at,
+          expiresAt: deal.expires_at,
+          createdAt: deal.created_at,
+        },
+      };
+    });
+
+    // Calculate total metrics across all deals
+    const totalMetrics = dealAnalytics.reduce(
+      (acc, deal) => ({
+        totalViews: acc.totalViews + deal.metrics.totalViews,
+        totalShares: acc.totalShares + deal.metrics.shares,
+        totalSaves: acc.totalSaves + deal.metrics.saves,
+        totalRedemptions: acc.totalRedemptions + deal.metrics.redemptions,
+        totalEngagement: acc.totalEngagement + deal.metrics.totalEngagement,
+      }),
+      { totalViews: 0, totalShares: 0, totalSaves: 0, totalRedemptions: 0, totalEngagement: 0 }
+    );
+
+    // Calculate overall conversion rate
+    const overallConversionRate =
+      totalMetrics.totalViews > 0
+        ? (totalMetrics.totalRedemptions / totalMetrics.totalViews) * 100
+        : 0;
+
     return {
+      // Basic stats (backward compatible)
       activeDealCount,
       followerCount: business.follower_count,
       totalDealsSold,
+
+      // Enhanced analytics
+      totalMetrics: {
+        ...totalMetrics,
+        overallConversionRate: Math.round(overallConversionRate * 100) / 100,
+      },
+
+      // Per-deal analytics
+      dealAnalytics,
     };
   }
 

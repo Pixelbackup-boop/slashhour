@@ -213,7 +213,7 @@ const NotificationsScreen: React.FC = () => {
             <Image
               source={{ uri: item.image_url }}
               style={styles.notificationImage}
-              resizeMode="cover"
+              contentFit="cover"
             />
           )}
 

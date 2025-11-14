@@ -68,10 +68,12 @@ export const useDealDetail = (deal: Deal | undefined): UseDealDetailReturn => {
   }, [deal?.expires_at]);
 
   // Handle deal redemption
+  // 2025 Best Practice: Comprehensive error handling with user-friendly messages
   const handleRedeem = useCallback(async () => {
     if (!deal) {
       return;
     }
+
     try {
       setIsRedeeming(true);
       const response = await redemptionService.redeemDeal(deal.id);
@@ -87,12 +89,89 @@ export const useDealDetail = (deal: Deal | undefined): UseDealDetailReturn => {
       );
     } catch (error: any) {
       console.error('Failed to redeem deal:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to redeem deal';
-      Alert.alert('Redemption Failed', errorMessage);
+
+      // 2025 Best Practice: Detailed error handling with specific status codes
+      const statusCode = error.response?.status;
+      const errorData = error.response?.data;
+      let errorTitle = 'Redemption Failed';
+      let errorMessage = 'Unable to redeem deal. Please try again.';
+
+      switch (statusCode) {
+        case 400:
+          // Bad Request - validation error
+          errorTitle = 'Invalid Request';
+          errorMessage = errorData?.message || 'This deal cannot be redeemed. Please check deal requirements.';
+          break;
+
+        case 401:
+          // Unauthorized - token expired or invalid
+          errorTitle = 'Session Expired';
+          errorMessage = 'Your session has expired. Please log in again.';
+          break;
+
+        case 403:
+          // Forbidden - user doesn't have permission
+          errorTitle = 'Not Authorized';
+          errorMessage = errorData?.message || 'You are not authorized to redeem this deal.';
+          break;
+
+        case 404:
+          // Not Found - deal doesn't exist
+          errorTitle = 'Deal Not Found';
+          errorMessage = 'This deal is no longer available.';
+          break;
+
+        case 409:
+          // Conflict - already redeemed or out of stock
+          errorTitle = 'Already Redeemed';
+          errorMessage = errorData?.message || 'You have already redeemed this deal or it is out of stock.';
+          break;
+
+        case 410:
+          // Gone - deal expired
+          errorTitle = 'Deal Expired';
+          errorMessage = 'This deal has expired and can no longer be redeemed.';
+          break;
+
+        case 422:
+          // Unprocessable Entity - business logic error
+          errorTitle = 'Cannot Redeem';
+          errorMessage = errorData?.message || 'This deal cannot be redeemed at this time.';
+          break;
+
+        case 429:
+          // Too Many Requests - rate limit
+          errorTitle = 'Too Many Attempts';
+          errorMessage = 'Please wait a moment before trying again.';
+          break;
+
+        case 500:
+        case 502:
+        case 503:
+        case 504:
+          // Server errors
+          errorTitle = 'Server Error';
+          errorMessage = 'Our servers are experiencing issues. Please try again later.';
+          break;
+
+        default:
+          // Unknown error
+          if (errorData?.message) {
+            errorMessage = errorData.message;
+          } else if (error.message) {
+            errorMessage = error.message;
+          }
+      }
+
+      Alert.alert(errorTitle, errorMessage);
+
+      // Log error with context for debugging
       logError(error, {
-        context: 'useDealDetail',
+        context: 'useDealDetail.handleRedeem',
         dealId: deal.id,
-        businessId: deal.business?.id
+        businessId: deal.business?.id,
+        statusCode,
+        errorMessage: errorData?.message
       });
     } finally {
       setIsRedeeming(false);

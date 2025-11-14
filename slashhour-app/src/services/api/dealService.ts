@@ -181,4 +181,32 @@ export const dealService = {
     const response = await apiClient.get<{ deals: Deal[] }>(`/businesses/${businessId}/deals`);
     return response.deals;
   },
+
+  /**
+   * Track when a user views a deal (for analytics)
+   */
+  trackView: async (dealId: string, isFollower: boolean = false): Promise<void> => {
+    try {
+      await apiClient.post(`/deals/${dealId}/track-view`, { isFollower });
+    } catch (error) {
+      // Silent fail - analytics shouldn't break user experience
+      if (__DEV__) {
+        console.warn('Failed to track view:', error);
+      }
+    }
+  },
+
+  /**
+   * Track when a user shares a deal (for analytics)
+   */
+  trackShare: async (dealId: string): Promise<void> => {
+    try {
+      await apiClient.post(`/deals/${dealId}/track-share`);
+    } catch (error) {
+      // Silent fail - analytics shouldn't break user experience
+      if (__DEV__) {
+        console.warn('Failed to track share:', error);
+      }
+    }
+  },
 };

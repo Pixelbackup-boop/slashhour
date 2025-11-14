@@ -230,11 +230,17 @@ export const usePushNotifications = () => {
         return null;
       }
 
-      // Get the device push token
-      const tokenData = await Notifications.getDevicePushTokenAsync();
+      // Get the Expo push token (works without Firebase setup)
+      // For 2025 best practice: Use Expo's managed push notification service
+      // This works on both iOS and Android without additional Firebase setup
+      const projectId = process.env.EXPO_PUBLIC_PROJECT_ID || 'slashhour-app';
+
+      const tokenData = await Notifications.getExpoPushTokenAsync({
+        projectId,
+      });
       const token = tokenData.data;
 
-      logger.info('Device push token:', token);
+      logger.info('Expo push token:', token);
       setDeviceToken(token);
 
       // Store device token in auth store for logout cleanup
@@ -261,7 +267,23 @@ export const usePushNotifications = () => {
 
       return token;
     } catch (error) {
-      logger.error('Error registering for push notifications:', error);
+      // 2025 Best Practice: Detailed error logging with context
+      if (error instanceof Error) {
+        logger.error('Error registering for push notifications:', {
+          message: error.message,
+          name: error.name,
+          stack: error.stack,
+          platform: Platform.OS,
+          isDevice: Device.isDevice,
+        });
+
+        // Specific error handling
+        if (error.message.includes('Firebase')) {
+          logger.warn('Firebase not initialized - using Expo push tokens instead (this is fine for most apps)');
+        }
+      } else {
+        logger.error('Unknown error registering for push notifications:', error);
+      }
       return null;
     }
   };

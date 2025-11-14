@@ -154,13 +154,21 @@ export const useChat = ({
   // Join conversation and setup real-time listeners
   useEffect(() => {
     // Join conversation room (only once)
+    // 2025 Best Practice: Handle async socket connection
     if (!isJoinedRef.current) {
-      socketService.joinConversation(conversationId, userId);
-      isJoinedRef.current = true;
+      isJoinedRef.current = true; // Set early to prevent multiple attempts
 
-      if (__DEV__) {
-        console.log('🚪 useChat: Joined conversation', conversationId);
-      }
+      socketService.joinConversation(conversationId, userId)
+        .then(() => {
+          if (__DEV__) {
+            console.log('🚪 useChat: Successfully joined conversation', conversationId);
+          }
+        })
+        .catch((error) => {
+          console.error('❌ useChat: Failed to join conversation:', error);
+          isJoinedRef.current = false; // Reset on failure so it can retry
+          logError(error, { context: 'useChat.joinConversation' });
+        });
     }
 
     const handleNewMessage = (message: Message) => {
