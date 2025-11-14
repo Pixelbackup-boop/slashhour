@@ -540,7 +540,7 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
                   <Icon
-                    name="arrow-up-from-bracket"
+                    name="share"
                     size={20}
                     color={COLORS.gray400}
                     style="line"

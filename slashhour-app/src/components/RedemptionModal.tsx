@@ -8,13 +8,13 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
-  Share,
   Platform,
 } from 'react-native';
 import { Image } from 'expo-image';
 import QRCode from 'react-native-qrcode-svg';
 import ViewShot from 'react-native-view-shot';
 import * as MediaLibrary from 'expo-media-library';
+import * as Sharing from 'expo-sharing';
 import { Icon } from './icons';
 
 interface RedemptionModalProps {
@@ -110,16 +110,21 @@ export default function RedemptionModal({
 
       const uri = await viewShotRef.current.capture();
 
-      await Share.share({
-        message: `My redemption code for ${dealTitle} at ${businessName}`,
-        url: Platform.OS === 'ios' ? uri : `file://${uri}`,
-        title: 'Share Redemption Code',
+      // Check if sharing is available on this device
+      const isAvailable = await Sharing.isAvailableAsync();
+      if (!isAvailable) {
+        Alert.alert('Error', 'Sharing is not available on this device');
+        return;
+      }
+
+      // Share the image using expo-sharing (works better on Android)
+      await Sharing.shareAsync(uri, {
+        mimeType: 'image/png',
+        dialogTitle: `My redemption code for ${dealTitle} at ${businessName}`,
       });
     } catch (error: any) {
-      if (error.message !== 'User did not share') {
-        console.error('Error sharing:', error);
-        Alert.alert('Error', 'Failed to share image. Please try again.');
-      }
+      console.error('Error sharing:', error);
+      Alert.alert('Error', 'Failed to share image. Please try again.');
     } finally {
       setIsSharing(false);
     }
@@ -158,7 +163,6 @@ export default function RedemptionModal({
                   style={styles.logo}
                   contentFit="contain"
                 />
-                <Text style={styles.appName}>SlashHour</Text>
               </View>
 
               {/* QR Code */}
@@ -185,12 +189,12 @@ export default function RedemptionModal({
                 <View style={styles.priceRow}>
                   <View>
                     <Text style={styles.priceLabel}>Original Price</Text>
-                    <Text style={styles.originalPrice}>${originalPrice.toFixed(2)}</Text>
+                    <Text style={styles.originalPrice}>${(Number(originalPrice) || 0).toFixed(2)}</Text>
                   </View>
                   <Icon name="arrow-right" size={20} color="#999" style="line" />
                   <View>
                     <Text style={styles.priceLabel}>Deal Price</Text>
-                    <Text style={styles.discountedPrice}>${discountedPrice.toFixed(2)}</Text>
+                    <Text style={styles.discountedPrice}>${(Number(discountedPrice) || 0).toFixed(2)}</Text>
                   </View>
                 </View>
 
@@ -244,7 +248,7 @@ export default function RedemptionModal({
                   <ActivityIndicator color="#fff" />
                 ) : (
                   <>
-                    <Icon name="arrow-down-to-line" size={20} color="#fff" style="line" />
+                    <Icon name="download" size={20} color="#fff" style="line" />
                     <Text style={styles.actionButtonText}>Save to Gallery</Text>
                   </>
                 )}
@@ -259,7 +263,7 @@ export default function RedemptionModal({
                   <ActivityIndicator color="#FF6B6B" />
                 ) : (
                   <>
-                    <Icon name="arrow-up-from-bracket" size={20} color="#FF6B6B" style="line" />
+                    <Icon name="share" size={20} color="#FF6B6B" style="line" />
                     <Text style={[styles.actionButtonText, styles.shareButtonText]}>Share</Text>
                   </>
                 )}

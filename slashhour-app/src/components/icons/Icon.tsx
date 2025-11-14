@@ -70,7 +70,12 @@ export type IconName =
   | 'clipboard'
   | 'inbox'
   | 'image'
-  | 'list';
+  | 'list'
+  | 'share'
+  | 'download'
+  | 'arrow-right'
+  | 'qrcode'
+  | 'location';
 
 export interface IconProps {
   /**
@@ -161,6 +166,11 @@ const ICON_MAP: Record<IconName, { outline: keyof typeof Ionicons.glyphMap; fill
   inbox: { outline: 'mail-outline', filled: 'mail' },
   image: { outline: 'image-outline', filled: 'image' },
   list: { outline: 'list-outline', filled: 'list' },
+  share: { outline: 'share-outline', filled: 'share' },
+  download: { outline: 'download-outline', filled: 'download' },
+  'arrow-right': { outline: 'arrow-forward-outline', filled: 'arrow-forward' },
+  qrcode: { outline: 'qr-code-outline', filled: 'qr-code' },
+  location: { outline: 'location-outline', filled: 'location' },
 };
 
 /**
