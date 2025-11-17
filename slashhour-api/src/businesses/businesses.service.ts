@@ -23,12 +23,29 @@ export class BusinessesService {
       throw new ConflictException('Business slug already exists');
     }
 
-    const business = await this.prisma.businesses.create({
-      data: {
-        ...createBusinessDto,
-        owner_id: userId,
-      } as any,
+    // Check if user already owns a business (one business per user limit)
+    const userBusinessCount = await this.prisma.businesses.count({
+      where: { owner_id: userId },
     });
+
+    if (userBusinessCount > 0) {
+      throw new ConflictException('You can only create one business per account');
+    }
+
+    // Create business and update user type to 'business' in a transaction
+    const [business] = await this.prisma.$transaction([
+      this.prisma.businesses.create({
+        data: {
+          ...createBusinessDto,
+          owner_id: userId,
+        } as any,
+      }),
+      // Automatically update user_type to 'business' when they create a business
+      this.prisma.users.update({
+        where: { id: userId },
+        data: { user_type: 'business' },
+      }),
+    ]);
 
     return {
       message: 'Business created successfully',
@@ -176,9 +193,17 @@ export class BusinessesService {
       throw new ForbiddenException('You do not have permission to delete this business');
     }
 
-    await this.prisma.businesses.delete({
-      where: { id },
-    });
+    // Delete business and revert user_type back to 'consumer' in a transaction
+    await this.prisma.$transaction([
+      this.prisma.businesses.delete({
+        where: { id },
+      }),
+      // Revert user_type back to 'consumer' when their business is deleted
+      this.prisma.users.update({
+        where: { id: userId },
+        data: { user_type: 'consumer' },
+      }),
+    ]);
 
     return {
       message: 'Business deleted successfully',

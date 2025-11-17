@@ -300,6 +300,7 @@ export interface Message {
   isRead: boolean;
   readAt?: string;
   createdAt: string;
+  broadcastId?: string | null; // Link to broadcast for tracking
   sender: {
     id: string;
     username: string;

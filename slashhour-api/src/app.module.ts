@@ -17,7 +17,9 @@ import { UploadModule } from './upload/upload.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { BookmarksModule } from './bookmarks/bookmarks.module';
+import { ReportsModule } from './reports/reports.module';
 import { CronModule } from './cron/cron.module';
+import { AdminModule } from './admin/admin.module';
 import { LoggerService } from './common/services/logger.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { CacheModule } from './cache/cache.module';
@@ -58,6 +60,10 @@ import { CacheModule } from './cache/cache.module';
     NotificationsModule,
     ReviewsModule,
     BookmarksModule,
+    ReportsModule,
+
+    // Admin Module
+    AdminModule,
 
     // Cron Jobs
     CronModule,

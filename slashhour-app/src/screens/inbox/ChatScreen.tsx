@@ -19,6 +19,7 @@ import { trackScreenView } from '../../services/analytics';
 import { Icon } from '../../components/icons';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, LAYOUT } from '../../theme';
 import { Message } from '../../types/models';
+import { MessageTextWithLinks } from '../../components/MessageTextWithLinks';
 
 interface ChatScreenProps {
   route: {
@@ -107,6 +108,8 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
       },
       sent: true,
       received: msg.isRead,
+      // Include broadcastId for link tracking
+      broadcastId: msg.broadcastId,
     }));
   };
 
@@ -214,6 +217,26 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
       </Send>
     );
   }, []);
+
+  // Custom render for message text with clickable links
+  const renderMessageText = useCallback((props: any) => {
+    const { currentMessage } = props;
+    const isMyMessage = currentMessage.user._id === user?.id;
+
+    return (
+      <MessageTextWithLinks
+        text={currentMessage.text}
+        userId={user?.id}
+        broadcastId={currentMessage.broadcastId}
+        style={isMyMessage ? styles.bubbleTextRight : styles.bubbleTextLeft}
+        linkStyle={{
+          color: isMyMessage ? COLORS.white : COLORS.primary,
+          textDecorationLine: 'underline',
+          fontWeight: '600',
+        }}
+      />
+    );
+  }, [user?.id]);
 
   // Custom render for footer (typing indicator)
   const renderFooter = useCallback(() => {
@@ -345,6 +368,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
           renderBubble={renderBubble}
           renderComposer={renderComposer}
           renderSend={renderSend}
+          renderMessageText={renderMessageText}
           renderFooter={renderFooter}
           renderAvatar={null}
           // Callbacks

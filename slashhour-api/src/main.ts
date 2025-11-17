@@ -9,6 +9,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import * as bodyParser from 'body-parser';
 import helmet from 'helmet';
+import cors = require('cors');
 
 // Initialize Sentry error tracking before anything else
 initSentry();
@@ -50,14 +51,36 @@ async function bootstrap() {
   // Global exception filter for Sentry
   app.useGlobalFilters(new SentryExceptionFilter());
 
+  // Enable CORS using express cors middleware
+  const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || [
+    'http://localhost:19006',  // React Native app
+    'http://localhost:2222',    // Admin panel
+    'http://localhost:3000',    // Development
+  ];
+
+  app.use(cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl)
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      console.log('CORS Check - Origin:', origin, 'Allowed:', allowedOrigins);
+
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        return callback(null, true);
+      } else {
+        return callback(new Error(`Not allowed by CORS: ${origin}`));
+      }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    exposedHeaders: ['Authorization'],
+  }));
+
   // Global prefix for API
   app.setGlobalPrefix(process.env.API_PREFIX || 'api/v1');
-
-  // Enable CORS
-  app.enableCors({
-    origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:19006'],
-    credentials: true,
-  });
 
   // Global validation pipe
   app.useGlobalPipes(

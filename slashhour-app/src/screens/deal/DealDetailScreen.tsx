@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Deal } from '../../types/models';
 import { getCategoryImage } from '../../utils/categoryImages';
 import RedemptionModal from '../../components/RedemptionModal';
+import ReportDealModal from '../../components/ReportDealModal';
 import PriceCard from '../../components/PriceCard';
 import CountdownBox from '../../components/CountdownBox';
 import StockBar from '../../components/StockBar';
@@ -24,6 +25,7 @@ import { useUser } from '../../stores/useAuthStore';
 import { haptics } from '../../utils/haptics';
 import { shareDeal } from '../../utils/sharing';
 import { dealService } from '../../services/api/dealService';
+import { reportService } from '../../services/api/reportService';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../../theme';
 
 interface DealDetailScreenProps {
@@ -83,6 +85,10 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
 
   // Bookmark state management
   const { isBookmarked, toggleBookmark, isProcessing, setIsBookmarked } = useBookmark(deal?.id || '', false);
+
+  // Report modal state
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [hasReported, setHasReported] = useState(false);
 
   // Sync bookmark state from deal object when it loads
   useEffect(() => {
@@ -204,6 +210,24 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
       await shareDeal(deal);
     } catch (error) {
       console.error('Failed to share deal:', error);
+    }
+  };
+
+  const handleReportPress = () => {
+    if (!hasReported) {
+      haptics.light();
+      setShowReportModal(true);
+    }
+  };
+
+  const handleReportSubmit = async (reason: string, description: string) => {
+    try {
+      await reportService.reportDeal(deal.id, reason, description);
+      setHasReported(true);
+      haptics.success();
+    } catch (error) {
+      console.error('Failed to report deal:', error);
+      throw error;
     }
   };
 
@@ -476,6 +500,21 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
                 style={isBookmarked ? 'solid' : 'line'}
               />
             </TouchableOpacity>
+
+            {/* Report Button */}
+            <TouchableOpacity
+              style={[styles.actionButton, hasReported && { opacity: 0.5 }]}
+              onPress={handleReportPress}
+              activeOpacity={0.8}
+              disabled={hasReported}
+            >
+              <Icon
+                name="target"
+                size={18}
+                color={hasReported ? COLORS.textTertiary : COLORS.error}
+                style="line"
+              />
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -642,6 +681,14 @@ export default function DealDetailScreen({ route, navigation }: DealDetailScreen
         businessPhone={deal.business?.phone}
         expiresAt={deal.expires_at}
         onClose={closeRedemptionModal}
+      />
+
+      <ReportDealModal
+        visible={showReportModal}
+        dealId={deal.id}
+        dealTitle={deal.title}
+        onClose={() => setShowReportModal(false)}
+        onSubmit={handleReportSubmit}
       />
     </SafeAreaView>
   );

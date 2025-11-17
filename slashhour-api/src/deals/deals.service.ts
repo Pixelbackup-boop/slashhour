@@ -709,7 +709,7 @@ export class DealsService {
     );
 
     // Calculate revenue impact (estimated savings provided to customers)
-    const totalSavings = redemptionCount * (deal.original_price - deal.discounted_price);
+    const totalSavings = redemptionCount * (Number(deal.original_price) - Number(deal.discounted_price));
 
     // Group redemptions by date for trend data
     const redemptionsByDate: { [key: string]: number } = {};
@@ -726,7 +726,7 @@ export class DealsService {
         originalPrice: deal.original_price,
         discountedPrice: deal.discounted_price,
         discountPercentage: deal.discount_percentage,
-        savingsAmount: deal.original_price - deal.discounted_price,
+        savingsAmount: Number(deal.original_price) - Number(deal.discounted_price),
         status: deal.status,
         isActive,
         startsAt: deal.starts_at,
